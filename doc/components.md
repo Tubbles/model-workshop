@@ -150,7 +150,7 @@ The SOFNG part turned up only at LCSC, JLCPCB's parts store (C22355741), in no M
 | Rating | 350 mA 30 VDC | 200 mA 30 VDC |
 | RoHS | "RoHS-conform" mark on the catalogue page | not on the drawing, only in distributor listings (Unconfirmed) |
 | Lifecycle | not published by Knitter-switch that we found | Active at LCSC, which is LCSC's view, not E-Switch's |
-| Availability | Electrokit 41011898, 19 SEK, 75 in stock (its page). Distrelec (MFP 120-R, 135-11-212) and RS (7023542), TME's MFP 120 with 0 in stock, all from web search results, the pages not opened | LCSC 1,471 in stock (its page). Mouser, TME, Digi-Key and Farnell from web search results, the pages not opened. Electrokit's similar 41004098 is discontinued |
+| Availability | Electrokit 41011898, 75 in stock (its page). Distrelec (MFP 120-R, 135-11-212) and RS (7023542), TME's MFP 120 with 0 in stock, all from web search results, the pages not opened | LCSC 1,471 in stock (its page). Mouser, TME, Digi-Key and Farnell from web search results, the pages not opened. Electrokit's similar 41004098 is discontinued |
 
 Keyboard builds: a nice!nano holder for the Dactyl Manuform names Adafruit's SPDT slide switch (product 805) for power (https://github.com/nathanielks/nice-nano-holder), and a hand-wired wireless Skeletyl glues an unnamed SPDT slide switch to its case (https://elescia.wordpress.com/2022/02/27/handwired-wireless-skeletyl/7/). The PCB kits use the MSK12C02 (above), which is SMD.
 
@@ -179,7 +179,7 @@ Notes:
 
 The PTS636 SL43 LFS is at Mouser and Digi-Key but turned up at neither TME nor Farnell (web search results, the pages not opened), and Electrokit has no 6 x 3.5 through-hole tactile switch (only an SMD 6 x 3, 41024337). Electrokit's 2-lead 6 x 6 switches are TE's (Alcoswitch FSM):
 
-- FSM2JRT (41024339): 6 x 6 x 4.3, 2 leads 5 apart, 1.6 N, 50 mA 24 VDC, 4.50 SEK, at least 2, 293 in stock. "ACTIVE" and "EU RoHS Directive 2011/65/EU Compliant" on TE's product sheet (`work/research/downloads/electrokit-41024339-te-fsm2jrt/`), which has no drawing.
+- FSM2JRT (41024339): 6 x 6 x 4.3, 2 leads 5 apart, 1.6 N, 50 mA 24 VDC, 293 in stock. "ACTIVE" and "EU RoHS Directive 2011/65/EU Compliant" on TE's product sheet (`work/research/downloads/electrokit-41024339-te-fsm2jrt/`), which has no drawing.
 - FSM4JRT (41019151): the same switch 5 tall, 4.90 SEK, 895 in stock, and at Mouser, Digi-Key and RS by web search results (the pages not opened). Its 2 leads 5 apart make it the FSM2JRT's second source, if the tray's pocket allows the extra 0.7.
 
 The nice!nano holder above names Adafruit's 6 mm slim tactile switch (product 1489) for reset.
@@ -204,7 +204,7 @@ Space: the PCB rests about 8 above the tray floor with sockets 2.0 below it, lea
 
 **Recommendation: B2B-PH-K-S laid on its side** in a floor pocket: envelope 5.9 x 4.5 (now the height) x 6.0, plus the 3.4 posts pointing back horizontally, where the battery-side wires solder without any slot in the floor. The plug enters horizontally. Lying on its 5.9 x 6.0 face, header and PHR-2 plug are both 4.5 thick, so the mated pair is 4.5 tall, under the 6 available; on the other face it would be 5.9 tall, with no margin (housing sizes from the table above; the mated height on its side is my arithmetic, Derived). The pocket must hold the header's front shoulders, since the plug pulls out toward the front. SparkFun warns PH plugs "can stick in pretty good" (URL above).
 
-Electrokit sells JST's straight 2-pin PH header (41004562, "Stiftlist JST-PH 2-pol 2.0mm", brand JST, 2.30 SEK, at least 6, 3979 in stock), with JST's PH catalogue as its datasheet (`work/research/downloads/electrokit-41004562-jst-ph/`), so the B2B-PH-K-S above. Its listing names no suffix, so whether it is the RoHS (LF)(SN) version is not stated. It is also at RS as B2B-PH-K-S(LF)(SN) (1667311).
+Electrokit sells JST's straight 2-pin PH header (41004562, "Stiftlist JST-PH 2-pol 2.0mm", brand JST, 3979 in stock), with JST's PH catalogue as its datasheet (`work/research/downloads/electrokit-41004562-jst-ph/`), so the B2B-PH-K-S above. Its listing names no suffix, so whether it is the RoHS (LF)(SN) version is not stated. It is also at RS as B2B-PH-K-S(LF)(SN) (1667311).
 
 ## 5. Magnets for the joint
 
@@ -361,7 +361,7 @@ The first print of kbdkid4's tray with the soldered left half in it. The nice!na
 
 For the hand-wired frame's diodes (TODO.md).
 
-- Confirmed (Diotec's 1N4148 datasheet, version 2017-08-25, from Electrokit 40310010, `work/research/downloads/electrokit-40310010-diotec-1n4148/`): the DO-35 body Ø1.9 ±0.1 and 3.9 ±0.4 long, the leads Ø0.5 at most, 62.5 ±3 end to end. "Compliant to RoHS, REACH". Electrokit sells it at 0.25 SEK, at least 50, 2048 in stock. The distributor listings first recorded here gave 4.3 to 4.6 long.
+- Confirmed (Diotec's 1N4148 datasheet, version 2017-08-25, from Electrokit 40310010, `work/research/downloads/electrokit-40310010-diotec-1n4148/`): the DO-35 body Ø1.9 ±0.1 and 3.9 ±0.4 long, the leads Ø0.5 at most, 62.5 ±3 end to end. "Compliant to RoHS, REACH". Electrokit has 2048 in stock. The distributor listings first recorded here gave 4.3 to 4.6 long.
 
 ## 13. Order list (2026-10-21)
 
@@ -373,9 +373,19 @@ Everything from Electrokit, prices with 25 % VAT, the least each listing sells, 
 | Reset button, TE FSM2JRT (section 3) | 41024339 | 4.50 | 2 | 2 | 9.00 |
 | Battery header, JST PH 2-pin straight (section 4) | 41004562 | 2.30 | 6 | 6 | 13.80 |
 | Key diodes, Diotec 1N4148 DO-35, 25 keys a half (section 12), only for the hand-wired frame | 40310010 | 0.25 | 50 | 50 | 12.50 |
+| Thumb slide joystick, to try as a pointer (section 14) | 41003908 | 99 | 1 | 1 | 99.00 |
 | Shipping | | | | | from 35 |
 
-That is 73.30 SEK of parts and about 108 SEK with the cheapest shipping. Electrokit prices its shipping at checkout, from 35 SEK, and pickup at its Malmö store is free (its consumer terms). The other shops lose on shipping alone for an order this small: Mouser ships free only from 615 to 800 SEK (its Swedish pages differ), Elfa Distrelec closed its web shop on 2026-05-18 and sends its customers to RS, and TME had no MFP 120 in stock. Not in this order: the socket strips (section 8, the user's own order), the hotswap sockets, the nice!nano, the battery and the magnets.
+That is 172.30 SEK of parts and about 207 SEK with the cheapest shipping, or 73.30 and 108 without the joystick. Electrokit prices its shipping at checkout, from 35 SEK, and pickup at its Malmö store is free (its consumer terms). The other shops lose on shipping alone for an order this small: Mouser ships free only from 615 to 800 SEK (its Swedish pages differ), Elfa Distrelec closed its web shop on 2026-05-18 and sends its customers to RS, and TME had no MFP 120 in stock. Not in this order: the socket strips (section 8, the user's own order), the hotswap sockets, the nice!nano, the battery and the magnets.
+
+## 14. Thumb slide joystick (2026-10-21)
+
+For trying a pointer on the keyboard (TODO.md).
+
+- Confirmed (Electrokit's page, 41003908 "Joystick - tum, glid", 7 in stock): a resistive analog slide joystick "liknande den som används i PSP1000", 5 kΩ, with no push button. Seen from below its pins are 1 the X output, 2 +5 V, 3 the Y output and 4 ground, on SMD pads 2 apart. Its rubber thumb pad comes off. On an Arduino each axis reads about 128 to 775.
+- Unconfirmed (SparkFun's product page for the same joystick, COM-09426, which links no datasheet): pin 4 is the one nearest the two mounting tabs on one side. No drawing was found, so its size needs a caliper.
+- Derived: across the nice!nano's 3.3 V each 5 kΩ track draws 0.66 mA, all the time unless its supply is switched.
+- Not checked: which of the nice!nano's free pins can read an analog voltage, and how ZMK takes an analog pointer.
 
 ## Not confirmed
 
