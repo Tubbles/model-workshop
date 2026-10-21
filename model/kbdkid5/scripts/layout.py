@@ -2184,9 +2184,11 @@ def usb_opening_boxes(fits=DEFAULT_MOUNT_FITS):
 # The north block, one block across the pocket against the north wall's
 # inner face, between the board's USB end and the wall (work item 010,
 # the user: "make the cradle more of a heavy duty pocket in an
-# extrusion"). It reaches over the ledge cut-away's whole width, so it
-# meets the ledge at both ends, and from the floor to the bar's
-# top. Its south face, nano_north_end_gap() north of the board's USB
+# extrusion"). It reaches over the ledge cut-away's whole width, from
+# the floor to the bar's top. Its west end meets the ledge at the
+# column 1/2 step. Its east end stands in column 3's cavity, 0.95 past
+# the column 2/3 step's wall, where the built tray's rounded ledge
+# corner leaves no ledge beside it. Its south face, nano_north_end_gap() north of the board's USB
 # end, is the board's north stop. The shell passes it in an opening of its own, the
 # shell's slip fit across (the shell plus 0.5), from the board's seat up
 # to the bar's underside, bar_clearance over the shell's top as printed,

@@ -1096,8 +1096,9 @@ def measure_usb_channel(tray, right, design, figures):
 def measure_nano_north_block(tray, right, design, figures):
     """The north block between the board's USB end and the wall: its
     opening for the shell with the sill under it and the bar over it,
-    its south faces, and its ends, at the ledge cut-away's, where it
-    stands to its top."""
+    its south faces, and its ends, where it stands to its top: the west
+    one at the ledge cut-away's, the east one free in column 3's
+    cavity."""
     board = design.board
     inner, _outer = north_wall_faces("nice!nano")
     y = inner - 0.1
@@ -1110,9 +1111,14 @@ def measure_nano_north_block(tray, right, design, figures):
     sides = [(opening[0] - 1.0, y, in_opening[2]), (opening[1] + 1.0, y, in_opening[2])]
     south_faces = [run_span(tray, right, point, "y", True)[0] for point in [in_bar] + sides]
     south_gap = worst_offset(south_faces, [board.north] * 3)
-    cut_away = run_span(tray, right, (board.center, y, bar[1] + 0.5), "x", False)
+    west_end = run_span(tray, right, (board.center, y, bar[1] + 0.5), "x", False)[0]
+    # The east end stands past column 2's north edge, in column 3's
+    # cavity, where the built tray rounds the step's ledge corner away:
+    # nothing stops a run over the block there, so this one runs
+    # through the block's east side.
+    east_end = run_span(tray, right, sides[1], "x", True)[1]
     end_tops = [run_span(tray, right, (x, y, 1.0), "z", True)[1]
-                for x in (cut_away[0] + 0.05, cut_away[1] - 0.05)]
+                for x in (west_end + 0.05, east_end - 0.05)]
     mouth = shell_mouth_y(board)
     over_channel = (channel_top_z(design) + DESIGN_USB_WINDOW_CENTER_Z_MM
                     + DESIGN_USB_WINDOW_MM[1] / 2.0) / 2.0
@@ -1132,8 +1138,8 @@ def measure_nano_north_block(tray, right, design, figures):
         figures.check("deep", span_length(deep), DESIGN_NANO_BAR_DEPTH_MM, 2),
         figures.check("to the shell's mouth", deep[1] - mouth, 0.0, 2),
         figures.check("from the board's USB end", south_gap, DESIGN_NANO_END_GAP_MM, 2),
-        figures.check("from x", cut_away[0], round(board.west - past, 3), 3),
-        figures.check("to", cut_away[1], round(board.east + past, 3), 3),
+        figures.check("from x", west_end, round(board.west - past, 3), 3),
+        figures.check("to", east_end, round(board.east + past, 3), 3),
         figures.check("its top z at both ends",
                       max(end_tops, key=lambda top: abs(top - bar[1])),
                       round(channel_top_z(design) + DESIGN_NANO_BAR_HEIGHT_MM, 2), 2),
