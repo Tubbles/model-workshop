@@ -30,5 +30,5 @@ Still open:
 - The MFP 120-R's slide force is not published, so the cradle is sized as the one it replaced.
 - The retainer and the new sockets have not been printed: the retainer's snug fit in its grooves, the reset button's snug side walls and front stop.
 - The FSM2JRT's corner bumps are placed from the drawing's top view (doc/components.md, section 3), which the reset button's front stop keeps 0.4 from as printed.
-- The battery header does not meet the socket rule yet: by JST's figures the plug's housing covers its entry face but 0.05 per side, too little for lips to hold it against the plug's pull without keeping the plug from seating, so only the snug pocket's friction holds it. A caliper on the header and plug in hand settles whether `battery_shoulder` lips can be the default (DESIGN.md, Battery connector).
+- Dropped 2026-10-21: whether `battery_shoulder` lips could hold the battery header. The tray no longer holds the battery or its connector (work item 018).
 - TE's current customer drawing of the FSM2JRT was not obtained (te.com refuses curl), so its figures rest on the 2008 catalogue drawing.
