@@ -383,7 +383,7 @@ For the hand-wired frame's diodes (TODO.md).
 
 ## 13. Order list (2026-10-21)
 
-Everything from Electrokit, prices with 25 % VAT, the least each listing sells, for both halves:
+Everything from Electrokit, prices with 25 % VAT, the least each listing sells, for both halves. The user placed this order on 2026-10-21, due a couple of days later.
 
 | Part | Electrokit | Each | Least | Buy | SEK |
 |---|---|---|---|---|---|
