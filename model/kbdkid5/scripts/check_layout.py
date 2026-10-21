@@ -1814,7 +1814,10 @@ def magnet_slot_opening_problems(opening_across, wall_left):
     """Where a magnet would not drop into its slot as printed: the slot
     or the opening above it too tight for it with
     MAGNET_DROP_IN_CLEARANCE_MM, the slot not open toward the cavity,
-    or the cut-back through the wall."""
+    or the cut-back through the wall. The sixth standoff walls off the
+    south 2.165 of the slot at 67.511 along the slant, flush with the
+    block's inner face, so the slot still prints 3.1 across there and the
+    magnet still drops in from the top."""
     clearance = MAGNET_DROP_IN_CLEARANCE_MM
     thickness = layout.MAGNET_THICKNESS_MM
     diameter = layout.MAGNET_DIAMETER_MM

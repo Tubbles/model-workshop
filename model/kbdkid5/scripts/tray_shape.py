@@ -39,10 +39,12 @@ channel and the USB window, the knob slot through the ledge and the
 north wall, the reset pin hole through the north wall, the nice!nano's
 pry slot through the clamp's block and foot and the clamp block's
 insert bore. Then
-the magnet slots, open toward the cavity, with the wall cut back over
-them, the flat-topped teardrop pin holes (the half's fit and depth, the
-right half's with a lead-in at the mouth), the flat-topped teardrop
-parking hole in through the joint face, aslant, and the chamfer along
+the magnet slots, open toward the cavity (but the south 2.165 of the
+one at 67.511 along the slant, which the sixth standoff walls off), with
+the wall cut back over them, the flat-topped teardrop pin holes (the
+half's fit and depth, the right half's with a lead-in at the mouth),
+the flat-topped teardrop parking hole in through the joint face,
+aslant, and the chamfer along
 the joint face's bottom edge. Each
 step checks its volume and probes what it made. Last the floor is
 checked closed: its underside is the void-free footprint's, so no void
@@ -688,7 +690,11 @@ def cut_magnet_slot(tray, along):
     on to the rim, which also cuts the wall back to the slot's face side
     above the block. All of it lies in plastic: the slot in the block
     and the floor, the cut-back in the wall. The slot's inner side lies
-    on the block's inner face, so it opens toward the cavity."""
+    on the block's inner face, so it opens toward the cavity, but where
+    a standoff merges with the block: the sixth standoff walls off the
+    south 2.165 of the slot at 67.511 along the slant, flush with that
+    face, so the slot still prints 3.1 across there and the magnet still
+    drops in from the top."""
     bottom = layout.MAGNET_SLOT_BOTTOM_Z_MM
     cutter = plan_prism(layout.magnet_slot_polygon(along), bottom, RIM_Z_MM + CUT_EXTRA_MM)
     result = tray.cut(cutter)

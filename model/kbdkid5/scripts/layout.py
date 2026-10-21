@@ -507,7 +507,7 @@ def slant_rectangle(along_center, along_width, outward_range):
 
 
 # The mirror line for the right half (DESIGN.md, "Frame and units", and
-# the module docstring): the outline's center line, x = 66.199.
+# the module docstring): the outline's center line, x = 69.133.
 RIGHT_HALF_MIRROR_X_MM = (
     min(x for x, _ in OUTLINE_VERTICES_MM) + max(x for x, _ in OUTLINE_VERTICES_MM)
 ) / 2.0
@@ -1350,6 +1350,10 @@ PRINT_RISE_OF_TOP_FACES_MM = 0.05
 # is a notch through the rest of the block, open at the top and toward
 # the cavity: the skin and a 3.0 magnet's printed fit across fill the
 # block's 4.0, which leaves no room for a wall on the slot's inner side.
+# The sixth standoff (MOUNTING_DRILL_CENTERS_MM), merged with the block,
+# walls off the south 2.165 of the slot at 67.511, flush with the
+# block's inner face, so the slot still prints 3.1 across there and the
+# magnet still drops in from the top.
 # The slots run from z -0.7 up (0.5 above the bed), between the pins at
 # the given centers along the slant: spread evenly between the bosses
 # when the slots were 8.2 long (3.14 from each boss and from each
@@ -2824,7 +2828,7 @@ def power_switch_cradle_boxes():
 # edges swell like any face. It reaches up to
 # POWER_SWITCH_RETAINER_UNDER_POSTS_MM under the switches' center posts
 # and side pegs, which reach SWITCH_POSTS_BELOW_PCB_MM below the PCB
-# (DESIGN.md, Fused mock): S120's lie over it. Lifted to the PCB it
+# (DESIGN.md, Fused mock): S100's lie over it. Lifted to the PCB it
 # stays in its grooves, so the PCB keeps it in its socket.
 POWER_SWITCH_RETAINER_THICKNESS_MM = 1.2  # along y as fitted, the print's height
 POWER_SWITCH_RETAINER_GROOVE_DEPTH_MM = 0.6  # into each end block, along x
