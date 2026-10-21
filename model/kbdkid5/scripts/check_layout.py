@@ -67,8 +67,9 @@ rounds its convex corners inside with the wall's inner radius (0.4 on
 kbdkid4's tray), so a part within that of a convex cavity corner has
 less room than reported here.
 
-The rules a standoff (its drill, body and bore) and a hand-wired
-frame's boss (the boss and its screw head) meet where they stand are
+The rules a standoff (its drill, body and bore, and the switch
+plate's head hole over it) and a hand-wired frame's boss (the boss and
+its screw head) meet where they stand are
 records, PlacementRules, one per feature and obstacle, gathered from
 the obstacle functions by standoff_rules() and frame_boss_rules(), with
 standoff_merges() where a standoff may merge with the tray instead and
@@ -873,8 +874,9 @@ class SocketFlat:
     standoff's body, the standoff gets that socket's flats as layout.py's
     rule cuts them at its center (flats_cut()), the rule holds with them,
     and each must leave minimum_wall of plastic around the insert bore
-    (flat_plastic(), thin_flats()). layout.SOCKET_STANDOFF_FLATS declares
-    the flats the layout has (check_socket_tray_rules())."""
+    (flat_plastic(), thin_flats(), and flat_margin() for its signed
+    margin). layout.SOCKET_STANDOFF_FLATS declares the flats the layout
+    has (check_socket_tray_rules())."""
 
     key: str
     right: bool
@@ -957,8 +959,10 @@ def flats_cut(center, rule):
 
 def with_flats_cut(center, rule):
     """The rule with the flats it cuts at center in it, for a center
-    anywhere: rule_clearance() then gives what the flats leave, and
-    thin_flats() the flats breaking the SocketFlat's own rule."""
+    anywhere: rule_clearance() then gives what the flats leave (at
+    least the rule's minimum wherever they are cut, since the rule
+    places them so), and thin_flats() and flat_margin() the SocketFlat's
+    own rule."""
     return dataclasses.replace(rule, flats=flats_cut(center, rule))
 
 
@@ -967,6 +971,18 @@ def thin_flats(center, rule):
     SocketFlat's minimum_wall of plastic around the bore."""
     return [flat for flat in flats_cut(center, rule)
             if flat_plastic(flat) < rule.flat.minimum_wall - TOLERANCE_MM]
+
+
+def flat_margin(center, rule):
+    """The SocketFlat rule's signed margin at center, for a solver: the
+    least plastic the flats the rule cuts there leave around the bore
+    (flat_plastic()) less the SocketFlat's minimum_wall, and infinite
+    where it cuts none. The checks take a flat as thin below
+    -TOLERANCE_MM (thin_flats())."""
+    if rule.flat is None:
+        return math.inf
+    plastic = min((flat_plastic(flat) for flat in flats_cut(center, rule)), default=math.inf)
+    return plastic - rule.flat.minimum_wall
 
 
 def rules_named(rules, names):
@@ -988,8 +1004,8 @@ def rules_against(rules, obstacle, shape):
     return found
 
 
-# A standoff's rules, its drill's, body's and bore's, by the checks that
-# hold them. standoff_rules() gathers them, and each check takes its own
+# A standoff's rules, its drill's, body's and bore's and its plate head
+# hole's, by the checks that hold them. standoff_rules() gathers them, and each check takes its own
 # from there.
 
 

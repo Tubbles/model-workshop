@@ -1136,7 +1136,8 @@ class TrayCut:
 class StandoffFlat:
     """A vertical flat on the standoff at standoff_center, square to the
     unit vector `toward` the socket's nearest point (socket_distance
-    away), plane_distance from the center, over z_range."""
+    away, negative with the center inside the socket), plane_distance
+    from the center, over z_range."""
 
     label: str
     standoff_center: tuple
@@ -1231,22 +1232,69 @@ def socket_ledge_reliefs(key, right=False):
     )
 
 
+# A point this close to a polygon's boundary lies on it.
+ON_BOUNDARY_MM = 1e-9
+
+
+def inside_convex_polygon(point, polygon):
+    """Whether a point lies inside a counter-clockwise convex polygon,
+    left of every edge."""
+    count = len(polygon)
+    for index in range(count):
+        start, end = polygon[index], polygon[(index + 1) % count]
+        edge = (end[0] - start[0], end[1] - start[1])
+        offset = (point[0] - start[0], point[1] - start[1])
+        if edge[0] * offset[1] - edge[1] * offset[0] < 0.0:
+            return False
+    return True
+
+
+def inward_normal_at(point, polygon):
+    """The unit vector into a counter-clockwise convex polygon at a point
+    on its boundary: the normal of the edge it lies on, or at a corner
+    the two edges' normals' mean."""
+    count = len(polygon)
+    total = [0.0, 0.0]
+    for index in range(count):
+        start, end = polygon[index], polygon[(index + 1) % count]
+        if math.dist(point, closest_point_on_segment(point, start, end)) > ON_BOUNDARY_MM:
+            continue
+        length = math.dist(start, end)
+        total[0] -= (end[1] - start[1]) / length
+        total[1] += (end[0] - start[0]) / length
+    norm = math.hypot(*total)
+    return (total[0] / norm, total[1] / norm)
+
+
+def toward_polygon(point, polygon):
+    """(signed distance, unit vector) from a point to a counter-clockwise
+    convex polygon's nearest boundary point, negative inside it, and the
+    way the polygon lies from the point there: toward that point from
+    outside, away from it inside, and the inward normal on the boundary,
+    so both change smoothly as the point crosses into the polygon."""
+    distance, nearest = nearest_polygon_point(point, polygon)
+    if distance <= ON_BOUNDARY_MM:
+        return 0.0, inward_normal_at(nearest, polygon)
+    toward = ((nearest[0] - point[0]) / distance, (nearest[1] - point[1]) / distance)
+    if inside_convex_polygon(point, polygon):
+        return -distance, (-toward[0], -toward[1])
+    return distance, toward
+
+
 def socket_standoff_flats(standoff_center, key, right=False):
     """The flats the rule cuts into a standoff for a key's socket on the
     given half, one per socket polygon within
-    STANDOFF_RELIEF_CLEARANCE_MM of it."""
+    STANDOFF_RELIEF_CLEARANCE_MM of it. A center on a polygon's boundary
+    or inside it gets the flat the same rule gives by the signed distance
+    (toward_polygon()), which cuts through the bore."""
     reach_below_pcb = HOTSWAP_SOCKET_REACH_MM + STANDOFF_RELIEF_CLEARANCE_MM
     z_range = (max(PCB_UNDERSIDE_Z_MM - reach_below_pcb, 0.0), STANDOFF_HEIGHT_MM)
     flats = []
     for polygon in socket_polygons_on_half(key, right):
-        distance, nearest = nearest_polygon_point(standoff_center, polygon)
+        distance, toward = toward_polygon(standoff_center, polygon)
         plane_distance = distance - STANDOFF_RELIEF_CLEARANCE_MM
         if plane_distance >= STANDOFF_DIAMETER_MM / 2.0:
             continue  # the polygon clears this standoff
-        toward = (
-            (nearest[0] - standoff_center[0]) / distance,
-            (nearest[1] - standoff_center[1]) / distance,
-        )
         flats.append(
             StandoffFlat(
                 f"{key} socket flat", standoff_center, toward, plane_distance, distance, z_range
