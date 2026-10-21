@@ -70,6 +70,33 @@ jobs:
           path: socket/
           if-no-files-found: error
 
+  kbdkid5-frame:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the artifacts after the commit
+        run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/freecad-image
+      - name: Export hand-wired frame and backing STL
+        run: |
+          mkdir -p frame
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_frame.py --pass frame/kbdkid5_Frame_Left.stl frame
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_frame.py --pass frame/kbdkid5_Frame_Right.stl frame right
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_frame.py --pass frame/kbdkid5_Frame_Backing_Left.stl \
+            backing
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_frame.py --pass frame/kbdkid5_Frame_Backing_Right.stl \
+            backing right
+      - name: Upload hand-wired frame and backing STL
+        uses: actions/upload-artifact@v4
+        with:
+          name: kbdkid5-frame-${{ env.SHORT_SHA }}
+          path: frame/
+          if-no-files-found: error
+
   kbdkid5-mock:
     runs-on: ubuntu-latest
     steps:

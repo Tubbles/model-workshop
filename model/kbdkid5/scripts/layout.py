@@ -3215,3 +3215,277 @@ def nano_wire_rooms(fits=DEFAULT_MOUNT_FITS, right=False):
 
 def wire_rooms(fits=DEFAULT_MOUNT_FITS, right=False):
     return lead_wire_rooms() + nano_wire_rooms(fits, right)
+
+
+# The hand-wired frame (work item 014, DESIGN.md, "Hand-wired frame"):
+# a printed frame of the PCB's thickness in the PCB's place on each
+# half, with every key's socket in a pocket on its underside and one
+# backing per half screwed up under the sockets. This first iteration
+# has no diode cradles and no wire grooves (the user, 2026-10-21: "Ok
+# let's just skip the diode and wire fittings, first iteration is just
+# the frame board and backing standoffs"): the wires run in the room
+# between the frame's underside and the backing, as on the socket test
+# strips. socket_test_shape.py's cells, walls, tab slots, bosses and
+# pads build it (frame_shape.py). The figures here are the plan
+# geometry check_layout.py checks; everything is in the left half's
+# frame, the right half's sockets mirrored back as in the tray's checks.
+#
+# The backing's pads: a rectangle under each of the socket's two lobes,
+# the cover's lobe (HOTSWAP_SOCKET_LOBES_MM) cut back to the body's ends
+# in footprint-local coordinates (x range, y range), as the third
+# backing strip printed them, the lobes' north and south faces at the
+# outline's (HOTSWAP_SOCKET_OUTLINE_MM), 0.003 from the cover's rounded
+# ones. Each is moved in by BACKING_PAD_INSET_MM, 0.95, set for the
+# scrapped lip strip and kept so the third backing stays (the user wants
+# the pads smaller in plan, not a perfect fit, doc/log/2026-10-18.md).
+# Lobe B's reaches down to the cover's y 2.25, so on the outline its
+# pad's corner beside the 1.5 fill lies 0.534 inside the body, the
+# nearest the pads come to its edge. A rectangle rather than the cover's
+# chamfered lobe B, whose 0.608 chamfer edge collapses under an inset
+# past 0.73 and turned the pad inside out at 0.85.
+BACKING_PAD_LOBE_RECTANGLES_MM = (
+    ((-8.223, -3.573), (-2.07, 2.25)),
+    ((-6.023, -1.373), (2.25, 7.48)),
+)
+BACKING_PAD_INSET_MM = 0.95
+
+
+def backing_pad_polygons(key_center):
+    """The pads under the socket at key_center, axis-aligned rectangles
+    in board coordinates."""
+    inset = BACKING_PAD_INSET_MM
+    pads = []
+    for local_x_range, local_y_range in BACKING_PAD_LOBE_RECTANGLES_MM:
+        corners = footprint_polygon(key_center, (
+            (local_x_range[0], local_y_range[0]), (local_x_range[1], local_y_range[0]),
+            (local_x_range[1], local_y_range[1]), (local_x_range[0], local_y_range[1])))
+        xs = [x for x, _ in corners]
+        ys = [y for _, y in corners]
+        low_x, high_x = min(xs) + inset, max(xs) - inset
+        low_y, high_y = min(ys) + inset, max(ys) - inset
+        pads.append(((low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y)))
+    return tuple(pads)
+
+
+# The frame's pockets hold each socket at the fourth pocket strip's
+# best fit (DESIGN.md, "Pocket strip"). The walls, the bosses, the
+# backing and the backing's screw heads keep FRAME_TRAY_CLEARANCE_MM in
+# plan from whatever of the tray stands within their heights, as
+# modelled (the ledge's 0.5 from the sockets, 0.1 as printed with both
+# faces swelling): frame_shape.py cuts the walls back where they would
+# come closer, the bosses are placed clear of it, and the backing is cut
+# out around it.
+FRAME_POCKET_FIT_MM = -0.15
+FRAME_TRAY_CLEARANCE_MM = 0.5
+
+# The bosses, the strips' (socket_test_shape.py: the standoffs' 5.8 with
+# a 3.2 bore for an M2 heat-set insert, ending 2.267 below the frame's
+# underside), placed per half by these rules, as modelled: 0.5 from the
+# pocket walls, the tab slots and the footprint holes, 0.2 from the tab
+# wires' rooms (DESIGN.md, "Tabs"), FRAME_TRAY_CLEARANCE_MM from the
+# tray, 0.5 apart, the frame's body reaching 0.5 past them, and their
+# screws' heads under the backing, FRAME_BACKING_SCREW_HEAD_DIAMETER_MM
+# across (ISO 7045's largest M2 pan head; the user's heads are
+# calipered for height only, 1.5), FRAME_TRAY_CLEARANCE_MM from every
+# part and room they reach, which keeps them off the nice!nano's socket
+# strips. A socket presses its pads down with up to 3.0 kgf while a
+# switch goes in, so each key gets a boss north of its socket in its own
+# column, the valid place nearest (-2.8, +4.0) from the key's center
+# (mirrored on the right half), and the bottom row, whose sockets have
+# no room south of them, also the strips' corners (+-9.525, +3.1). A
+# boss within 6.3 of another (0.5 apart) is that one. Where a key's own
+# place is taken (the power switch's retainer north of S120, the reset
+# button north of S130, the parking boss north of the thumb, the upper
+# dowel boss north of S150 on the right half and the nice!nano's clamp
+# screw north of S102 there) its north corners stand in, if they fit.
+# The thumb's socket has none within reach: the parking boss, the
+# standoff at (114.141, 19.765) and S153's pegs leave no room for one.
+FRAME_BOSS_FROM_WIRE_ROOMS_MM = 0.2
+FRAME_BOSS_FROM_FRAME_MM = 0.5  # the walls, the tab slots, the footprint holes, each other
+FRAME_BOSS_EDGE_MARGIN_MM = 0.5
+FRAME_BACKING_SCREW_HEAD_DIAMETER_MM = 4.0
+FRAME_BOSS_CENTERS_MM = {
+    False: (
+        (4.499, 32.507), (5.999, 13.457), (6.499, 52.307), (6.499, 70.857), (18.574, 12.307),
+        (25.049, 13.457), (25.049, 32.507), (25.049, 51.557), (25.049, 70.607), (37.624, 17.070),
+        (44.099, 18.220), (44.099, 37.270), (44.099, 56.320), (56.674, 19.320), (63.149, 20.601),
+        (63.149, 39.651), (63.149, 58.701), (75.724, 19.451), (75.724, 76.101), (82.199, 18.220),
+        (82.199, 37.270), (82.199, 56.320), (82.199, 75.370), (94.774, 17.070), (101.249, 15.839),
+        (101.249, 34.889), (101.249, 53.939), (101.249, 72.989),
+    ),
+    True: (
+        (11.849, 52.307), (12.099, 13.457), (12.099, 70.607), (18.574, 12.307), (18.574, 31.357),
+        (31.149, 13.457), (31.149, 32.507), (31.149, 51.557), (31.149, 70.607), (37.624, 12.307),
+        (50.199, 18.220), (50.199, 37.270), (50.199, 56.320), (56.424, 74.970), (56.674, 19.451),
+        (69.249, 20.601), (69.249, 39.651), (69.249, 58.701), (75.724, 19.451), (88.299, 18.220),
+        (88.299, 37.270), (88.299, 56.320), (88.299, 75.370), (94.774, 17.070), (107.349, 15.839),
+        (107.349, 34.889), (107.349, 53.939),
+    ),
+}
+
+# The backing's cutouts over the nice!nano's socket strips, for the
+# wires to reach them: each strip's insulator grown by
+# FRAME_STRIP_CUTOUT_PAST_STRIP_MM, less wherever a pad, grown by
+# FRAME_STRIP_CUTOUT_FROM_PADS_MM, lies over it, so every pad keeps the
+# backing around it. A strip's pins under a pad's socket take a wire bent
+# over the strip under the backing, which keeps 1.17 over the strips
+# (DESIGN.md, "In the tray").
+FRAME_STRIP_CUTOUT_PAST_STRIP_MM = 0.5
+FRAME_STRIP_CUTOUT_FROM_PADS_MM = 1.0
+
+
+def frame_boss_centers(right=False):
+    return FRAME_BOSS_CENTERS_MM[right]
+
+
+def counter_clockwise(polygon):
+    polygon = tuple(polygon)
+    return polygon if polygon_signed_area(polygon) > 0.0 else tuple(reversed(polygon))
+
+
+def box_corners(x_range, y_range):
+    return ((x_range[0], y_range[0]), (x_range[1], y_range[0]),
+            (x_range[1], y_range[1]), (x_range[0], y_range[1]))
+
+
+def frame_pad_boxes(right=False):
+    """(key, x range, y range) of every pad on the half, in the left
+    half's frame: the right half's footprint unmirrored at its mirrored
+    key center, mirrored back."""
+    boxes = []
+    for key, center in KEY_CENTERS_MM.items():
+        half_center = mirror_for_right_half(center) if right else center
+        for pad in backing_pad_polygons(half_center):
+            points = [mirror_for_right_half(point) if right else point for point in pad]
+            xs = [x for x, _ in points]
+            ys = [y for _, y in points]
+            boxes.append((key, (min(xs), max(xs)), (min(ys), max(ys))))
+    return boxes
+
+
+def ranges_less(kept, removed):
+    """What of the range kept the ranges removed leave, in order."""
+    pieces = [kept]
+    for low, high in removed:
+        pieces = [piece for start, end in pieces
+                  for piece in ((start, min(end, low)), (max(start, high), end))
+                  if piece[1] > piece[0]]
+    return pieces
+
+
+def frame_strip_cutouts(right=False):
+    """(label, x range, y range) of the backing's cutouts over the
+    nice!nano's socket strips."""
+    pads = frame_pad_boxes(right)
+    from_pads = FRAME_STRIP_CUTOUT_FROM_PADS_MM
+    cutouts = []
+    for envelope in nano_strip_envelopes():
+        if not envelope.piece.endswith("insulator"):
+            continue
+        x_range = grown_range(envelope.x_range, FRAME_STRIP_CUTOUT_PAST_STRIP_MM)
+        y_range = grown_range(envelope.y_range, FRAME_STRIP_CUTOUT_PAST_STRIP_MM)
+        blocked = sorted(
+            grown_range(pad_y, from_pads) for _key, pad_x, pad_y in pads
+            if grown_range(pad_x, from_pads)[0] < x_range[1]
+            and x_range[0] < grown_range(pad_x, from_pads)[1]
+        )
+        cutouts.extend((f"over the {envelope.piece}", x_range, piece)
+                       for piece in ranges_less(y_range, blocked))
+    return cutouts
+
+
+def frame_backing_outline():
+    """The backing's outline: the ledge's inner face (the joint block's
+    along the slant) moved in by FRAME_TRAY_CLEARANCE_MM,
+    sharp-cornered."""
+    return offset_polygon(ledge_inner_polygon(), -FRAME_TRAY_CLEARANCE_MM)
+
+
+def frame_backing_circle_cutouts():
+    """(label, center, radius) of the backing's cutouts around the
+    standoffs, which stand to the frame's underside."""
+    radius = STANDOFF_DIAMETER_MM / 2.0 + FRAME_TRAY_CLEARANCE_MM
+    return [(f"around the standoff at {center}", center, radius)
+            for center in MOUNTING_DRILL_CENTERS_MM]
+
+
+def frame_backing_tray_bodies(right=False):
+    """(label, counter-clockwise polygon) of what of the tray but the
+    ledge and the standoffs stands into the backing's heights inside its
+    outline: the joint's dowel bosses and fills, the parking boss and its
+    fill (all to the frame's underside), the nice!nano's clamp screw's
+    head (to z 8.0) and the power switch's retainer (to z 7.6 as
+    printed)."""
+    bodies = [(f"dowel boss at {along} along the slant", dowel_boss_polygon(along, right))
+              for along in DOWEL_PIN_ALONGS_MM]
+    bodies.append(("upper dowel boss's fill", upper_boss_fill_polygon(right)))
+    bodies.append(("parking boss", parking_boss_polygon()))
+    bodies.append(("parking boss's fill", parking_boss_fill_polygon()))
+    head = [box for box in nano_clamp_part_boxes() if box.label == "clamp screw's head"]
+    bodies.extend(("nice!nano clamp screw's head", box_corners(box.x_range, box.y_range))
+                  for box in head)
+    retainer = power_switch_retainer_envelope()
+    bodies.append(("power switch retainer", box_corners(retainer.x_range, retainer.y_range)))
+    return [(label, counter_clockwise(polygon)) for label, polygon in bodies]
+
+
+def frame_backing_polygon_cutouts(right=False):
+    """(label, counter-clockwise polygon) of the backing's other cutouts:
+    the tray bodies grown by FRAME_TRAY_CLEARANCE_MM, and the strips'."""
+    cutouts = [(f"around the {label}", offset_polygon(polygon, FRAME_TRAY_CLEARANCE_MM))
+               for label, polygon in frame_backing_tray_bodies(right)]
+    cutouts.extend((label, box_corners(x_range, y_range))
+                   for label, x_range, y_range in frame_strip_cutouts(right))
+    return cutouts
+
+
+def arc_through_points(start, through, end, step_degrees=3.0):
+    """Points on the circle through three points from start (left out)
+    past through to end (kept), every step_degrees at most."""
+    (ax, ay), (bx, by), (cx, cy) = start, through, end
+    denominator = 2.0 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+    center_x = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay)
+                + (cx * cx + cy * cy) * (ay - by)) / denominator
+    center_y = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx)
+                + (cx * cx + cy * cy) * (bx - ax)) / denominator
+    radius = math.dist((center_x, center_y), start)
+
+    def angle(point):
+        return math.atan2(point[1] - center_y, point[0] - center_x)
+
+    turn = 2.0 * math.pi
+    start_angle = angle(start)
+    to_through = (angle(through) - start_angle) % turn
+    to_end = (angle(end) - start_angle) % turn
+    span = to_end if to_through <= to_end else to_end - turn
+    steps = max(2, math.ceil(abs(math.degrees(span)) / step_degrees))
+    return [(center_x + radius * math.cos(start_angle + span * index / steps),
+             center_y + radius * math.sin(start_angle + span * index / steps))
+            for index in range(1, steps + 1)]
+
+
+def hotswap_socket_outline_points():
+    """HOTSWAP_SOCKET_OUTLINE_MM as a polygon in footprint-local
+    coordinates, its arcs in steps of 3 degrees."""
+    start, segments = HOTSWAP_SOCKET_OUTLINE_MM
+    points = [start]
+    for kind, *ends in segments:
+        if kind == "line":
+            points.append(ends[0])
+        else:
+            points.extend(arc_through_points(points[-1], *ends))
+    if math.dist(points[0], points[-1]) < 1e-9:
+        points.pop()
+    return points
+
+
+def frame_wall_outer_polygon(key, right=False):
+    """A pocket's walls' outer face before their cuts, in the left
+    half's frame: the socket's outline moved out by the pocket's gap and
+    the wall, corners extended (DESIGN.md, "Frame cells")."""
+    center = mirror_for_right_half(KEY_CENTERS_MM[key]) if right else KEY_CENTERS_MM[key]
+    points = [footprint_point(center, point) for point in hotswap_socket_outline_points()]
+    if right:
+        points = [mirror_for_right_half(point) for point in points]
+    outline = counter_clockwise(points)
+    return offset_polygon(outline, half_fit_gap(0.0, FRAME_POCKET_FIT_MM) + TRAY_WALL_MM)

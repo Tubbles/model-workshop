@@ -250,21 +250,11 @@ BACKING_SCREW_HEAD_HEIGHT_MM = 1.5
 SCREW_CLEARANCE_HOLE_DIAMETER_MM = layout.printed_fit(
     layout.MOUNTING_DRILL_DIAMETER_MM, layout.SNUG_FIT_MM
 )
-PAD_INSET_MM = 0.95
-
-# The pads' rectangles before PAD_INSET_MM, in footprint-local
-# coordinates (x range, y range): the cover's lobes
-# (layout.HOTSWAP_SOCKET_LOBES_MM) cut back to the body's ends, which the
-# third backing was printed with, the lobes' north and south faces at
-# the outline's, 0.003 from the cover's rounded ones (moved there with
-# the scrapped lip strip's lips, which sat on those faces, in the same
-# print). Lobe B's reaches down to the cover's y 2.25, so on the outline
-# its pad's corner beside the 1.5 fill lies 0.534 inside the body, the
-# nearest the pads come to its edge, where the pockets' walls follow it.
-PAD_LOBE_RECTANGLES_MM = (
-    ((-8.223, -3.573), (-2.07, 2.25)),
-    ((-6.023, -1.373), (2.25, 7.48)),
-)
+# The pads' inset and their rectangles before it live in layout.py
+# (BACKING_PAD_INSET_MM, BACKING_PAD_LOBE_RECTANGLES_MM, which say why),
+# since the hand-wired frame's backing and check_layout.py share them.
+PAD_INSET_MM = layout.BACKING_PAD_INSET_MM
+PAD_LOBE_RECTANGLES_MM = layout.BACKING_PAD_LOBE_RECTANGLES_MM
 
 # The notches that number the cells, as on the slit test strip, through
 # each strip from its south edge, and the marks in each strip's north
@@ -766,19 +756,8 @@ def frame_analytic_volume(kind, pull_in, insert_length):
 
 
 def pad_polygons(key_center):
-    """The pads: each of PAD_LOBE_RECTANGLES_MM moved in by PAD_INSET_MM.
-    The rectangle rather than the cover's chamfered lobe B, whose 0.608
-    chamfer edge collapses under an inset past 0.73 and turned the pad
-    inside out at 0.85."""
-    inset = PAD_INSET_MM
-    pads = []
-    for local_range in PAD_LOBE_RECTANGLES_MM:
-        corners = layout.footprint_polygon(key_center, rectangle(*local_range))
-        xs = [x for x, _ in corners]
-        ys = [y for _, y in corners]
-        pads.append(rectangle((min(xs) + inset, max(xs) - inset),
-                              (min(ys) + inset, max(ys) - inset)))
-    return pads
+    """The pads: layout.backing_pad_polygons()."""
+    return list(layout.backing_pad_polygons(key_center))
 
 
 def backing_analytic_volume():
@@ -843,21 +822,25 @@ def build_cell_walls(key_center, fit, depth):
     return ring.cut(Part.makeCompound(cutters)).removeSplitter()
 
 
-def build_bosses(depth):
+def build_bosses(depth, centers=None):
+    """The bosses below the ceiling, at the strip's boss_centers() unless
+    given (the hand-wired frame's, frame_shape.py)."""
     radius = BOSS_DIAMETER_MM / 2.0
+    centers = boss_centers() if centers is None else centers
     return [
-        Part.makeCylinder(radius, depth, App.Vector(x, y, -depth), UP) for x, y in boss_centers()
+        Part.makeCylinder(radius, depth, App.Vector(x, y, -depth), UP) for x, y in centers
     ]
 
 
-def build_bores(depth, insert_length):
+def build_bores(depth, insert_length, centers=None):
     radius = INSERT_BORE_DIAMETER_MM / 2.0
     bore = insert_bore_depth(insert_length)
+    centers = boss_centers() if centers is None else centers
     return [
         Part.makeCylinder(
             radius, bore + CUT_EXTRA_MM, App.Vector(x, y, -depth - CUT_EXTRA_MM), UP
         )
-        for x, y in boss_centers()
+        for x, y in centers
     ]
 
 
