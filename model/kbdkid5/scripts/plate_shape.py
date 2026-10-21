@@ -12,7 +12,11 @@ put on the PCB. Its outer edges are trimmed so it fits the tray.
 
 The switch-free corner between column 5, the thumb key and the slant
 gets a slab, flush with the cells beside it, out to the slant moved
-out by CORNER_OVERHANG_MM. The screws clamp the PCB onto the tray's
+out by CORNER_OVERHANG_MM. The slab runs on south past the thumb's
+east edge to the plate's south edge, over the triangle the slant takes
+in where it runs on south to the outline's south edge
+(slant_run_south_vertices()), which is where the tray's outline goes
+next. The screws clamp the PCB onto the tray's
 standoffs and the plate sits over their heads, held down by the
 switches, so head clearance holes go through it at the mounting
 drills. Every drill is cut, even one in mostly open plate area:
@@ -34,10 +38,10 @@ a plate printed with a 0.5 shift came out about as far off the other
 way, so 0.25 is kbdkid4's current try (the drift's cause is still
 open there). Here it is 0 by default, since this plate sits on a
 printed frame or mock, not a fabricated board. Then side_shave
-comes off the plate's west and east extremes and its slanted edge,
-since kbdkid4's printed plate was a snug fit across the tray's
-width: its east edge, like the slanted edge here, started 0.05
-short of the cavity wall.
+comes off the plate's west extreme and its slanted edge, which holds
+its east extreme, since kbdkid4's printed plate was a snug fit across
+the tray's width: its east edge, like the slanted edge here, started
+0.05 short of the cavity wall.
 
 Last, the plate's touching solids (the kbdkid3 cells, the corner slab,
 any cover and the strips the pattern shift fills) are fused into one,
@@ -113,9 +117,10 @@ DIODE_PIT_DEPTH_MM = 1.6
 # outline, along +x (east), the way kbdkid4's holes drifted (toward
 # its nano there, cause unknown), mirrored to -x on the right half
 # along with everything else, 0 here (DESIGN.md, Plate and mocks),
-# and what comes off the west and east extremes, so the plate comes
-# out 2 x DEFAULT_SIDE_SHAVE_MM narrower, and off the slanted edge,
-# along its normal. The north and south edges stay as they are.
+# and what comes off the west extreme and off the slanted edge, along
+# its normal, the slanted edge reaching the plate's south edge and so
+# holding its east extreme. The north and south edges stay as they
+# are.
 DEFAULT_PATTERN_SHIFT_MM = 0.0
 DEFAULT_SIDE_SHAVE_MM = 0.1
 
@@ -145,8 +150,10 @@ class Corner:
     slab: Part.Shape
     west_x: float  # column 5's east edge
     south_y: float  # the thumb cell's top edge
-    east_x: float  # the thumb cell's east edge
+    east_x: float  # the thumb cell's east edge, the triangle's west edge
     north_y: float  # column 5's top edge
+    triangle_south_y: float  # the thumb cell's south edge, the triangle's
+    tip_x: float  # the triangle's south corner on the slant, before the shave
 
 
 @dataclass
@@ -173,9 +180,30 @@ class Plate:
     solid_count: int  # fused into the one solid
 
 
+def slant_x_at(y, outward):
+    """The x at which the line `outward` mm out of the slant, run on
+    past either end, crosses y."""
+    direction_x, direction_y = layout.slant_direction()
+    south_x, south_y = layout.slant_point(0.0, outward)
+    return south_x + (y - south_y) * direction_x / direction_y
+
+
+def slant_run_south_vertices():
+    """The layout's outline with its slant run on south to the outline's
+    south edge (y 0): the thumb's east edge and its corner on the south
+    edge give way to the slant's crossing of that edge. The plate is
+    built for this outline, where the tray's goes next."""
+    vertices = list(layout.OUTLINE_VERTICES_MM)
+    index = vertices.index(layout.SLANT_SOUTH_END_MM)
+    south_y = vertices[index - 1][1]
+    vertices[index - 1:index + 1] = [(slant_x_at(south_y, 0.0), south_y)]
+    return tuple(vertices)
+
+
 def outline_polygon_wire(z):
-    """The layout's outline, sharp-cornered, at height z."""
-    points = [App.Vector(x, y, z) for x, y in layout.OUTLINE_VERTICES_MM]
+    """The outline the plate is built for (slant_run_south_vertices()),
+    sharp-cornered, at height z."""
+    points = [App.Vector(x, y, z) for x, y in slant_run_south_vertices()]
     return Part.makePolygon(points + [points[0]])
 
 
@@ -354,12 +382,13 @@ def vertical_silhouette_edges(plate):
 
 
 def corner_bounds(plate):
-    """(west x, south y, east x, north y) of the switch-free corner: the
-    plate's rightmost vertical edge is the thumb cell's east edge, its
-    top is the thumb cell's top edge, and the rightmost vertical edge
+    """(west x, south y, east x, north y, thumb's south y) of the
+    switch-free corner: the plate's rightmost vertical edge is the thumb
+    cell's east edge, its top is the thumb cell's top edge and its
+    bottom the thumb cell's south edge, and the rightmost vertical edge
     above that is column 5's east edge, its top column 5's top edge."""
     edges = vertical_silhouette_edges(plate)
-    east_x, _thumb_low_y, south_y = max(edges)
+    east_x, thumb_south_y, south_y = max(edges)
     if abs(east_x - plate.BoundBox.XMax) > EDGE_TOLERANCE_MM:
         raise SystemExit("error: the plate's rightmost vertical edge is not its east extreme")
     above_thumb = [
@@ -370,7 +399,7 @@ def corner_bounds(plate):
     if not above_thumb:
         raise SystemExit("error: no vertical silhouette edge above the thumb cell")
     west_x, north_y = max(above_thumb)
-    return west_x, south_y, east_x, north_y
+    return west_x, south_y, east_x, north_y, thumb_south_y
 
 
 def cover_slant_corner(plate):
@@ -379,21 +408,25 @@ def cover_slant_corner(plate):
     cell's top edge out to the outline moved out by
     CORNER_OVERHANG_MM, which bounds it along the slant. It goes no
     further north than column 5's top edge, so it stays flush with the
-    cells beside it (kbdkid4's rule), and no further east than the
-    thumb cell's east edge, so the plate's east edge stays straight
-    there (kbdkid4's corner had a tab below it out to the same reach,
-    beside its nice!nano, which kbdkid5 does not have). The slab abuts
-    the cells without overlapping them, like the cells abut each
+    cells beside it (kbdkid4's rule). East of the thumb cell's east edge
+    it runs on south over the triangle the slant takes in when it runs
+    on south (slant_run_south_vertices()), down to the thumb cell's
+    south edge, so the plate's south edge stays straight there. The slab
+    abuts the cells without overlapping them, like the cells abut each
     other. Returns (plate, Corner)."""
-    west_x, south_y, east_x, north_y = corner_bounds(plate)
+    west_x, south_y, east_x, north_y, thumb_south_y = corner_bounds(plate)
     box = plate.BoundBox
     reach = offset_outline(outline_polygon_wire(box.ZMin), CORNER_OVERHANG_MM)
     prism = Part.Face(reach).extrude(UP * box.ZLength)
-    region = Part.makeBox(
-        east_x - west_x,
-        north_y - south_y,
-        box.ZLength,
-        App.Vector(west_x, south_y, box.ZMin),
+    tip_x = slant_x_at(thumb_south_y, CORNER_OVERHANG_MM)
+    beyond_x = tip_x + CUT_EXTRA_MM
+    region_points = [
+        App.Vector(x, y, box.ZMin)
+        for x, y in ((west_x, south_y), (east_x, south_y), (east_x, thumb_south_y),
+                     (beyond_x, thumb_south_y), (beyond_x, north_y), (west_x, north_y))
+    ]
+    region = Part.Face(Part.makePolygon(region_points + [region_points[0]])).extrude(
+        UP * box.ZLength
     )
     slab = prism.common(region)
     if len(slab.Solids) != 1 or slab.Volume <= 0:
@@ -401,8 +434,8 @@ def cover_slant_corner(plate):
     slab_box = slab.BoundBox
     for expected, actual, side in (
         (west_x, slab_box.XMin, "x min"),
-        (south_y, slab_box.YMin, "y min"),
-        (east_x, slab_box.XMax, "x max"),
+        (thumb_south_y, slab_box.YMin, "y min"),
+        (tip_x, slab_box.XMax, "x max"),
         (north_y, slab_box.YMax, "y max"),
     ):
         if abs(expected - actual) > EDGE_TOLERANCE_MM:
@@ -410,7 +443,8 @@ def cover_slant_corner(plate):
                 f"error: the corner slab's {side} is {actual:.3f}, expected {expected:.3f}"
             )
     covered = Part.makeCompound(list(plate.Solids) + [slab.Solids[0]])
-    return covered, Corner(slab.Solids[0], west_x, south_y, east_x, north_y)
+    return covered, Corner(slab.Solids[0], west_x, south_y, east_x, north_y, thumb_south_y,
+                           tip_x)
 
 
 def solid_bottom_outline(solid):
@@ -638,15 +672,16 @@ def slant_keep_prism(plate, shave):
 
 
 def shave_sides(plate, shave):
-    """Take `shave` off the plate's west and east edges (its extremes
-    along x) and off its slanted edge, along that edge's normal,
-    leaving the north and south edges and the hole pattern where they
-    are. Returns the plate."""
+    """Take `shave` off the plate's west edge (its west extreme) and off
+    its slanted edge, along that edge's normal, which moves its east
+    extreme, the slanted edge's south end, in with it, leaving the north
+    and south edges and the hole pattern where they are. Returns the
+    plate."""
     if shave == 0:
         return plate
     box = plate.BoundBox
     keep = Part.makeBox(
-        box.XLength - 2.0 * shave,
+        box.XLength - shave + 1.0,
         box.YLength + 2.0,
         box.ZLength + 2.0,
         App.Vector(box.XMin + shave, box.YMin - 1.0, box.ZMin - 1.0),
@@ -659,7 +694,7 @@ def shave_sides(plate, shave):
     new_box = shaved.BoundBox
     for expected, actual, side in (
         (box.XMin + shave, new_box.XMin, "x min"),
-        (box.XMax - shave, new_box.XMax, "x max"),
+        (slant_x_at(box.YMin, CORNER_OVERHANG_MM - shave), new_box.XMax, "x max"),
         (box.YMin, new_box.YMin, "y min"),
         (box.YMax, new_box.YMax, "y max"),
     ):

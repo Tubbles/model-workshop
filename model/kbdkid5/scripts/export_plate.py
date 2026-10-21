@@ -2,7 +2,7 @@
 
 plate_shape.py builds the plate (see its docstring): the kbdkid3 plate
 model aligned onto layout.py's keys, trimmed, the corner by the slant
-covered, head clearance holes at the mounting drills, kbdkid4's print
+and the triangle east of the thumb covered, head clearance holes at the mounting drills, kbdkid4's print
 corrections and, with "covered", S123's cutout filled with a pit for
 its diode. This script mirrors it for the right half, checks the
 result against the layout and prints what it measured: the plate
@@ -28,7 +28,11 @@ along -x on the right half.
 The cavity is checked as the outline moved out by the tray's gap with
 round corners: the tray's cavity rounds its convex corners with at
 most the gap around the outline's corners and its concave ones
-outward (kbdkid4's tray), so it only has more room than that.
+outward (kbdkid4's tray), so it only has more room than that. The
+outline is the one the plate is built for, with the slant run on
+south to the south edge (plate_shape.slant_run_south_vertices()),
+where the tray's outline goes next, so until the tray follows, the
+plate's triangle east of the thumb overhangs the tray's thumb wall.
 """
 
 import math
@@ -103,8 +107,8 @@ usage: freecadcmd model/kbdkid5/scripts/export_plate.py --pass <plate.stl> [righ
   pattern_shift  move every cutout and hole this far along +x (east, the way
                  kbdkid4's holes drifted, cause unknown) while the outline
                  stays put, mm
-  side_shave     take this much off the plate's west and east edges and its
-                 slanted edge, mm
+  side_shave     take this much off the plate's west edge and its slanted
+                 edge, mm
   hole_diameter  clearance holes over the screw heads, mm (the measured
                  {SCREW_HEAD_DIAMETER_MM} mm head plus {SCREW_HEAD_CLEARANCE_MM} mm)\
 """
@@ -424,8 +428,10 @@ def print_build(build):
           f"trimmed {PLATE_EDGE_TRIM_MM} mm")
     print(f"corner:     covered from x {corner.west_x:.3f} (column 5) and y "
           f"{corner.south_y:.3f} (the thumb cell) to the slant plus {CORNER_OVERHANG_MM} mm, "
-          f"east to x {corner.east_x:.3f} (the thumb cell), north to y {corner.north_y:.3f} "
-          f"(column 5), {corner.slab.Volume / layout.PLATE_THICKNESS_MM:.1f} mm2")
+          f"north to y {corner.north_y:.3f} (column 5), and east of x {corner.east_x:.3f} (the "
+          f"thumb cell) on south to y {corner.triangle_south_y:.3f} (the thumb cell), out to "
+          f"the slant run on south, its tip at x {corner.tip_x:.3f} before the shave, "
+          f"{corner.slab.Volume / layout.PLATE_THICKNESS_MM:.1f} mm2")
     if build.diode_pit is not None:
         pit = build.diode_pit
         key = layout.KEY_CENTERS_MM[COVERED_KEY_NAME]
@@ -442,8 +448,8 @@ def print_build(build):
               f"{support * 100.0:5.1f} % supported{note}")
     print(f"shift:      hole pattern moved {build.pattern_shift:+.2f} mm along x relative to "
           f"the outline, which stays put")
-    print(f"sides:      {build.side_shave:.2f} mm shaved off the west and east edges and "
-          "the slanted edge")
+    print(f"sides:      {build.side_shave:.2f} mm shaved off the west edge and the slanted "
+          "edge")
     print(f"fused:      {build.solid_count} solids into one, volume {build.solid.Volume:.3f} mm3")
 
 
