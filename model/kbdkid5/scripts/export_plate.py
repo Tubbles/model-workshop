@@ -28,11 +28,7 @@ along -x on the right half.
 The cavity is checked as the outline moved out by the tray's gap with
 round corners: the tray's cavity rounds its convex corners with at
 most the gap around the outline's corners and its concave ones
-outward (kbdkid4's tray), so it only has more room than that. The
-outline is the one the plate is built for, with the slant run on
-south to the south edge (plate_shape.slant_run_south_vertices()),
-where the tray's outline goes next, so until the tray follows, the
-plate's triangle east of the thumb overhangs the tray's thumb wall.
+outward (kbdkid4's tray), so it only has more room than that.
 """
 
 import math

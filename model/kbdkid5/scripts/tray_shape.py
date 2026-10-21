@@ -43,7 +43,8 @@ insert bore. Then
 the magnet slots, open toward the cavity, with the wall cut back over
 them, the flat-topped teardrop pin holes (the half's fit and depth, the
 right half's with a lead-in at the mouth), the flat-topped teardrop
-parking hole and the chamfer along the joint face's bottom edge. Each
+parking hole in through the joint face, aslant, and the chamfer along
+the joint face's bottom edge. Each
 step checks its volume and probes what it made. Last the floor is
 checked closed: its underside is the void-free footprint's, so no void
 reaches it (work item 009).
@@ -495,10 +496,10 @@ def boss_bodies(corner_radius, right):
 
 
 def add_bosses(tray, corner_radius, right):
-    """Fuse the bosses and fills one by one (the lower dowel boss and the
-    parking boss overlap, which one boolean with both would not take),
-    each adding plastic but no more than its own volume, and solid at
-    its center of mass afterwards."""
+    """Fuse the bosses and fills one by one (one boolean did not take the
+    lower dowel boss and the parking boss while they overlapped), each
+    adding plastic but no more than its own volume, and solid at its
+    center of mass afterwards."""
     for label, body in boss_bodies(corner_radius, right):
         result = tray.fuse(body)
         require_one_valid_solid(result, f"adding {label}")

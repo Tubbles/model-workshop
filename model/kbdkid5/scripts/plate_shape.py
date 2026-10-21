@@ -14,9 +14,7 @@ The switch-free corner between column 5, the thumb key and the slant
 gets a slab, flush with the cells beside it, out to the slant moved
 out by CORNER_OVERHANG_MM. The slab runs on south past the thumb's
 east edge to the plate's south edge, over the triangle the slant takes
-in where it runs on south to the outline's south edge
-(slant_run_south_vertices()), which is where the tray's outline goes
-next. The screws clamp the PCB onto the tray's
+in where it runs on south to the outline's south edge. The screws clamp the PCB onto the tray's
 standoffs and the plate sits over their heads, held down by the
 switches, so head clearance holes go through it at the mounting
 drills. Every drill is cut, even one in mostly open plate area:
@@ -180,30 +178,9 @@ class Plate:
     solid_count: int  # fused into the one solid
 
 
-def slant_x_at(y, outward):
-    """The x at which the line `outward` mm out of the slant, run on
-    past either end, crosses y."""
-    direction_x, direction_y = layout.slant_direction()
-    south_x, south_y = layout.slant_point(0.0, outward)
-    return south_x + (y - south_y) * direction_x / direction_y
-
-
-def slant_run_south_vertices():
-    """The layout's outline with its slant run on south to the outline's
-    south edge (y 0): the thumb's east edge and its corner on the south
-    edge give way to the slant's crossing of that edge. The plate is
-    built for this outline, where the tray's goes next."""
-    vertices = list(layout.OUTLINE_VERTICES_MM)
-    index = vertices.index(layout.SLANT_SOUTH_END_MM)
-    south_y = vertices[index - 1][1]
-    vertices[index - 1:index + 1] = [(slant_x_at(south_y, 0.0), south_y)]
-    return tuple(vertices)
-
-
 def outline_polygon_wire(z):
-    """The outline the plate is built for (slant_run_south_vertices()),
-    sharp-cornered, at height z."""
-    points = [App.Vector(x, y, z) for x, y in slant_run_south_vertices()]
+    """The layout's outline, sharp-cornered, at height z."""
+    points = [App.Vector(x, y, z) for x, y in layout.OUTLINE_VERTICES_MM]
     return Part.makePolygon(points + [points[0]])
 
 
@@ -409,16 +386,16 @@ def cover_slant_corner(plate):
     CORNER_OVERHANG_MM, which bounds it along the slant. It goes no
     further north than column 5's top edge, so it stays flush with the
     cells beside it (kbdkid4's rule). East of the thumb cell's east edge
-    it runs on south over the triangle the slant takes in when it runs
-    on south (slant_run_south_vertices()), down to the thumb cell's
-    south edge, so the plate's south edge stays straight there. The slab
+    it runs on south over the triangle the slant takes in east of the
+    thumb, down to the thumb cell's south edge, so the plate's south
+    edge stays straight there. The slab
     abuts the cells without overlapping them, like the cells abut each
     other. Returns (plate, Corner)."""
     west_x, south_y, east_x, north_y, thumb_south_y = corner_bounds(plate)
     box = plate.BoundBox
     reach = offset_outline(outline_polygon_wire(box.ZMin), CORNER_OVERHANG_MM)
     prism = Part.Face(reach).extrude(UP * box.ZLength)
-    tip_x = slant_x_at(thumb_south_y, CORNER_OVERHANG_MM)
+    tip_x = layout.slant_x_at_y(thumb_south_y, CORNER_OVERHANG_MM)
     beyond_x = tip_x + CUT_EXTRA_MM
     region_points = [
         App.Vector(x, y, box.ZMin)
@@ -694,7 +671,7 @@ def shave_sides(plate, shave):
     new_box = shaved.BoundBox
     for expected, actual, side in (
         (box.XMin + shave, new_box.XMin, "x min"),
-        (slant_x_at(box.YMin, CORNER_OVERHANG_MM - shave), new_box.XMax, "x max"),
+        (layout.slant_x_at_y(box.YMin, CORNER_OVERHANG_MM - shave), new_box.XMax, "x max"),
         (box.YMin, new_box.YMin, "y min"),
         (box.YMax, new_box.YMax, "y max"),
     ):
