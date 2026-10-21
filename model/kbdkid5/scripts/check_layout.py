@@ -112,6 +112,13 @@ OUTLINE_ON_CELLS_TOLERANCE_MM = 0.0015
 # magnet).
 MAGNET_DROP_IN_CLEARANCE_MM = 0.1
 
+# This check's own threshold (work item 016, the user having no
+# preference): a standoff's head hole keeps at least this much of the
+# switch plate from every switch cutout, in each of the plate's layers.
+# It equals plate_shape.py's SUPPORTED_HOLE_THRESHOLD in number only,
+# which is the fraction of a hole's volume the plate fills.
+PLATE_HEAD_HOLE_FROM_CUTOUTS_MM = 0.5
+
 # DESIGN.md's figures, each compared within half its last digit.
 DESIGN_SLANT_OFFSET_MM = 0.574
 DESIGN_SLANT_LENGTH_MM = 81.76
@@ -184,6 +191,10 @@ DESIGN_DOWEL_BOSSES_INSIDE_SLANT_ENDS_MM = (19.251, 0.006)
 # holes come nearest: the sixth standoff's, merged with the joint block,
 # beside the magnet slot at 67.511 along the slant, on both halves.
 DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM = 0.832
+# The plate the standoffs' head holes keep from the switch cutouts where
+# they come nearest, in each of the plate's layers: the north-east
+# standoff's, from S131's cutout, on both halves.
+DESIGN_HEAD_HOLES_FROM_CUTOUTS_MM = {"top": 0.703, "lower": 0.502}
 DESIGN_PARKING_PIN_PROUD_MM = 1.5
 DESIGN_PARKING_BOSS_FROM_SOCKETS_MM = 1.763  # on both halves, the thumb's
 DESIGN_MAGNET_SLOT_ABOVE_BED_MM = 0.5
@@ -822,6 +833,50 @@ def socket_clearances(obstacles, minimum, right=False):
     return problems, tightest
 
 
+# The switch plate's cutouts as its model cuts them (plate_shape.py's
+# PLATE_MODEL_FILE, kbdkid3's switch cell, read off the shape the file
+# stores, which plate_shape.py builds on): through the plate's top
+# PLATE_TOP_LAYER_MM a PLATE_TOP_LAYER_CUTOUT_MM square, and through the
+# rest a PLATE_LOWER_LAYER_CUTOUT_MM square with the edge of one of the
+# cell's pin holes at the middle of its south edge, a circle of
+# PLATE_PIN_HOLE_RADIUS_MM about the point PLATE_PIN_HOLE_SOUTH_MM south
+# of the key's center, reaching 0.25 past the square (DESIGN.md, Plate
+# and mocks). plate_shape.py moves the model onto the keys by the one
+# translation that fits all of them, which leaves each cutout within
+# 0.0005 of its key's center (the model's column staggers differ from
+# the layout's by 0.001 of rounding).
+PLATE_TOP_LAYER_MM = 1.2
+PLATE_TOP_LAYER_CUTOUT_MM = 14.1
+PLATE_LOWER_LAYER_CUTOUT_MM = 14.4
+PLATE_PIN_HOLE_RADIUS_MM = 1.55
+PLATE_PIN_HOLE_SOUTH_MM = 5.9
+
+
+def plate_layers():
+    """(layer, z range) of the switch plate's top PLATE_TOP_LAYER_MM and
+    the lower layer under it, the plate resting on the PCB."""
+    split_z = layout.PLATE_TOP_Z_MM - PLATE_TOP_LAYER_MM
+    return (("top", (split_z, layout.PLATE_TOP_Z_MM)), ("lower", (layout.PCB_TOP_Z_MM, split_z)))
+
+
+def centered_square(center, size):
+    return layout.box_corners(layout.centered_range(center[0], size),
+                              layout.centered_range(center[1], size))
+
+
+def plate_cutout_pieces(key, layer):
+    """(label, circle_clearance() kind, shape) of the pieces of a key's
+    switch cutout in a layer of the plate: the top layer's square, the
+    lower layer's square and its pin hole's edge."""
+    x, y = layout.KEY_CENTERS_MM[key]
+    label = f"{key}'s cutout in the plate's {layer} layer"
+    if layer == "top":
+        return [(label, "polygon", centered_square((x, y), PLATE_TOP_LAYER_CUTOUT_MM))]
+    return [(label, "polygon", centered_square((x, y), PLATE_LOWER_LAYER_CUTOUT_MM)),
+            (f"{key}'s cutout's pin hole edge in the plate's {layer} layer", "circle",
+             ((x, y - PLATE_PIN_HOLE_SOUTH_MM), PLATE_PIN_HOLE_RADIUS_MM))]
+
+
 # The rules a placed feature meets (work item 016), one record per
 # feature and obstacle: standoff_rules() and frame_boss_rules() gather
 # them, the checks below take theirs from those by name (rules_named()),
@@ -1087,6 +1142,26 @@ def standoff_nano_strip_rules(places):
             for moved in places]
 
 
+def plate_head_hole_rule_name(layer):
+    return f"head hole from the plate's {layer} layer cutouts"
+
+
+def standoff_plate_rules():
+    """The switch plate's head hole over the standoff
+    PLATE_HEAD_HOLE_FROM_CUTOUTS_MM from every switch cutout in each of
+    the plate's layers (check_plate_head_holes()). The right half's plate
+    is the left half's mirrored (export_plate.py's right), so in the left
+    half's frame its rules are these."""
+    return [PlacementRule(name=plate_head_hole_rule_name(layer), feature="head hole",
+                          radius=layout.PLATE_HEAD_HOLE_DIAMETER_MM / 2.0,
+                          feature_z_range=(layout.PCB_TOP_Z_MM, layout.PLATE_TOP_Z_MM),
+                          obstacle=label, kind=kind, shape=shape, obstacle_z_range=z_range,
+                          minimum=PLATE_HEAD_HOLE_FROM_CUTOUTS_MM)
+            for layer, z_range in plate_layers()
+            for key in layout.KEY_CENTERS_MM
+            for label, kind, shape in plate_cutout_pieces(key, layer)]
+
+
 def standoff_merges(right=False, fits=layout.DEFAULT_MOUNT_FITS):
     """Where the body may run into the tray instead of keeping clear of
     it: it merges with the half's ledge and joint block as cut, and the
@@ -1109,7 +1184,8 @@ def standoff_rules(right=False, fits=layout.DEFAULT_MOUNT_FITS):
     parts, the sockets (with their flats), the joint's plastic, the
     parking hole and the mounts, the bore's from the joint's voids, and
     the body's as printed from the wire rooms and from the nice!nano's
-    strips wherever check_nano_strips() takes the board. Where it may
+    strips wherever check_nano_strips() takes the board, and the switch
+    plate's head hole over it from the switch cutouts. Where it may
     merge instead is standoff_merges()'s, and the frame's bosses keep
     from the standoffs by their own rules (frame_boss_rules())."""
     drill = [] if right else standoff_drill_rules()
@@ -1118,7 +1194,7 @@ def standoff_rules(right=False, fits=layout.DEFAULT_MOUNT_FITS):
             + standoff_joint_rules(right) + standoff_bore_rules(right)
             + standoff_parking_hole_rules() + standoff_mount_rules(fits)
             + standoff_wire_room_rules(layout.wire_rooms(fits, right))
-            + standoff_nano_strip_rules(strip_places))
+            + standoff_nano_strip_rules(strip_places) + standoff_plate_rules())
 
 
 # The checks, in order.
@@ -1461,6 +1537,37 @@ def check_mounting_drills():
         f"drills:    {len(drills)} inside the outline, tightest edge {inside}; clear of the switch "
         f"holes by {from_holes}, of the sockets by {from_sockets}"
     )
+
+
+def check_plate_head_holes():
+    """Every standoff's head hole in the switch plate keeps
+    PLATE_HEAD_HOLE_FROM_CUTOUTS_MM of plate from every switch cutout in
+    each of the plate's layers (standoff_plate_rules()), the tightest in
+    each layer DESIGN.md's. The right half's plate and standoffs are the
+    left half's mirrored, so its figures are the left half's."""
+    layers = [layer for layer, _ in plate_layers()]
+    names = tuple(plate_head_hole_rule_name(layer) for layer in layers)
+    rules = rules_named(standoff_rules(), names)
+    problems = []
+    tightest = {name: Tightest() for name in names}
+    for center in layout.MOUNTING_DRILL_CENTERS_MM:
+        for rule in rules:
+            if not heights_meet(rule):
+                continue
+            plate = rule_clearance(center, rule)
+            where = f"the head hole at {center} and {rule.obstacle}"
+            tightest[rule.name].update(plate, where)
+            if plate < rule.minimum - TOLERANCE_MM:
+                problems.append(f"{where} leave {plate:.3f} of plate, less than {rule.minimum}")
+    figures = [require_figure(f"{layer} layer", tightest[name].value,
+                              DESIGN_HEAD_HOLES_FROM_CUTOUTS_MM[layer], 3)
+               for layer, name in zip(layers, names)]
+    problems.extend(failed(figures))
+    fail_on(problems, "a plate head hole too close to a switch cutout")
+    texts = [f"{text} ({tightest[name].where})" for (_, text), name in zip(figures, names)]
+    return (f"plate:     head holes {layout.PLATE_HEAD_HOLE_DIAMETER_MM:.2f} across from the "
+            f"switch cutouts, on both halves, at least {PLATE_HEAD_HOLE_FROM_CUTOUTS_MM}: "
+            + ", ".join(texts))
 
 
 def check_heights():
@@ -4202,6 +4309,7 @@ CHECKS = (
     check_keys_and_holes,
     check_switch_pins,
     check_mounting_drills,
+    check_plate_head_holes,
     check_heights,
     check_part_figures,
     check_part_containment,

@@ -22,6 +22,6 @@ Decided: the research is `work/research/placement-solver.md` (untracked), and th
 - It runs in an image, `docker/placement.Dockerfile`, through podman, by the root CLAUDE.md's tooling rule, rather than in the uv venv the research proposed. README.md has the commands.
 - The picture is drawn with matplotlib.
 - Refactors are encouraged and need no asking: "Yes absolutely, no need to even ask permission for that? Refactors are encouraged". `check_layout.py`'s standoff and frame boss rules become records, `standoff_rules()` and `frame_boss_rules()`, that its checks and the solver's kbdkid5 script both read (section 5), in a commit of their own before the tool.
-- The plate's head holes against the switch cutouts become a `check_layout.py` rule at 0.5, `plate_shape.py`'s `SUPPORTED_HOLE_THRESHOLD` (the user had no preference), so the solver sees it. DESIGN.md (Mounting) has what each moved standoff's hole keeps today. A later round.
+- The plate's head holes against the switch cutouts become a `check_layout.py` rule at 0.5 (the user had no preference), so the solver sees it. Done: `check_plate_head_holes()`, its rules in `standoff_rules()`. The 0.5 was to be `plate_shape.py`'s `SUPPORTED_HOLE_THRESHOLD`, which is a fraction of a hole's volume rather than a distance, so the rule has its own `PLATE_HEAD_HOLE_FROM_CUTOUTS_MM`. DESIGN.md (Mounting) has what each moved standoff's hole keeps.
 
 Open: the tool itself. The research's section 4 has the solver families it recommends, section 7 the runs that validate them.
