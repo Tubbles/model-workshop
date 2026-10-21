@@ -84,10 +84,22 @@ DESIGN_MOUNTING_DRILLS_MM = (
     (94.774, 60.404),
     (114.141, 19.765),
 )
-# The mirror line to five decimals, since it places every probe on the
-# right half (DESIGN.md gives 69.133).
-DESIGN_MIRROR_LINE_X_MM = 69.13256
-DESIGN_SLANT_ENDS_MM = ((138.265, 0.0), (113.348, 77.867))  # south, north
+# DESIGN.md's slant runs through the thumb's corner and its north end
+# on to the south edge. Its south end (x 138.265) and the mirror line
+# midway between it and the west edge at x 0 (69.133) are computed from
+# those corners, as layout.py does: rounded, they leave the joined
+# trays' faces 0.0001 off, far past the joined check's tolerance.
+DESIGN_SLANT_THUMB_CORNER_MM = (132.398, 18.335)
+DESIGN_SLANT_NORTH_END_MM = (113.348, 77.867)
+DESIGN_SLANT_SOUTH_END_MM = (
+    DESIGN_SLANT_THUMB_CORNER_MM[0]
+    + (DESIGN_SLANT_THUMB_CORNER_MM[0] - DESIGN_SLANT_NORTH_END_MM[0])
+    * DESIGN_SLANT_THUMB_CORNER_MM[1]
+    / (DESIGN_SLANT_NORTH_END_MM[1] - DESIGN_SLANT_THUMB_CORNER_MM[1]),
+    0.0,
+)
+DESIGN_SLANT_ENDS_MM = (DESIGN_SLANT_SOUTH_END_MM, DESIGN_SLANT_NORTH_END_MM)
+DESIGN_MIRROR_LINE_X_MM = DESIGN_SLANT_SOUTH_END_MM[0] / 2.0
 DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES = 17.74
 DESIGN_JOINT_FACE_OUT_OF_SLANT_MM = 1.2
 DESIGN_JOINT_FACE_BOTTOM_CHAMFER_MM = 0.4
