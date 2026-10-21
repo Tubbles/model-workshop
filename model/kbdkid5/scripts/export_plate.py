@@ -8,10 +8,11 @@ its diode. This script mirrors it for the right half, checks the
 result against the layout and prints what it measured: the plate
 inside the tray's cavity wall, its slanted edge's distance from the
 outline's slant, every cutout on its key and every head hole on its
-drill (both moved by the pattern shift), and the plate each head hole
-leaves to the nearest switch cutout. Then it writes the plate
-upside down, its top face on z = 0, so the covered variant's pit opens
-upward and it prints as is without supports.
+drill (both moved by the pattern shift), every cutout's shape in both
+of the plate's layers against layout.py's figures for it, and the
+plate each head hole leaves to the nearest switch cutout. Then it
+writes the plate upside down, its top face on z = 0, so the covered
+variant's pit opens upward and it prints as is without supports.
 
 Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
@@ -71,6 +72,11 @@ from plate_shape import (
 # A cutout or hole further than this from where the layout puts it is
 # not its key's or drill's at all.
 FEATURE_MATCH_RADIUS_MM = 1.0
+# Every switch cutout as built must match layout.py's figures for it
+# (PLATE_TOP_LAYER_MM and the rest, transcribed from the plate model,
+# which check_layout.py holds the head holes from) within this, so the
+# model cannot drift from them unseen.
+CUTOUT_FIGURE_TOLERANCE_MM = 0.001
 # The slant edge's two ends must lie this close to the same offset
 # from the slant. An edge counts as along the slant when its direction
 # is off by less than PARALLEL_TOLERANCE radians.
@@ -389,6 +395,126 @@ def measure_openings(plate, arguments):
     return len(cutouts), cutout_worst, len(holes), hole_worst
 
 
+def is_head_hole(wire):
+    return all(isinstance(edge.Curve, Part.Circle) for edge in wire.Edges)
+
+
+def cutout_wires(face):
+    """A face's inner wires but the head holes, each a ring of arcs."""
+    return [wire for wire in face.Wires
+            if not wire.isSame(face.OuterWire) and not is_head_hole(wire)]
+
+
+def plan_center(shape):
+    """The center of a shape's bounding box in plan."""
+    center = shape.BoundBox.Center
+    return (center.x, center.y)
+
+
+def square_center(wire, size):
+    """The center of a cutout's square of the given size: the wire's
+    bounding box but where the lower layer's notch takes it on south
+    past the square."""
+    box = wire.BoundBox
+    return (box.Center.x, box.YMax - size / 2.0)
+
+
+def notch_arcs(wire):
+    return [edge.Curve for edge in wire.Edges if isinstance(edge.Curve, Part.Circle)]
+
+
+def layer_steps(plate):
+    """The plate's horizontal faces between its bottom and top faces:
+    each cutout's step from the top layer's square out to the lower
+    layer's, and the diode pit's ceiling."""
+    box = plate.BoundBox
+    return [face for face in plate.Faces
+            if isinstance(face.Surface, Part.Plane)
+            and face.BoundBox.ZLength < FACE_TOLERANCE_MM
+            and box.ZMin + FACE_TOLERANCE_MM < face.BoundBox.ZMin < box.ZMax - FACE_TOLERANCE_MM]
+
+
+def one_near(items, point, center_of, label, what):
+    """The one item whose center lies within FEATURE_MATCH_RADIUS_MM of
+    point."""
+    near = [item for item in items if distance(center_of(item), point) < FEATURE_MATCH_RADIUS_MM]
+    if len(near) != 1:
+        raise SystemExit(f"error: found {len(near)} {what}s at {label}, expected one")
+    return near[0]
+
+
+def top_layer_figures(wire, step, plate):
+    """(figure, measured, layout.py's) of a cutout in the plate's top
+    layer: a square, through the layer down to its step."""
+    if notch_arcs(wire):
+        raise SystemExit("error: a switch cutout in the plate's top layer has arcs, "
+                         "layout.py's has none")
+    box = wire.BoundBox
+    size = layout.PLATE_TOP_LAYER_CUTOUT_MM
+    return [("top layer's thickness", plate.BoundBox.ZMax - step.BoundBox.ZMin,
+             layout.PLATE_TOP_LAYER_MM),
+            ("top cutouts across", box.XLength, size),
+            ("top cutouts along y", box.YLength, size)]
+
+
+def lower_layer_figures(wire):
+    """(figure, measured, layout.py's) of a cutout in the plate's lower
+    layer: a square, and the notch the old pin hole's arcs cut into the
+    middle of its south edge."""
+    arcs = notch_arcs(wire)
+    if not arcs:
+        raise SystemExit("error: a switch cutout in the plate's lower layer has no notch, "
+                         "layout.py's has one")
+    box = wire.BoundBox
+    size = layout.PLATE_LOWER_LAYER_CUTOUT_MM
+    center = square_center(wire, size)
+    radius = layout.PLATE_PIN_HOLE_DIAMETER_MM / 2.0
+    figures = [("lower cutouts across", box.XLength, size),
+               ("notches past the square", box.YLength - size,
+                layout.PLATE_PIN_HOLE_SOUTH_MM + radius - size / 2.0)]
+    for arc in arcs:
+        figures += [("notches across", 2.0 * arc.Radius, layout.PLATE_PIN_HOLE_DIAMETER_MM),
+                    ("notches south of the square's center", center[1] - arc.Center.y,
+                     layout.PLATE_PIN_HOLE_SOUTH_MM),
+                    ("notches off its center line", arc.Center.x - center[0], 0.0)]
+    return figures
+
+
+def measure_cutout_figures(plate, arguments, recesses):
+    """{figure: (measured, layout.py's)} of the built plate's switch
+    cutouts, each the measure farthest from layout.py's: the top layer's
+    on the top face, the lower layer's on the bottom face (less the
+    recesses, the diode pit) and the step between them. Every cutout
+    must be there and match layout.py's figures within
+    CUTOUT_FIGURE_TOLERANCE_MM."""
+    top_size = layout.PLATE_TOP_LAYER_CUTOUT_MM
+    lower_size = layout.PLATE_LOWER_LAYER_CUTOUT_MM
+    top_wires = cutout_wires(top_face(plate))
+    lower_wires = [wire for wire in cutout_wires(plate_silhouette_bottom_face(plate))
+                   if all(distance(plan_center(wire), recess) >= FEATURE_MATCH_RADIUS_MM
+                          for recess in recesses)]
+    steps = layer_steps(plate)
+    expected = expected_cutouts(arguments)
+    if len(lower_wires) != len(expected):
+        raise SystemExit(f"error: the plate's lower layer has {len(lower_wires)} switch "
+                         f"cutouts, the layout {len(expected)} keys")
+    worst = {}
+    for label, point in expected:
+        top = one_near(top_wires, point, lambda wire: square_center(wire, top_size), label,
+                       "top layer cutout")
+        lower = one_near(lower_wires, point, lambda wire: square_center(wire, lower_size), label,
+                         "lower layer cutout")
+        step = one_near(steps, point, plan_center, label, "layer step")
+        figures = top_layer_figures(top, step, plate) + lower_layer_figures(lower)
+        for figure, measured, stated in figures:
+            if abs(measured - stated) > CUTOUT_FIGURE_TOLERANCE_MM:
+                raise SystemExit(f"error: {label}'s cutout: {figure} {measured:.4f}, "
+                                 f"layout.py's {stated:g}")
+            if figure not in worst or abs(measured - stated) > abs(worst[figure][0] - stated):
+                worst[figure] = (measured, stated)
+    return worst
+
+
 def turn_upside_down(plate, recess_centers):
     """Rotate the plate 180 degrees about the x axis through its center
     and drop it onto z = 0, so it prints with its top face on the bed
@@ -449,7 +575,7 @@ def print_build(build):
     print(f"fused:      {build.solid_count} solids into one, volume {build.solid.Volume:.3f} mm3")
 
 
-def print_measurements(plate, arguments):
+def print_measurements(plate, arguments, recesses):
     clearance, where, sides = measure_cavity(plate, arguments.right)
     side_text = ", ".join(f"{side} {value:.3f}" for side, value in sides.items())
     print(f"cavity:     inside the tray's cavity wall (outline plus {layout.TRAY_GAP_MM}), at "
@@ -467,6 +593,11 @@ def print_measurements(plate, arguments):
           f"along x, worst residual {cutout_worst:.4f} mm")
     print(f"holes:      {hole_count} head holes, each on its drill moved {shift:+.2f} along "
           f"x, worst residual {hole_worst:.4f} mm")
+    figures = measure_cutout_figures(plate, arguments, recesses)
+    texts = [f"{figure} {round(measured, 4) + 0.0:.4f} (layout.py {stated:g})"
+             for figure, (measured, stated) in figures.items()]
+    print(f"layers:     {', '.join(texts)}, each the cutouts' farthest from layout.py's, all "
+          f"within {CUTOUT_FIGURE_TOLERANCE_MM}")
     for center, distance, cutout in hole_cutout_clearances(plate):
         print(f"hole:       {format_point(center)} {distance:.3f} mm of plate to the nearest "
               f"switch cutout, centered at {format_point(cutout)}")
@@ -491,7 +622,7 @@ def main():
         half = (f"right, mirrored across x = {layout.RIGHT_HALF_MIRROR_X_MM:.3f} (the lines "
                 "above are the left half's build, the lines below the right half's)")
     print(f"half:       {half}")
-    print_measurements(plate, arguments)
+    print_measurements(plate, arguments, recess_centers(build, arguments))
     plate = turn_upside_down(plate, recess_centers(build, arguments))
     mesh = export_stl(plate, arguments.stl_file)
     check_closed_mesh(arguments.stl_file)

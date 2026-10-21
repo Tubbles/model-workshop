@@ -833,30 +833,7 @@ def socket_clearances(obstacles, minimum, right=False):
     return problems, tightest
 
 
-# The switch plate's cutouts as its model cuts them (plate_shape.py's
-# PLATE_MODEL_FILE, kbdkid3's switch cell, read off the shape the file
-# stores, which plate_shape.py builds on): through the plate's top
-# PLATE_TOP_LAYER_MM a PLATE_TOP_LAYER_CUTOUT_MM square, and through the
-# rest a PLATE_LOWER_LAYER_CUTOUT_MM square with the edge of one of the
-# cell's pin holes at the middle of its south edge, a circle of
-# PLATE_PIN_HOLE_RADIUS_MM about the point PLATE_PIN_HOLE_SOUTH_MM south
-# of the key's center, reaching 0.25 past the square (DESIGN.md, Plate
-# and mocks). plate_shape.py moves the model onto the keys by the one
-# translation that fits all of them, which leaves each cutout within
-# 0.0005 of its key's center (the model's column staggers differ from
-# the layout's by 0.001 of rounding).
-PLATE_TOP_LAYER_MM = 1.2
-PLATE_TOP_LAYER_CUTOUT_MM = 14.1
-PLATE_LOWER_LAYER_CUTOUT_MM = 14.4
-PLATE_PIN_HOLE_RADIUS_MM = 1.55
-PLATE_PIN_HOLE_SOUTH_MM = 5.9
-
-
-def plate_layers():
-    """(layer, z range) of the switch plate's top PLATE_TOP_LAYER_MM and
-    the lower layer under it, the plate resting on the PCB."""
-    split_z = layout.PLATE_TOP_Z_MM - PLATE_TOP_LAYER_MM
-    return (("top", (split_z, layout.PLATE_TOP_Z_MM)), ("lower", (layout.PCB_TOP_Z_MM, split_z)))
+# The switch plate's cutouts as obstacles, by layout.py's figures.
 
 
 def centered_square(center, size):
@@ -871,10 +848,10 @@ def plate_cutout_pieces(key, layer):
     x, y = layout.KEY_CENTERS_MM[key]
     label = f"{key}'s cutout in the plate's {layer} layer"
     if layer == "top":
-        return [(label, "polygon", centered_square((x, y), PLATE_TOP_LAYER_CUTOUT_MM))]
-    return [(label, "polygon", centered_square((x, y), PLATE_LOWER_LAYER_CUTOUT_MM)),
+        return [(label, "polygon", centered_square((x, y), layout.PLATE_TOP_LAYER_CUTOUT_MM))]
+    return [(label, "polygon", centered_square((x, y), layout.PLATE_LOWER_LAYER_CUTOUT_MM)),
             (f"{key}'s cutout's pin hole edge in the plate's {layer} layer", "circle",
-             ((x, y - PLATE_PIN_HOLE_SOUTH_MM), PLATE_PIN_HOLE_RADIUS_MM))]
+             ((x, y - layout.PLATE_PIN_HOLE_SOUTH_MM), layout.PLATE_PIN_HOLE_DIAMETER_MM / 2.0))]
 
 
 # The rules a placed feature meets (work item 016), one record per
@@ -1157,7 +1134,7 @@ def standoff_plate_rules():
                           feature_z_range=(layout.PCB_TOP_Z_MM, layout.PLATE_TOP_Z_MM),
                           obstacle=label, kind=kind, shape=shape, obstacle_z_range=z_range,
                           minimum=PLATE_HEAD_HOLE_FROM_CUTOUTS_MM)
-            for layer, z_range in plate_layers()
+            for layer, z_range in layout.plate_layers()
             for key in layout.KEY_CENTERS_MM
             for label, kind, shape in plate_cutout_pieces(key, layer)]
 
@@ -1545,7 +1522,7 @@ def check_plate_head_holes():
     each of the plate's layers (standoff_plate_rules()), the tightest in
     each layer DESIGN.md's. The right half's plate and standoffs are the
     left half's mirrored, so its figures are the left half's."""
-    layers = [layer for layer, _ in plate_layers()]
+    layers = [layer for layer, _ in layout.plate_layers()]
     names = tuple(plate_head_hole_rule_name(layer) for layer in layers)
     rules = rules_named(standoff_rules(), names)
     problems = []

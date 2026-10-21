@@ -585,6 +585,33 @@ PLATE_TOP_Z_MM = PCB_TOP_Z_MM + PLATE_THICKNESS_MM  # 13.3
 TRAY_RIM_Z_MM = PLATE_TOP_Z_MM + RIM_ABOVE_PLATE_MM  # 13.4
 STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
 
+# The switch plate's cutouts as its model cuts them (plate_shape.py's
+# PLATE_MODEL_FILE, kbdkid3's switch cell, read off the shape the file
+# stores): through the plate's top PLATE_TOP_LAYER_MM a
+# PLATE_TOP_LAYER_CUTOUT_MM square, and through the lower layer under it
+# a PLATE_LOWER_LAYER_CUTOUT_MM square with the edge of one of the
+# cell's old pin holes at the middle of its south edge, a circle
+# PLATE_PIN_HOLE_DIAMETER_MM across about the point
+# PLATE_PIN_HOLE_SOUTH_MM south of the key's center, reaching 0.25 past
+# the square (DESIGN.md, Plate and mocks). The model is their source:
+# export_plate.py measures the built plate's cutouts against them and
+# stops where they differ. plate_shape.py moves the model onto the keys
+# by the one translation that fits all of them, which leaves each
+# cutout within 0.0005 of its key's center (the model's column staggers
+# differ from the layout's by 0.001 of rounding).
+PLATE_TOP_LAYER_MM = 1.2
+PLATE_TOP_LAYER_CUTOUT_MM = 14.1
+PLATE_LOWER_LAYER_CUTOUT_MM = 14.4
+PLATE_PIN_HOLE_DIAMETER_MM = 3.1
+PLATE_PIN_HOLE_SOUTH_MM = 5.9
+
+
+def plate_layers():
+    """(layer, z range) of the switch plate's top PLATE_TOP_LAYER_MM and
+    the lower layer under it, the plate resting on the PCB."""
+    split_z = PLATE_TOP_Z_MM - PLATE_TOP_LAYER_MM
+    return (("top", (split_z, PLATE_TOP_Z_MM)), ("lower", (PCB_TOP_Z_MM, split_z)))
+
 
 # The parts in the tray (DESIGN.md, "Parts in the tray"), as boxes:
 # the bodies DESIGN.md gives, then the leads from the parts'
