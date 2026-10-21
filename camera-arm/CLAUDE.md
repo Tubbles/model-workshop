@@ -12,4 +12,4 @@ It imports `board_step.py` from `kbdkid4/scripts/` for the STL export with its c
 
 ## CI
 
-The `camera-arm` job in `.github/workflows/ci.yml` exports the four STLs from the repository root into `camera/` (`--pass camera`) and uploads them as the `camera-arm-stl-<short commit hash>` artifact. The hash is this repository's commit, the pull request head's for pull requests (`github.sha` is a merge commit there). The export runs in CI only, never locally: a question about the geometry becomes a figure the script prints, read in the job's log.
+The `camera-arm` job in `.github/workflows/ci.yml` exports the four STLs from the repository root into `camera/` (`--pass camera`) and uploads them as the `camera-arm-stl-<short commit hash>` artifact. The hash is this repository's commit, the pull request head's for pull requests (`github.sha` is a merge commit there).

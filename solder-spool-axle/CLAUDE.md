@@ -10,4 +10,4 @@ It imports `board_step.py` from `kbdkid4/scripts/` for the STL export with its c
 
 ## CI
 
-The `solder-spool-axle` job in `.github/workflows/ci.yml` exports the axle from the repository root into `spool/` and uploads `Solder_Spool_Axle.stl` as the `solder-spool-axle-stl-<short commit hash>` artifact. The hash is this repository's commit, the pull request head's for pull requests (`github.sha` is a merge commit there). The export runs in CI only, never locally: push and read the job's log, which prints the axle's figures.
+The `solder-spool-axle` job in `.github/workflows/ci.yml` exports the axle from the repository root into `spool/` and uploads `Solder_Spool_Axle.stl` as the `solder-spool-axle-stl-<short commit hash>` artifact. The hash is this repository's commit, the pull request head's for pull requests (`github.sha` is a merge commit there). The job's log prints the axle's figures.
