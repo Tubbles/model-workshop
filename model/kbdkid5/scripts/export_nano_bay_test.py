@@ -169,19 +169,20 @@ def mount_problems(fits):
     """Every problem check_layout.py's mount checks find with the fits on
     the left half."""
     right = False
+    standoff_centers = layout.MOUNTING_DRILL_CENTERS_MM
     return (
         check_layout.mount_containment_problems(fits)[0]
         + check_layout.mount_part_clearances(fits)[3]
         + check_layout.mount_socket_problems(right, fits)[0]
-        + check_layout.mount_standoff_clearances(fits)[0]
+        + check_layout.mount_standoff_clearances(standoff_centers, fits)[0]
         + check_layout.mount_joint_problems(right, fits)[0]
         + check_layout.clamp_problems(fits)
         + check_layout.opening_problems(fits)
         + check_layout.insertion_problems(fits)
         + check_layout.nano_seat_problems(fits)
-        + check_layout.nano_strip_clearances(right, fits)[0]
-        + check_layout.pry_slot_problems(right, fits)
-        + check_layout.wire_room_problems(right, fits)[0]
+        + check_layout.nano_strip_clearances(standoff_centers, right, fits)[0]
+        + check_layout.pry_slot_problems(standoff_centers, right, fits)
+        + check_layout.wire_room_problems(standoff_centers, right, fits)[0]
     )
 
 

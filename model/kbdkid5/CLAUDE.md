@@ -7,7 +7,7 @@ Guidance for Claude Code working on kbdkid5, in `model/kbdkid5/`. Read its [READ
 Each module's docstring says what it builds or checks and how, and its constants and the comments on its steps give the details. In `model/kbdkid5/scripts/`:
 
 - `layout.py`: the geometry as data, the ground truth until a PCB exists.
-- `check_layout.py`: the layout and DESIGN.md's figures, in plain Python. To run every check without stopping at the first failure, import it and call each of `CHECKS`.
+- `check_layout.py`: the layout and DESIGN.md's figures, in plain Python. To run every check without stopping at the first failure, import it and call each of `CHECKS`. A scan or a placement script takes the standoffs' and the frame bosses' rules from its records (`standoff_rules()`, `frame_boss_rules()`), never from a copy: `tmp/standoffs/scan.py`'s own copy drifted from the checks (work item 016).
 - `freecad_common.py`: the STL export and the freecadcmd scaffolding.
 - `pcb_shape.py`: the PCB mock, and the fused mock's fusing and measuring. `export_pcb.py` and `export_mock.py` export them, `export_slit_test.py` the slit test strips.
 - `plate_shape.py`: the switch plate. `export_plate.py` exports it.
