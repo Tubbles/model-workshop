@@ -12,7 +12,7 @@ Each module's docstring says what it builds or checks and how, and its constants
 - `pcb_shape.py`: the PCB mock, and the fused mock's fusing and measuring. `export_pcb.py` and `export_mock.py` export them, `export_slit_test.py` the slit test strips.
 - `plate_shape.py`: the switch plate. `export_plate.py` exports it.
 - `socket_test_shape.py`: the hand-wired frame's test strips and the switch hole strip. `export_socket_test.py` exports them.
-- `tray_shape.py`: the tray and the nice!nano clamp's tab. `export_tray.py` and `export_clamp_tab.py` export them, and `export_nano_bay_test.py` cuts the test bay out of the left tray.
+- `tray_shape.py`: the tray, the nice!nano clamp's tab and the power switch's retainer. `export_tray.py`, `export_clamp_tab.py` and `export_power_switch_retainer.py` export them, and `export_nano_bay_test.py` cuts the test bay out of the left tray.
 
 ## Conventions
 

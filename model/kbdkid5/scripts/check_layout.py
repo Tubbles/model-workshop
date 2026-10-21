@@ -115,7 +115,7 @@ DESIGN_MINIMUM_PCB_UNDERSIDE_Z_MM = 6.63
 DESIGN_NANO_SIZE_MM = (18.20, 33.20)  # along x, along y
 DESIGN_NANO_FROM_WEST_LEDGE_FACE_MM = 0.3
 DESIGN_NANO_USB_MOUTH_BEHIND_OUTER_FACE_MM = 0.5
-DESIGN_POWER_SWITCH_LEVER_PROUD_MM = {False: 2.2, True: 1.8}  # as modelled, as printed
+DESIGN_POWER_SWITCH_KNOB_PROUD_MM = {False: 3.2, True: 2.8}  # as modelled, as printed
 DESIGN_BATTERY_SIZE_MM = (34.37, 51.53)  # along x, along y
 DESIGN_BATTERY_FROM_STANDOFFS_MM = 0.53
 DESIGN_BATTERY_FROM_LEDGE_MM = 0.36
@@ -250,7 +250,16 @@ DESIGN_CLAMP_MINIMUM_UNDER_PCB_MM = 0.5
 DESIGN_CLAMP_HEAD_FROM_SOCKETS_MM = 1.586  # S101's, on both halves
 DESIGN_CLAMP_TAB_UNDER_SOCKET_MM = 1.38  # the plate as printed, lifted by the press
 DESIGN_CLAMP_SOCKET_KEYS = {"S101"}  # over the tab
-DESIGN_LEVER_IN_SLOT_PRINTED_MM = 0.05  # per side
+DESIGN_KNOB_IN_SLOT_PRINTED_MM = 0.25  # per side
+# The power switch's retainer as printed and fitted: under the switches'
+# center posts and side pegs where it lies under them, still in its
+# socket lifted to the PCB, from the sockets in plan on both halves, and
+# its opening from the leads, beside them and over them.
+DESIGN_RETAINER_UNDER_POSTS_MM = 0.5
+DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM = 1.1
+DESIGN_RETAINER_FROM_SOCKETS_MM = 2.648  # S120's
+DESIGN_RETAINER_BESIDE_LEADS_PRINTED_MM = 0.25
+DESIGN_RETAINER_OVER_LEADS_MM = 0.5
 DESIGN_NANO_BAR_DEPTH_MM = 0.62
 DESIGN_SHELL_PLAY_MM = {"west": 0.05, "east": 0.0, "north": 0.12}  # as printed
 DESIGN_SHELL_IN_CHANNEL_PRINTED_MM = {"sides": 0.0, "top": 0.1, "end": 0.0}
@@ -276,7 +285,7 @@ DESIGN_NANO_STRIP_TILT_LEAST_CLEARANCE_MM = 0.1
 # play across. The real shell's ends are rounded and clear the rounds.
 DESIGN_SHELL_PAST_CHANNEL_ALL_ON_FOOT_MM = 0.13
 DESIGN_SHELL_INTO_WINDOW_ROUND_ALL_ON_FOOT_MM = 0.018
-DESIGN_RESET_PIN_HOLE_AXIS_MM = (66.199, 1.75)  # x, z
+DESIGN_RESET_PIN_HOLE_AXIS_MM = (66.199, 3.095)  # x, z
 DESIGN_MOUNTS_FROM_PCB_ZONE_PRINTED_MM = 0.0  # the nice!nano's east wall
 DESIGN_WIRE_ROOM_BEHIND_LEADS_MM = 3.0
 DESIGN_WIRE_ROOM_OVER_PADS_MM = 3.0
@@ -1179,30 +1188,30 @@ def power_switch_figures():
     north_edge_y = layout.NORTH_EDGE_Y_OF_COLUMN_2_MM
     return [
         require_figure(
-            "power switch's north face past the cavity wall",
-            layout.POWER_SWITCH_BODY.y_range[1] - layout.cavity_wall_y(north_edge_y),
+            "power switch's north face past the ledge's face",
+            layout.POWER_SWITCH_BODY.y_range[1] - layout.ledge_face_y(north_edge_y),
             0.0,
             3,
         ),
         require_figure(
-            "lever proud of the outer face",
-            layout.POWER_SWITCH_LEVER.y_range[1] - layout.outer_face_y(north_edge_y),
-            DESIGN_POWER_SWITCH_LEVER_PROUD_MM[False],
+            "knob proud of the outer face",
+            layout.POWER_SWITCH_KNOB.y_range[1] - layout.outer_face_y(north_edge_y),
+            DESIGN_POWER_SWITCH_KNOB_PROUD_MM[False],
             1,
         ),
         require_figure(
-            "as printed", lever_proud_as_printed(), DESIGN_POWER_SWITCH_LEVER_PROUD_MM[True], 1
+            "as printed", knob_proud_as_printed(), DESIGN_POWER_SWITCH_KNOB_PROUD_MM[True], 1
         ),
     ]
 
 
-def lever_proud_as_printed():
-    """The lever's tip past the outer face as printed: the swollen wall
-    pushes the snug body south, and the outer face swells north."""
+def knob_proud_as_printed():
+    """The knob's tip past the outer face as printed: the swollen ledge
+    face pushes the snug body south, and the outer face swells north."""
     north_edge_y = layout.NORTH_EDGE_Y_OF_COLUMN_2_MM
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
-    lever_past_body = layout.POWER_SWITCH_LEVER.y_range[1] - layout.POWER_SWITCH_BODY.y_range[1]
-    tip = layout.cavity_wall_y(north_edge_y) - swelling + lever_past_body
+    knob_past_body = layout.POWER_SWITCH_KNOB.y_range[1] - layout.POWER_SWITCH_BODY.y_range[1]
+    tip = layout.ledge_face_y(north_edge_y) - swelling + knob_past_body
     return tip - (layout.outer_face_y(north_edge_y) + swelling)
 
 
@@ -1250,10 +1259,14 @@ def check_part_containment():
 
 
 def part_ledge_problems(pieces):
-    """(problems, tightest) of every part against the ledge pieces."""
+    """(problems, tightest) of every part against the ledge pieces. A
+    part proud of the wall passes the ledge and the wall in an opening of
+    its own, which check_mount_openings() checks it against."""
     problems = []
     tightest = Tightest()
     for envelope in layout.part_envelopes():
+        if envelope.containment == layout.PROUD:
+            continue
         box = box_polygon(envelope)
         for label, piece, z_range in pieces:
             if not ranges_overlap(envelope.z_range, z_range):
@@ -2083,9 +2096,11 @@ def mount_containment_problems(fits=layout.DEFAULT_MOUNT_FITS):
     clamp's tab and screw head and the pry slot inside the cavity, the
     pry slot and recess, the voids in the cavity, down to the floor's top
     and no further, so the floor stays whole and closed (work item 009),
-    and the wall's voids from the cavity wall to the outer face."""
+    and the wall's voids from the cavity wall, or the ledge's face where
+    they run through the ledge too, to the outer face."""
     cavity = layout.tray_cavity_polygon()
     outer = layout.tray_outer_polygon()
+    ledge = layout.ledge_inner_polygon()
     problems = []
     tightest = Tightest()
     inside = standing_bodies(fits) + (layout.nano_pry_slot_box(fits),)
@@ -2099,22 +2114,25 @@ def mount_containment_problems(fits=layout.DEFAULT_MOUNT_FITS):
             problems.append(f"the {describe_mount(box)} reaches z {box.z_range[0]}, below the "
                             "floor's top")
     for opening in layout.wall_openings(fits):
-        problems.extend(wall_opening_problems(opening, cavity, outer))
+        problems.extend(wall_opening_problems(opening, cavity, ledge, outer))
     return problems, tightest
 
 
-def wall_opening_problems(opening, cavity, outer):
+def wall_opening_problems(opening, cavity, ledge, outer):
     """An opening's boxes, from the cavity out, run through the wall:
-    the first from the cavity wall, each on from where the one before
-    it ends, the last out to the outer face."""
+    the first from the cavity wall, or from the ledge's face where it
+    runs through the ledge too, each on from where the one before it
+    ends, the last out to the outer face."""
     middle_x = sum(opening[0].x_range) / 2.0
     problems = []
-    inner = point_boundary_distance((middle_x, opening[0].y_range[0]), cavity)
+    start = (middle_x, opening[0].y_range[0])
+    inner = min(point_boundary_distance(start, cavity), point_boundary_distance(start, ledge))
     outside = point_boundary_distance((middle_x, opening[-1].y_range[1]), outer)
     if max(inner, outside) > TOLERANCE_MM:
         problems.append(
-            f"the {describe_mount(opening[0])} runs {inner:.3f} off the cavity wall and the "
-            f"{describe_mount(opening[-1])} {outside:.3f} off the outer face, not through the wall"
+            f"the {describe_mount(opening[0])} runs {inner:.3f} off the cavity wall or the "
+            f"ledge's face and the {describe_mount(opening[-1])} {outside:.3f} off the outer "
+            "face, not through the wall"
         )
     for before, after in zip(opening, opening[1:]):
         if after.y_range[0] > before.y_range[1] + TOLERANCE_MM:
@@ -2130,7 +2148,8 @@ def check_mount_containment():
     return (
         f"mounts:    bodies, the clamp's tab and screw head and the pry slot inside the cavity "
         f"wall by {tightest}, the pry slot and recess down to the floor's top only, the shell's "
-        "channel and the window, the lever slot and the pin hole through the wall"
+        "channel and the window and the pin hole through the wall, the knob slot through the "
+        "ledge and the wall"
     )
 
 
@@ -2550,17 +2569,32 @@ def shell_in_channel_margins(fits=layout.DEFAULT_MOUNT_FITS):
     }
 
 
-def lever_in_slot_margin():
-    """The least, as printed, between the lever's swept box and its
+def knob_in_slot_margin():
+    """The least, as printed, between the knob's swept box and its
     slot."""
-    lever = layout.POWER_SWITCH_LEVER
-    slot = layout.power_switch_lever_slot_box()
+    knob = layout.POWER_SWITCH_KNOB
+    slot = layout.power_switch_knob_slot_box()
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
     margins = []
-    for lever_range, slot_range in ((lever.x_range, slot.x_range), (lever.z_range, slot.z_range)):
-        margins.append(lever_range[0] - (slot_range[0] + swelling))
-        margins.append((slot_range[1] - swelling) - lever_range[1])
+    for knob_range, slot_range in ((knob.x_range, slot.x_range), (knob.z_range, slot.z_range)):
+        margins.append(knob_range[0] - (slot_range[0] + swelling))
+        margins.append((slot_range[1] - swelling) - knob_range[1])
     return min(margins)
+
+
+def power_switch_path_problems():
+    """The power switch's body and leads, swept south by the knob's
+    length, the path they slide north along with the knob going first
+    through its closed slot (DESIGN.md), clear of every mount body."""
+    sweep = layout.POWER_SWITCH_KNOB_LENGTH_MM
+    problems = []
+    for envelope in (layout.POWER_SWITCH_BODY, layout.POWER_SWITCH_LEADS):
+        south, north = envelope.y_range
+        path = dataclasses.replace(envelope, y_range=(south - sweep, north))
+        problems.extend(f"the {describe_mount(body)} stands in the way of the power switch's "
+                        f"{envelope.piece} going in"
+                        for body in standing_bodies() if box_overlap(path, body) > TOLERANCE_MM)
+    return problems
 
 
 # Going in (DESIGN.md), the board is lowered nose first, its shell into
@@ -2723,18 +2757,80 @@ def shell_with_end_swelling_on_foot(fits=layout.DEFAULT_MOUNT_FITS):
     return past, reach
 
 
+def retainer_under_posts(envelope):
+    """(least height under them, keys) of the switches' center posts
+    and side pegs, at their holes' size, that come within
+    DESIGN_MOUNT_FROM_OTHER_PARTS_MM of the retainer in plan."""
+    polygon = box_polygon(envelope)
+    bottom = layout.PCB_UNDERSIDE_Z_MM - layout.SWITCH_POSTS_BELOW_PCB_MM
+    keys = sorted({
+        name for name, center in layout.KEY_CENTERS_MM.items()
+        for hole_center, diameter in layout.footprint_holes(center)[:3]
+        if circle_separation(hole_center, diameter / 2.0, polygon)
+        < DESIGN_MOUNT_FROM_OTHER_PARTS_MM
+    })
+    return bottom - envelope.z_range[1], keys
+
+
+def retainer_from_sockets(envelope, right):
+    polygon = box_polygon(envelope)
+    tightest = Tightest()
+    for name, socket in socket_footprints(right):
+        tightest.update(convex_separation(polygon, socket), f"{name}'s socket")
+    return tightest
+
+
+def check_power_switch_retainer(right=False):
+    """The retainer under the posts and pegs over it, kept in its
+    socket by the PCB, clear of the sockets in plan, its opening clear of
+    the leads as printed and the leads' shortest cut behind it."""
+    envelope = layout.power_switch_retainer_envelope()
+    under, keys = retainer_under_posts(envelope)
+    in_socket = layout.POWER_SWITCH_CRADLE_TOP_Z_MM - (layout.PCB_UNDERSIDE_Z_MM
+                                                       - envelope.z_range[1])
+    sockets = retainer_from_sockets(envelope, right)
+    half_opening, opening_top = layout.power_switch_retainer_opening()
+    leads = layout.POWER_SWITCH_LEADS
+    beside = (half_opening - layout.PRINT_SWELLING_PER_SIDE_MM
+              - (leads.x_range[1] - leads.x_range[0]) / 2.0)
+    past = layout.POWER_SWITCH_SHORTEST_LEAD_MM - layout.power_switch_retainer_printed_thickness()
+    figures = [
+        require_figure("under the posts and pegs of " + ", ".join(keys), under,
+                       DESIGN_RETAINER_UNDER_POSTS_MM, 1),
+        require_figure("in its socket lifted to the PCB", in_socket,
+                       DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM, 1),
+        require_figure("from the sockets in plan", sockets.value, DESIGN_RETAINER_FROM_SOCKETS_MM,
+                       3),
+        require_figure("its opening beside the leads as printed", beside,
+                       DESIGN_RETAINER_BESIDE_LEADS_PRINTED_MM, 2),
+        require_figure("over them", opening_top - leads.z_range[1], DESIGN_RETAINER_OVER_LEADS_MM,
+                       1),
+    ]
+    problems = failed(figures)
+    if sockets.value < DESIGN_MOUNT_FROM_OTHER_PARTS_MM - TOLERANCE_MM:
+        problems.append(f"the retainer comes {sockets.value:.3f} from {sockets.where}")
+    if past < TOLERANCE_MM:
+        problems.append("the power switch's leads cut to the shortest end inside the retainer")
+    fail_on(problems, f"{half_label(right)}the power switch's retainer off DESIGN.md")
+    return (f"retainer:  {half_label(right)}{joined(figures)} ({sockets.where}); the shortest "
+            f"leads {past:.2f} past it")
+
+
 def opening_problems(fits=layout.DEFAULT_MOUNT_FITS):
-    """The lever and the shell, wherever its play lets it go, clear of
-    their openings as printed."""
+    """The knob over its whole sweep and the shell, wherever its play lets
+    it go, clear of their openings as printed, and the power switch's
+    way in clear."""
     in_channel = shell_in_channel_margins(fits)
-    if lever_in_slot_margin() < -TOLERANCE_MM or min(in_channel.values()) < -TOLERANCE_MM:
-        return ["the lever or the shell does not clear its opening as printed"]
-    return []
+    problems = power_switch_path_problems()
+    if knob_in_slot_margin() < -TOLERANCE_MM or min(in_channel.values()) < -TOLERANCE_MM:
+        problems.append("the knob or the shell does not clear its opening as printed")
+    return problems
 
 
 def check_mount_openings():
-    """The lever passes its slot and the shell its channel as printed,
-    the shell wherever its play lets it go, the bar reaches the shell's
+    """The knob passes its slot and the shell its channel as printed,
+    the power switch slides in with its knob through the slot, the shell
+    wherever its play lets it go, the bar reaches the shell's
     mouth, the board goes in past the foot, and the pin hole's axis lies
     where DESIGN.md puts it."""
     play = nano_shell_play()
@@ -2746,8 +2842,8 @@ def check_mount_openings():
     tilt_worst, steepest_worst = nano_strip_tilt_figures()
     past_channel, into_round = shell_with_end_swelling_on_foot()
     figures = [
-        require_figure("lever in its slot as printed", lever_in_slot_margin(),
-                       DESIGN_LEVER_IN_SLOT_PRINTED_MM, 2),
+        require_figure("knob in its slot as printed", knob_in_slot_margin(),
+                       DESIGN_KNOB_IN_SLOT_PRINTED_MM, 2),
         require_figure("bar deep to the shell's mouth", layout.nano_bar_depth(),
                        DESIGN_NANO_BAR_DEPTH_MM, 2),
     ] + [
@@ -2782,7 +2878,7 @@ def check_mount_openings():
         require_figure("its box into the window's corner rounds as printed", into_round,
                        DESIGN_SHELL_INTO_WINDOW_ROUND_ALL_ON_FOOT_MM, 3),
         require_figure("pin hole's axis x", hole_x, DESIGN_RESET_PIN_HOLE_AXIS_MM[0], 3),
-        require_figure("z", hole_z, DESIGN_RESET_PIN_HOLE_AXIS_MM[1], 2),
+        require_figure("z", hole_z, DESIGN_RESET_PIN_HOLE_AXIS_MM[1], 3),
     ]
     fail_on(failed(figures) + opening_problems() + insertion_problems(),
             "the mounts' openings off DESIGN.md")
@@ -3470,6 +3566,8 @@ CHECKS = (
     on_right_half(check_nano_strips),
     check_nano_clamp,
     check_mount_openings,
+    check_power_switch_retainer,
+    on_right_half(check_power_switch_retainer),
     check_pry_slot,
     on_right_half(check_pry_slot),
     check_wire_rooms,

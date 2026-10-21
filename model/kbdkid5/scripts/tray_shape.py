@@ -27,15 +27,17 @@ Every cut but the sockets' wall pockets is clipped to the cavity so it
 never reaches the wall, and a cut that finds nothing left to remove (a
 tab's relief inside its notch) is skipped. Then the parts' mounts
 (work item 004), layout.py's boxes in its order: the power switch's
-cradle, the reset button's back wall, the battery header's pocket and
+cradle with its retainer's socket, the reset button's back wall, side
+walls and front stop, the battery header's pocket and
 the battery's corner ribs, then the nice!nano's north block with the
 sill under its opening, its screw clamp's block and foot (work items
 009 and 010), its east wall, cut back over the board's top for the east
 socket strip, and the seat the board lies on, which leaves the pry
 recess free, no body filling a standoff's bore, then the USB shell's
-channel and the USB window, the lever slot and the reset pin hole
-through the north wall, the nice!nano's pry slot through the clamp's
-block and foot and the clamp block's insert bore. Then
+channel and the USB window, the knob slot through the ledge and the
+north wall, the reset pin hole through the north wall, the nice!nano's
+pry slot through the clamp's block and foot and the clamp block's
+insert bore. Then
 the magnet slots, open toward the cavity, with the wall cut back over
 them, the flat-topped teardrop pin holes (the half's fit and depth, the
 right half's with a lead-in at the mouth), the flat-topped teardrop
@@ -906,7 +908,7 @@ def check_floor_closed(tray, corner_radius):
 
 # The parts' mounts (work item 004): layout.py gives every body and void
 # as a MountBox. The bodies are fused one by one after the standoffs'
-# flats, so the cradle can fill the ledge cut-away's margins, then the
+# flats, so a body can fill a ledge cut-away's margins, then the
 # voids are cut. A body is built without the standoffs' bores it
 # reaches, so the standoff the nice!nano's clamp block, foot and east
 # wall take in keeps its bore. Each is checked against a volume worked
@@ -1318,18 +1320,19 @@ def cut_usb_window(tray, fits):
     return result
 
 
-def cut_lever_slot(tray):
-    """The power switch lever's slot through the north wall, its cutter
-    run on into the open cavity over the ledge's cut-away and out past
-    the outer face, so it removes the slot through the wall alone."""
-    box = layout.power_switch_lever_slot_box()
+def cut_knob_slot(tray):
+    """The power switch knob's slot through the ledge and the north wall,
+    its cutter run on into the open cavity where the switch's body lies
+    and out past the outer face, so it removes the slot through the ledge
+    and the wall alone."""
+    box = layout.power_switch_knob_slot_box()
     inner, outer = box.y_range
     cutter_box = layout.MountBox(
         box.label, box.part, box.x_range, (inner - 0.5, outer + CUT_EXTRA_MM), box.z_range
     )
     result = tray.cut(box_prism(cutter_box))
-    require_one_valid_solid(result, "the lever slot")
-    require_volume("the lever slot", tray.Volume - result.Volume, box_volume(box), 1e-6)
+    require_one_valid_solid(result, "the knob slot")
+    require_volume("the knob slot", tray.Volume - result.Volume, box_volume(box), 1e-6)
     middle = box_point(box)
     for point, want_solid, what in (
         (middle, False, "open"),
@@ -1339,13 +1342,13 @@ def cut_lever_slot(tray):
         (App.Vector(box.x_range[1] + 0.05, middle.y, middle.z), True, "closed on the east"),
     ):
         if is_solid_at(result, point) != want_solid:
-            raise SystemExit(f"error: the lever slot is not {what}")
+            raise SystemExit(f"error: the knob slot is not {what}")
     return result
 
 
 def cut_reset_pin_hole(tray):
     """The flat-topped teardrop pin hole through the north wall over the
-    reset button's stem, its cutter run on past both faces."""
+    reset button's actuator, its cutter run on past both faces."""
     box = layout.reset_pin_hole_box()
     inner, outer = box.y_range
     x, z = layout.reset_pin_hole_center()
@@ -1427,11 +1430,11 @@ def cut_nano_clamp_bore(tray, fits):
 
 def cut_mount_voids(tray, fits):
     """Cut every mount void layout.py gives, in its order: the shell's
-    channel and the window, the lever slot and the pin hole through the
+    channel and the window, the knob slot and the pin hole through the
     north wall, the pry slot through the clamp's block and foot, and
     bore the clamp's block."""
     tray = cut_usb_window(tray, fits)
-    tray = cut_lever_slot(tray)
+    tray = cut_knob_slot(tray)
     tray = cut_reset_pin_hole(tray)
     tray = cut_nano_pry_slot(tray, fits)
     return cut_nano_clamp_bore(tray, fits)
@@ -1526,6 +1529,21 @@ def build_clamp_tab(fits=None):
     expected = box_volume(plate) + box_volume(nose) - math.pi * radius**2 * thickness
     require_volume("the clamp's tab", tab.Volume, expected, 1e-6)
     return tab.Solids[0]
+
+
+def build_power_switch_retainer():
+    """The power switch's retainer, a print of its own, as modelled and
+    fitted in the layout's frame: its legs beside the leads and the bar
+    over them. Checked one valid solid of the three boxes' volume."""
+    boxes = layout.power_switch_retainer_boxes()
+    retainer = box_prism(boxes[0])
+    for box in boxes[1:]:
+        retainer = retainer.fuse(box_prism(box))
+    retainer = retainer.removeSplitter()
+    require_one_valid_solid(retainer, "the power switch's retainer")
+    require_volume("the power switch's retainer", retainer.Volume,
+                   sum(box_volume(box) for box in boxes), 1e-6)
+    return retainer.Solids[0]
 
 
 def mirror_for_right_half(shape):

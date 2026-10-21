@@ -556,15 +556,16 @@ STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
 
 
 # The parts in the tray (DESIGN.md, "Parts in the tray"), as boxes:
-# the bodies DESIGN.md gives, then the leads, pins and posts from the
-# parts' datasheets and the battery header's mated plug, each a piece
+# the bodies DESIGN.md gives, then the leads and posts from the
+# parts' drawings and the battery header's mated plug, each a piece
 # of its part. The mounts that hold them and the room their wires need
 # come last in this module (work item 004).
 # `containment` says where a box must lie: CAVITY inside the cavity
 # wall and clear of the ledge (except where the ledge is cut away for
 # it, ledge_cutaways()), THROUGH_WALL inside the tray's outer face (it
 # passes a window in the wall), PROUD nowhere (it stands out past the
-# wall by design).
+# wall by design, through an opening of its own in the wall and, for
+# the power switch's knob, the ledge in front of it).
 CAVITY = "cavity"
 THROUGH_WALL = "through the wall"
 PROUD = "proud of the wall"
@@ -588,6 +589,11 @@ def cavity_wall_y(outline_edge_y):
 def outer_face_y(outline_edge_y):
     """The tray's outer face's y beyond a north outline edge."""
     return outline_edge_y + TRAY_GAP_MM + TRAY_WALL_MM
+
+
+def ledge_face_y(outline_edge_y):
+    """The ledge's inner face's y in front of a north outline edge."""
+    return outline_edge_y + TRAY_GAP_MM - TRAY_LEDGE_WIDTH_MM
 
 
 # North outline edges, by column (OUTLINE_VERTICES_MM).
@@ -646,24 +652,37 @@ NANO_USB_SHELL = Envelope(
     THROUGH_WALL,
 )
 
-# Power switch, SOFNG SS-12D00-G3 (DESIGN.md): the body 8.8 along x
-# (the lever's travel), 3.5 along y, 3.9 tall, centered at x 47.149 with
-# its north face against column 2's cavity wall (DESIGN.md: y 80.648).
-# The lever, 1.5 x 1.5 x 3 on the body's north face, swept over its 2
-# travel (doc/components.md) around the body's center, through a slot
-# in the wall, centered on the face's 3.9 like the three pins on the
-# opposite face (the SOFNG drawing's end view,
-# work/research/downloads/ss12d00/sofng_SS-12D00-G3.pdf). The pins,
-# 0.5 along x and 0.3 thick, 2.5 apart along x around the center (its
-# side view and PCB layout), point south 3.0 from the body.
+# Power switch, Knitter-switch MFP 120-R (DESIGN.md), a right angle
+# slide switch, from Knitter-switch's catalogue page
+# (doc/components.md, section 2,
+# work/research/downloads/electrokit-41011898-knitter-mfp120/), whose
+# drawing is the MFP 140-R's, with A and B the table's for the MFP
+# 120-R. The body, A 11.0 along x (the knob's travel), 6 along y, 5.6
+# tall, centered at x 47.149, lies on the floor with its north face on
+# column 2's ledge face (DESIGN.md: y 79.648), so the ledge stands
+# whole in front of it. The knob, 3.4 along x and 3.2 tall, reaches 5
+# past the north face and sweeps the window B, 6.6 along x, both
+# centered on the body as the drawing draws them. The three leads, 0.8
+# along x and 0.5 thick, at 3.2 pitch around the center (the MFP 140-R's
+# pitch, taken centered for the MFP 120-R's three), leave the south face
+# at its middle height and are bent down on the part, the bent run's
+# outer face 1.5 behind the body, to 4.2 below the body's bottom.
+# Straightened by hand (README.md) they point south, at most
+# POWER_SWITCH_LEAD_LENGTH_MM behind the body: the bent run's middle
+# 1.25 behind it plus the 2.8 and the 4.2 it runs down, the bend taken
+# sharp. The user may cut them shorter, to
+# POWER_SWITCH_SHORTEST_LEAD_MM at the least (README.md), which leaves
+# their tips, and the wires' joints on them, behind the retainer that
+# holds the body in (power_switch_retainer_envelope()).
 POWER_SWITCH_CENTER_X_MM = 47.149
-POWER_SWITCH_BODY_X_MM = 8.8
-POWER_SWITCH_BODY_Y_MM = 3.5
-POWER_SWITCH_BODY_Z_MM = 3.9
-POWER_SWITCH_LEVER_WIDTH_MM = 1.5
-POWER_SWITCH_LEVER_LENGTH_MM = 3.0
-POWER_SWITCH_LEVER_TRAVEL_MM = 2.0
-POWER_SWITCH_NORTH_FACE_Y_MM = 80.648
+POWER_SWITCH_BODY_X_MM = 11.0
+POWER_SWITCH_BODY_Y_MM = 6.0
+POWER_SWITCH_BODY_Z_MM = 5.6
+POWER_SWITCH_KNOB_WIDTH_MM = 3.4  # along x
+POWER_SWITCH_KNOB_HEIGHT_MM = 3.2  # along z
+POWER_SWITCH_KNOB_LENGTH_MM = 5.0  # past the body's north face
+POWER_SWITCH_KNOB_WINDOW_MM = 6.6  # B, along x: the knob's sweep
+POWER_SWITCH_NORTH_FACE_Y_MM = ledge_face_y(NORTH_EDGE_Y_OF_COLUMN_2_MM)
 POWER_SWITCH_BODY = Envelope(
     "power switch",
     "body",
@@ -675,74 +694,89 @@ POWER_SWITCH_BODY = Envelope(
     (0.0, POWER_SWITCH_BODY_Z_MM),
     CAVITY,
 )
-POWER_SWITCH_LEVER_REACH_X_MM = (
-    POWER_SWITCH_LEVER_TRAVEL_MM / 2.0 + POWER_SWITCH_LEVER_WIDTH_MM / 2.0
-)
-POWER_SWITCH_LEVER_Z_MM = POWER_SWITCH_BODY_Z_MM / 2.0  # its middle
-POWER_SWITCH_LEVER = Envelope(
+POWER_SWITCH_KNOB_Z_MM = POWER_SWITCH_BODY_Z_MM / 2.0  # its middle
+POWER_SWITCH_KNOB = Envelope(
     "power switch",
-    "lever, over its travel",
+    "knob, over its travel",
     (
-        POWER_SWITCH_CENTER_X_MM - POWER_SWITCH_LEVER_REACH_X_MM,
-        POWER_SWITCH_CENTER_X_MM + POWER_SWITCH_LEVER_REACH_X_MM,
+        POWER_SWITCH_CENTER_X_MM - POWER_SWITCH_KNOB_WINDOW_MM / 2.0,
+        POWER_SWITCH_CENTER_X_MM + POWER_SWITCH_KNOB_WINDOW_MM / 2.0,
     ),
     (
         POWER_SWITCH_NORTH_FACE_Y_MM,
-        POWER_SWITCH_NORTH_FACE_Y_MM + POWER_SWITCH_LEVER_LENGTH_MM,
+        POWER_SWITCH_NORTH_FACE_Y_MM + POWER_SWITCH_KNOB_LENGTH_MM,
     ),
     (
-        POWER_SWITCH_LEVER_Z_MM - POWER_SWITCH_LEVER_WIDTH_MM / 2.0,
-        POWER_SWITCH_LEVER_Z_MM + POWER_SWITCH_LEVER_WIDTH_MM / 2.0,
+        POWER_SWITCH_KNOB_Z_MM - POWER_SWITCH_KNOB_HEIGHT_MM / 2.0,
+        POWER_SWITCH_KNOB_Z_MM + POWER_SWITCH_KNOB_HEIGHT_MM / 2.0,
     ),
     PROUD,
 )
-POWER_SWITCH_PIN_PITCH_MM = 2.5
-POWER_SWITCH_PIN_WIDTH_MM = 0.5
-POWER_SWITCH_PIN_THICKNESS_MM = 0.3
-POWER_SWITCH_PIN_LENGTH_MM = 3.0
-POWER_SWITCH_PINS_REACH_X_MM = POWER_SWITCH_PIN_PITCH_MM + POWER_SWITCH_PIN_WIDTH_MM / 2.0
-POWER_SWITCH_PINS = Envelope(
+POWER_SWITCH_LEAD_PITCH_MM = 3.2
+POWER_SWITCH_LEAD_WIDTH_MM = 0.8  # along x
+POWER_SWITCH_LEAD_THICKNESS_MM = 0.5  # along z
+POWER_SWITCH_LEAD_BEND_BEHIND_BODY_MM = 1.5  # to the bent run's outer face, on the part
+POWER_SWITCH_LEAD_BELOW_BODY_MM = 4.2  # the bent run's tip, on the part
+POWER_SWITCH_LEAD_LENGTH_MM = (
+    POWER_SWITCH_LEAD_BEND_BEHIND_BODY_MM - POWER_SWITCH_LEAD_THICKNESS_MM / 2.0
+    + POWER_SWITCH_BODY_Z_MM / 2.0 + POWER_SWITCH_LEAD_BELOW_BODY_MM
+)  # 8.25, straightened
+POWER_SWITCH_SHORTEST_LEAD_MM = 2.0
+POWER_SWITCH_LEADS_REACH_X_MM = POWER_SWITCH_LEAD_PITCH_MM + POWER_SWITCH_LEAD_WIDTH_MM / 2.0
+POWER_SWITCH_LEADS = Envelope(
     "power switch",
-    "pins",
+    "leads",
     (
-        POWER_SWITCH_CENTER_X_MM - POWER_SWITCH_PINS_REACH_X_MM,
-        POWER_SWITCH_CENTER_X_MM + POWER_SWITCH_PINS_REACH_X_MM,
+        POWER_SWITCH_CENTER_X_MM - POWER_SWITCH_LEADS_REACH_X_MM,
+        POWER_SWITCH_CENTER_X_MM + POWER_SWITCH_LEADS_REACH_X_MM,
     ),
     (
-        POWER_SWITCH_BODY.y_range[0] - POWER_SWITCH_PIN_LENGTH_MM,
+        POWER_SWITCH_BODY.y_range[0] - POWER_SWITCH_LEAD_LENGTH_MM,
         POWER_SWITCH_BODY.y_range[0],
     ),
     (
-        POWER_SWITCH_LEVER_Z_MM - POWER_SWITCH_PIN_THICKNESS_MM / 2.0,
-        POWER_SWITCH_LEVER_Z_MM + POWER_SWITCH_PIN_THICKNESS_MM / 2.0,
+        POWER_SWITCH_KNOB_Z_MM - POWER_SWITCH_LEAD_THICKNESS_MM / 2.0,
+        POWER_SWITCH_KNOB_Z_MM + POWER_SWITCH_LEAD_THICKNESS_MM / 2.0,
     ),
     CAVITY,
 )
 
-# Reset button, C&K PTS636 SL43 LFS (DESIGN.md), lying on its side:
-# 6.0 along x centered at x 66.199, 3.5 along z, 4.3 from its back to
-# the stem's top along y, the stem ending 0.2 short of column 3's
-# cavity wall. Its housing is 3.3 of those 4.3 (doc/components.md, the
-# PTS636 datasheet), the 3 x 1.5 stem the rest, centered on the
-# housing along x and, its 1.5 along z, on the housing's 3.5 (the
-# datasheet's end view, work/research/downloads/pts636/pts636_lcsc.pdf,
-# page 2). The two leads, 1 wide along z and centered on it too, leave
-# the housing's ends at its back, kink out to 7.7 across their outsides
-# 2.0 behind it and run on at 6.4 pitch to 3.9 behind it, each figure
-# +-0.2 (RESET_BUTTON_TOLERANCE_MM). Their thickness along x is not in
-# the datasheet: RESET_BUTTON_LEAD_THICKNESS_MM is assumed.
+# Reset button, TE FSM2JRT (DESIGN.md), a 6 x 6 tactile switch, from
+# the FSMJRT drawing in Tyco Electronics' tactile switch catalogue
+# 8-1773450-9, page C16 (doc/components.md, section 3,
+# work/research/downloads/te-fsm2jrt-drawing/), lying on a side face:
+# its 6.19 square across x and z, centered at x 66.199, its actuator
+# facing north and ending 0.2 short of column 3's cavity wall. Along y,
+# from the base's bottom face (the face that sits on a PCB): the cover's
+# top at 3.6 (RESET_BUTTON_HOUSING), the four bumps at its corners up
+# to 0.4 over it (RESET_BUTTON_BUMPS, each a square from the corner to
+# RESET_BUTTON_BUMPS_FROM_MIDDLE_MM off the middle), and the round
+# actuator, 3.5 across, to 4.3 (RESET_BUTTON_ACTUATOR, as a square of
+# its diameter). The two
+# leads, 5.00 +-0.10 apart along x around the center, leave the base's
+# bottom face at the body's middle height and run straight south, 0.6
+# wide along x near the body (0.5 further on) and 0.3 thick along z, 0.4
+# at the crimp the radial tape leaves on them, taken. Their length is
+# not dimensioned: RESET_BUTTON_LEAD_LENGTH_MM is the longest the tape's
+# figures allow (doc/components.md), and the user cuts them to taste, no
+# shorter than RESET_BUTTON_SHORTEST_LEAD_MM (README.md), which keeps
+# the wire room behind them clear of the back wall (lead_wire_rooms()).
 RESET_BUTTON_CENTER_X_MM = 66.199
-RESET_BUTTON_BODY_X_MM = 6.0
-RESET_BUTTON_BODY_Z_MM = 3.5
-RESET_BUTTON_TO_STEM_TOP_MM = 4.3
-RESET_BUTTON_HOUSING_DEPTH_MM = 3.3
-RESET_BUTTON_STEM_WIDTH_MM = 3.0  # along x
-RESET_BUTTON_STEM_THICKNESS_MM = 1.5  # along z
-RESET_BUTTON_STEM_SHORT_OF_WALL_MM = 0.2
-RESET_BUTTON_STEM_TOP_Y_MM = (
-    cavity_wall_y(NORTH_EDGE_Y_OF_COLUMN_3_MM) - RESET_BUTTON_STEM_SHORT_OF_WALL_MM
+RESET_BUTTON_BODY_X_MM = 6.19
+RESET_BUTTON_BODY_Z_MM = 6.19
+RESET_BUTTON_TO_ACTUATOR_TOP_MM = 4.3
+RESET_BUTTON_COVER_TOP_MM = 3.6  # from the base's bottom face
+RESET_BUTTON_BUMP_HEIGHT_MM = 0.4  # over the cover, at the most
+# The corner bumps come no nearer the middle of either of the cover's
+# sides than this, measured on the drawing's top view (Derived): about
+# 1.4 across, centered about 0.8 in from both edges.
+RESET_BUTTON_BUMPS_FROM_MIDDLE_MM = 1.6
+RESET_BUTTON_ACTUATOR_DIAMETER_MM = 3.5
+RESET_BUTTON_ACTUATOR_SHORT_OF_WALL_MM = 0.2
+RESET_BUTTON_ACTUATOR_TOP_Y_MM = (
+    cavity_wall_y(NORTH_EDGE_Y_OF_COLUMN_3_MM) - RESET_BUTTON_ACTUATOR_SHORT_OF_WALL_MM
 )
-RESET_BUTTON_BACK_Y_MM = RESET_BUTTON_STEM_TOP_Y_MM - RESET_BUTTON_TO_STEM_TOP_MM
+RESET_BUTTON_BACK_Y_MM = RESET_BUTTON_ACTUATOR_TOP_Y_MM - RESET_BUTTON_TO_ACTUATOR_TOP_MM
 RESET_BUTTON_HOUSING = Envelope(
     "reset button",
     "housing",
@@ -750,64 +784,89 @@ RESET_BUTTON_HOUSING = Envelope(
         RESET_BUTTON_CENTER_X_MM - RESET_BUTTON_BODY_X_MM / 2.0,
         RESET_BUTTON_CENTER_X_MM + RESET_BUTTON_BODY_X_MM / 2.0,
     ),
-    (RESET_BUTTON_BACK_Y_MM, RESET_BUTTON_BACK_Y_MM + RESET_BUTTON_HOUSING_DEPTH_MM),
+    (RESET_BUTTON_BACK_Y_MM, RESET_BUTTON_BACK_Y_MM + RESET_BUTTON_COVER_TOP_MM),
     (0.0, RESET_BUTTON_BODY_Z_MM),
     CAVITY,
 )
-RESET_BUTTON_STEM = Envelope(
+
+
+def reset_button_bump(x_side, z_side, label):
+    """The corner bump on the given side of the middle along x and z
+    (-1 or 1)."""
+    half = RESET_BUTTON_BODY_X_MM / 2.0
+    near = RESET_BUTTON_BUMPS_FROM_MIDDLE_MM
+    middle_z = RESET_BUTTON_BODY_Z_MM / 2.0
+    cover = RESET_BUTTON_BACK_Y_MM + RESET_BUTTON_COVER_TOP_MM
+    return Envelope(
+        "reset button",
+        label,
+        tuple(sorted((RESET_BUTTON_CENTER_X_MM + x_side * near,
+                      RESET_BUTTON_CENTER_X_MM + x_side * half))),
+        (cover, cover + RESET_BUTTON_BUMP_HEIGHT_MM),
+        tuple(sorted((middle_z + z_side * near, middle_z + z_side * half))),
+        CAVITY,
+    )
+
+
+RESET_BUTTON_BUMPS = tuple(
+    reset_button_bump(x_side, z_side, f"{height} {side} bump")
+    for z_side, height in ((-1.0, "lower"), (1.0, "upper"))
+    for x_side, side in ((-1.0, "west"), (1.0, "east"))
+)
+RESET_BUTTON_ACTUATOR = Envelope(
     "reset button",
-    "stem",
+    "actuator",
     (
-        RESET_BUTTON_CENTER_X_MM - RESET_BUTTON_STEM_WIDTH_MM / 2.0,
-        RESET_BUTTON_CENTER_X_MM + RESET_BUTTON_STEM_WIDTH_MM / 2.0,
+        RESET_BUTTON_CENTER_X_MM - RESET_BUTTON_ACTUATOR_DIAMETER_MM / 2.0,
+        RESET_BUTTON_CENTER_X_MM + RESET_BUTTON_ACTUATOR_DIAMETER_MM / 2.0,
     ),
-    (RESET_BUTTON_BACK_Y_MM + RESET_BUTTON_HOUSING_DEPTH_MM, RESET_BUTTON_STEM_TOP_Y_MM),
+    (RESET_BUTTON_BACK_Y_MM + RESET_BUTTON_COVER_TOP_MM, RESET_BUTTON_ACTUATOR_TOP_Y_MM),
     (
-        (RESET_BUTTON_BODY_Z_MM - RESET_BUTTON_STEM_THICKNESS_MM) / 2.0,
-        (RESET_BUTTON_BODY_Z_MM + RESET_BUTTON_STEM_THICKNESS_MM) / 2.0,
+        (RESET_BUTTON_BODY_Z_MM - RESET_BUTTON_ACTUATOR_DIAMETER_MM) / 2.0,
+        (RESET_BUTTON_BODY_Z_MM + RESET_BUTTON_ACTUATOR_DIAMETER_MM) / 2.0,
     ),
     CAVITY,
 )
-RESET_BUTTON_LEAD_PITCH_MM = 6.4
-RESET_BUTTON_LEAD_KINK_SPAN_MM = 7.7  # across the leads' outsides
-RESET_BUTTON_LEAD_WIDTH_MM = 1.0  # along z
-RESET_BUTTON_LEAD_LENGTH_MM = 3.9  # behind the housing
-RESET_BUTTON_LEAD_THICKNESS_MM = 0.4  # assumed
-RESET_BUTTON_TOLERANCE_MM = 0.2
+RESET_BUTTON_LEAD_PITCH_MM = 5.0
+RESET_BUTTON_LEAD_PITCH_TOLERANCE_MM = 0.1
+RESET_BUTTON_LEAD_WIDTH_MM = 0.6  # along x
+RESET_BUTTON_LEAD_THICKNESS_MM = 0.4  # along z
+RESET_BUTTON_LEAD_LENGTH_MM = 15.0  # behind the base, as delivered at the longest
+RESET_BUTTON_SHORTEST_LEAD_MM = 2.0
 
 
 def reset_button_lead_band():
     """(inside, outside) of either lead from the button's center along
-    x, over every place the datasheet's figures allow."""
+    x, over every place the drawing's figures allow."""
     inside = (
-        RESET_BUTTON_LEAD_PITCH_MM - RESET_BUTTON_TOLERANCE_MM - RESET_BUTTON_LEAD_THICKNESS_MM
+        RESET_BUTTON_LEAD_PITCH_MM - RESET_BUTTON_LEAD_PITCH_TOLERANCE_MM
+        - RESET_BUTTON_LEAD_WIDTH_MM
     ) / 2.0
-    outside = (RESET_BUTTON_LEAD_KINK_SPAN_MM + RESET_BUTTON_TOLERANCE_MM) / 2.0
+    outside = (
+        RESET_BUTTON_LEAD_PITCH_MM + RESET_BUTTON_LEAD_PITCH_TOLERANCE_MM
+        + RESET_BUTTON_LEAD_WIDTH_MM
+    ) / 2.0
     return inside, outside
 
 
 def reset_button_lead_z_range():
-    half = (RESET_BUTTON_LEAD_WIDTH_MM + RESET_BUTTON_TOLERANCE_MM) / 2.0
+    half = RESET_BUTTON_LEAD_THICKNESS_MM / 2.0
     middle = RESET_BUTTON_BODY_Z_MM / 2.0
     return (middle - half, middle + half)
 
 
 def reset_button_lead(side, label):
-    """A lead's envelope, side -1 the west one and 1 the east one: from
-    its tip at the most the tolerance allows to RESET_BUTTON_HOUSING's
-    back, and on along the housing's end as far as the housing's back
-    third."""
+    """A lead's envelope, side -1 the west one and 1 the east one, from
+    its tip to the base's bottom face."""
     inside, outside = reset_button_lead_band()
     reach = sorted(
         (RESET_BUTTON_CENTER_X_MM + side * inside, RESET_BUTTON_CENTER_X_MM + side * outside)
     )
-    tip_y = RESET_BUTTON_BACK_Y_MM - RESET_BUTTON_LEAD_LENGTH_MM - RESET_BUTTON_TOLERANCE_MM
-    along_housing_y = RESET_BUTTON_BACK_Y_MM + RESET_BUTTON_HOUSING_DEPTH_MM / 3.0
     return Envelope(
         "reset button",
         label,
         tuple(reach),
-        (tip_y, along_housing_y),
+        (RESET_BUTTON_BACK_Y_MM - RESET_BUTTON_LEAD_LENGTH_MM, RESET_BUTTON_BACK_Y_MM),
         reset_button_lead_z_range(),
         CAVITY,
     )
@@ -902,10 +961,11 @@ PART_ENVELOPES = (
     NANO_BOARD,
     NANO_USB_SHELL,
     POWER_SWITCH_BODY,
-    POWER_SWITCH_LEVER,
-    POWER_SWITCH_PINS,
+    POWER_SWITCH_KNOB,
+    POWER_SWITCH_LEADS,
     RESET_BUTTON_HOUSING,
-    RESET_BUTTON_STEM,
+    *RESET_BUTTON_BUMPS,
+    RESET_BUTTON_ACTUATOR,
     RESET_BUTTON_WEST_LEAD,
     RESET_BUTTON_EAST_LEAD,
     BATTERY_CONNECTOR,
@@ -917,10 +977,11 @@ PART_ENVELOPES = (
 
 
 # Where DESIGN.md cuts the north ledge away, as (part, x range along the
-# north outline edge at the given y): over the nice!nano's width, the
-# power switch body and the reset button, each plus 0.5 on either side.
-# The nice!nano's follows the board's width as the mounts' fits size it,
-# so ledge_cutaways() gives them all, with the mounts below.
+# north outline edge at the given y): over the nice!nano's width and the
+# reset button, each plus 0.5 on either side. The power switch lies
+# behind the ledge, which stands whole in front of it. The nice!nano's
+# follows the board's width as the mounts' fits size it, so
+# ledge_cutaways() gives them all, with the mounts below.
 LEDGE_CUTAWAY_MARGIN_MM = 0.5
 
 
@@ -940,9 +1001,8 @@ def ledge_cutaway(part, x_range, north_edge_y):
     )
 
 
-SWITCH_AND_BUTTON_LEDGE_CUTAWAYS = (
-    ledge_cutaway("power switch", POWER_SWITCH_BODY.x_range, NORTH_EDGE_Y_OF_COLUMN_2_MM),
-    ledge_cutaway("reset button", RESET_BUTTON_HOUSING.x_range, NORTH_EDGE_Y_OF_COLUMN_3_MM),
+RESET_BUTTON_LEDGE_CUTAWAY = ledge_cutaway(
+    "reset button", RESET_BUTTON_HOUSING.x_range, NORTH_EDGE_Y_OF_COLUMN_3_MM
 )
 
 
@@ -1937,7 +1997,8 @@ def part_envelopes(fits=DEFAULT_MOUNT_FITS):
     socket strips and their tails on that board."""
     sized = {NANO_BOARD: nano_board_envelope(fits), NANO_USB_SHELL: nano_usb_shell_envelope(fits)}
     return (tuple(sized.get(envelope, envelope) for envelope in PART_ENVELOPES)
-            + nano_strip_envelopes(fits) + nano_tail_envelopes(fits))
+            + nano_strip_envelopes(fits) + nano_tail_envelopes(fits)
+            + (power_switch_retainer_envelope(),))
 
 
 def nano_ledge_cutaway(fits=DEFAULT_MOUNT_FITS):
@@ -1950,7 +2011,7 @@ def nano_ledge_cutaway(fits=DEFAULT_MOUNT_FITS):
 def ledge_cutaways(fits=DEFAULT_MOUNT_FITS):
     """Every ledge cut-away, the nice!nano's over the board the fits
     size."""
-    return (nano_ledge_cutaway(fits),) + SWITCH_AND_BUTTON_LEDGE_CUTAWAYS
+    return (nano_ledge_cutaway(fits), RESET_BUTTON_LEDGE_CUTAWAY)
 
 
 # The USB window: kbdkid4's (model/kbdkid4/scripts/export_tray.py,
@@ -2644,71 +2705,190 @@ def nano_pry_recess_box(fits=DEFAULT_MOUNT_FITS):
                     (0.0, NANO_SEAT_HEIGHT_MM))
 
 
-# The power switch: its lever's slot through the north wall, its swept
-# box's slip fit, and the cradle on the floor, which holds the body
-# snug between two end blocks against the 3.5 N slide force and against
-# the wall by two back arms beside the pins, against a push on the
-# lever's tip.
+# The power switch: its knob's slot through the ledge and the north
+# wall, and the cradle on the floor, two end blocks that hold the body
+# snug along its travel against the slide force (not published for the
+# MFP 120-R), the ledge's face its north stop, and behind the body the
+# socket of the retainer that takes a push on the knob's tip (below).
+# The slot is closed, so the knob goes in first, the body slid north
+# along the floor over the knob's length, and nothing fixed may stand
+# behind the body in its way (check_layout.py checks that path): the
+# SOFNG switch's cradle, with back arms there, could not have been
+# fitted either. The slot is a passage rather than a fit:
+# POWER_SWITCH_KNOB_SLOT_FIT_MM leaves 0.25 per side as printed around
+# the knob's sweep, since the knob's figures come from an untoleranced
+# drawing of the MFP 140-R and the switch's own detents set where the
+# knob stops.
 POWER_SWITCH_CRADLE_TOP_Z_MM = 3.0
 POWER_SWITCH_CRADLE_END_MM = 1.2  # along x
-POWER_SWITCH_CRADLE_BACK_MM = 0.8  # along y
+POWER_SWITCH_KNOB_SLOT_FIT_MM = 0.5
 
 
-def power_switch_lever_slot_box():
-    north_edge_y = NORTH_EDGE_Y_OF_COLUMN_2_MM
-    lever = POWER_SWITCH_LEVER
+def power_switch_knob_slot_box():
+    knob = POWER_SWITCH_KNOB
+    fit = POWER_SWITCH_KNOB_SLOT_FIT_MM
     return MountBox(
-        "lever slot",
+        "knob slot",
         "power switch",
         centered_range(
-            POWER_SWITCH_CENTER_X_MM,
-            printed_fit(lever.x_range[1] - lever.x_range[0], SLIP_FIT_MM),
+            POWER_SWITCH_CENTER_X_MM, printed_fit(knob.x_range[1] - knob.x_range[0], fit)
         ),
-        (cavity_wall_y(north_edge_y), outer_face_y(north_edge_y)),
+        (POWER_SWITCH_NORTH_FACE_Y_MM, outer_face_y(NORTH_EDGE_Y_OF_COLUMN_2_MM)),
         centered_range(
-            POWER_SWITCH_LEVER_Z_MM, printed_fit(lever.z_range[1] - lever.z_range[0], SLIP_FIT_MM)
+            POWER_SWITCH_KNOB_Z_MM, printed_fit(knob.z_range[1] - knob.z_range[0], fit)
         ),
     )
+
+
+def power_switch_cradle_half_inside():
+    """Half the end blocks' inner span, the body's snug fit."""
+    return printed_fit(POWER_SWITCH_BODY_X_MM, SNUG_FIT_MM) / 2.0
 
 
 def power_switch_cradle_boxes():
+    """The cradle's two end blocks, from the ledge's face over the
+    body's depth, and behind them the retainer's socket: a groove in each
+    block's continuation south, open at the top and toward the body,
+    with the lip behind it."""
     center = POWER_SWITCH_CENTER_X_MM
-    half_inside = printed_fit(POWER_SWITCH_BODY_X_MM, SNUG_FIT_MM) / 2.0
+    half_inside = power_switch_cradle_half_inside()
     outside = half_inside + POWER_SWITCH_CRADLE_END_MM
-    wall = cavity_wall_y(NORTH_EDGE_Y_OF_COLUMN_2_MM)
-    back_face = wall - printed_fit(POWER_SWITCH_BODY_Y_MM, SNUG_FIT_MM)
-    back = back_face - POWER_SWITCH_CRADLE_BACK_MM
-    pins = POWER_SWITCH_PINS.x_range
-    half_pin_slot = printed_fit(pins[1] - pins[0], SLIP_FIT_MM) / 2.0
+    groove_outside = half_inside + POWER_SWITCH_RETAINER_GROOVE_DEPTH_MM
+    groove = power_switch_retainer_groove_y_range()
+    lip = (groove[0] - POWER_SWITCH_RETAINER_LIP_MM, groove[0])
+    y_range = POWER_SWITCH_BODY.y_range
     z_range = (0.0, POWER_SWITCH_CRADLE_TOP_Z_MM)
+    boxes = []
+    for side, name in ((-1.0, "west"), (1.0, "east")):
+        block = tuple(sorted((center + side * half_inside, center + side * outside)))
+        groove_wall = tuple(sorted((center + side * groove_outside, center + side * outside)))
+        boxes.extend((
+            MountBox(f"cradle's {name} end", "power switch", block, y_range, z_range),
+            MountBox(f"retainer socket's {name} groove wall", "power switch", groove_wall,
+                     groove, z_range),
+            MountBox(f"retainer socket's {name} lip", "power switch", block, lip, z_range),
+        ))
+    return tuple(boxes)
+
+
+# The power switch's retainer (DESIGN.md), a plate printed on its own,
+# flat (export_power_switch_retainer.py), that drops into its socket
+# once the body is in: its north face on the body's back and the end
+# blocks' south ends, its ends in the grooves, whose lips take a push on
+# the knob's tip, and an opening up from its lower edge over the leads.
+# Its thickness is a print's height, so it prints
+# PRINT_RISE_OF_TOP_FACES_MM thicker, a snug fit in the grooves, and its
+# edges swell like any face. It reaches up to
+# POWER_SWITCH_RETAINER_UNDER_POSTS_MM under the switches' center posts
+# and side pegs, which reach SWITCH_POSTS_BELOW_PCB_MM below the PCB
+# (DESIGN.md, Fused mock): S120's lie over it. Lifted to the PCB it
+# stays in its grooves, so the PCB keeps it in its socket.
+POWER_SWITCH_RETAINER_THICKNESS_MM = 1.2  # along y as fitted, the print's height
+POWER_SWITCH_RETAINER_GROOVE_DEPTH_MM = 0.6  # into each end block, along x
+POWER_SWITCH_RETAINER_LIP_MM = 1.2  # along y, behind each groove
+POWER_SWITCH_RETAINER_OVER_LEADS_MM = 0.5  # the opening's top over the leads
+POWER_SWITCH_RETAINER_BESIDE_LEADS_MM = 0.25  # as printed, either side of the leads
+SWITCH_POSTS_BELOW_PCB_MM = 1.4
+POWER_SWITCH_RETAINER_UNDER_POSTS_MM = 0.5
+
+
+def power_switch_retainer_printed_thickness():
+    return POWER_SWITCH_RETAINER_THICKNESS_MM + PRINT_RISE_OF_TOP_FACES_MM
+
+
+def power_switch_retainer_groove_y_range():
+    """From the lips' faces to the end blocks' south ends, the body's
+    back: the retainer's printed thickness, snug."""
+    back = POWER_SWITCH_BODY.y_range[0]
+    return (back - printed_fit(power_switch_retainer_printed_thickness(), SNUG_FIT_MM), back)
+
+
+def power_switch_retainer_printed_top_z():
+    return PCB_UNDERSIDE_Z_MM - SWITCH_POSTS_BELOW_PCB_MM - POWER_SWITCH_RETAINER_UNDER_POSTS_MM
+
+
+def power_switch_retainer_half_width():
+    """Half the plate's width as modelled: a slip fit between the
+    grooves' walls as printed, its own edges swollen."""
+    swelling = PRINT_SWELLING_PER_SIDE_MM
+    groove_wall = power_switch_cradle_half_inside() + POWER_SWITCH_RETAINER_GROOVE_DEPTH_MM
+    return groove_wall - swelling - SLIP_FIT_MM / 2.0 - swelling
+
+
+def power_switch_retainer_opening():
+    """(half width, top z) of the opening over the leads as modelled,
+    the plate standing on the floor as modelled. As fitted, the swelling
+    of its lower edge lifts the plate as much as the opening's top comes
+    down, so the top keeps its modelled height."""
+    leads = POWER_SWITCH_LEADS
+    half_width = ((leads.x_range[1] - leads.x_range[0]) / 2.0
+                  + POWER_SWITCH_RETAINER_BESIDE_LEADS_MM + PRINT_SWELLING_PER_SIDE_MM)
+    return half_width, leads.z_range[1] + POWER_SWITCH_RETAINER_OVER_LEADS_MM
+
+
+def power_switch_retainer_boxes():
+    """The retainer as modelled, as fitted: its two legs beside the
+    leads and the bar over them, its north face on the body's back."""
+    center = POWER_SWITCH_CENTER_X_MM
+    half_width = power_switch_retainer_half_width()
+    half_opening, opening_top = power_switch_retainer_opening()
+    back = POWER_SWITCH_BODY.y_range[0]
+    y_range = (back - POWER_SWITCH_RETAINER_THICKNESS_MM, back)
+    top = power_switch_retainer_printed_top_z() - 2.0 * PRINT_SWELLING_PER_SIDE_MM
     return (
-        MountBox("cradle's west end", "power switch", (center - outside, center - half_inside),
-                 (back, wall), z_range),
-        MountBox("cradle's east end", "power switch", (center + half_inside, center + outside),
-                 (back, wall), z_range),
-        MountBox("cradle's west back arm", "power switch",
-                 (center - outside, center - half_pin_slot), (back, back_face), z_range),
-        MountBox("cradle's east back arm", "power switch",
-                 (center + half_pin_slot, center + outside), (back, back_face), z_range),
+        MountBox("retainer's west leg", "power switch",
+                 (center - half_width, center - half_opening), y_range, (0.0, opening_top)),
+        MountBox("retainer's east leg", "power switch",
+                 (center + half_opening, center + half_width), y_range, (0.0, opening_top)),
+        MountBox("retainer's bar", "power switch", (center - half_width, center + half_width),
+                 y_range, (opening_top, top)),
     )
 
 
-# The reset button: the pin hole through the north wall over the stem
-# (DESIGN.md's 3.0, kbdkid4's plate reset hole, a passage for a SIM pin
-# rather than a fit, so it prints about 2.6), and the back wall behind
-# the housing, which takes the press. The button's depth with its stem
-# 0.2 short of the wall is a snug fit between the back wall and the
-# wall's inner face. The back wall is notched from its top for the
-# leads, each notch the slip fit of the band the lead may lie in, down
-# to the lead's band less the swelling and half the clearance.
+def power_switch_retainer_envelope():
+    """The retainer as printed and fitted, its printed edge on the
+    floor, as one box."""
+    half_width = power_switch_retainer_half_width() + PRINT_SWELLING_PER_SIDE_MM
+    back = POWER_SWITCH_BODY.y_range[0]
+    return Envelope(
+        "power switch",
+        "retainer",
+        centered_range(POWER_SWITCH_CENTER_X_MM, 2.0 * half_width),
+        (back - power_switch_retainer_printed_thickness(), back),
+        (0.0, power_switch_retainer_printed_top_z()),
+        CAVITY,
+    )
+
+
+# The reset button: the pin hole through the north wall over the
+# actuator (DESIGN.md's 3.0, kbdkid4's plate reset hole, a passage for a
+# SIM pin rather than a fit, so it prints about 2.6), and its socket:
+# the back wall behind the base, which takes the press, two side walls
+# that hold it snug across, and a front stop under the actuator for the
+# cover, the base to the cover's top a snug fit between it and the back
+# wall, so the actuator stays 0.2 short of the wall and only a pin
+# through the hole presses it. The front stop is the one face the cover
+# offers that the button going in from above does not sweep with its
+# actuator or its corner bumps: below the actuator and between the lower
+# bumps, as printed RESET_FRONT_STOP_CLEAR_OF_BUMPS_MM from the bumps and
+# RESET_FRONT_STOP_UNDER_ACTUATOR_MM under the actuator, its top a top
+# face. The back wall stands as tall as the button and is notched from
+# its top for the leads, each notch the slip fit of the band the lead
+# may lie in, down to the lead's band less the swelling and half the
+# clearance. The slip fit's 0.25 per side also takes the up to 10
+# degrees the drawing lets the body sit off its leads, 0.21 across the
+# wall's 1.2.
 RESET_PIN_HOLE_DIAMETER_MM = 3.0
 RESET_BACK_WALL_MM = 1.2
 RESET_BACK_WALL_BEYOND_NOTCHES_MM = 1.0
+RESET_SIDE_WALL_MM = 1.2
+RESET_FRONT_STOP_CLEAR_OF_BUMPS_MM = 0.4
+RESET_FRONT_STOP_UNDER_ACTUATOR_MM = 0.35
 
 
 def reset_pin_hole_center():
-    """(x, z) of the hole's axis: the stem's middle."""
-    return (RESET_BUTTON_CENTER_X_MM, sum(RESET_BUTTON_STEM.z_range) / 2.0)
+    """(x, z) of the hole's axis: the actuator's middle."""
+    return (RESET_BUTTON_CENTER_X_MM, sum(RESET_BUTTON_ACTUATOR.z_range) / 2.0)
 
 
 def reset_pin_hole_box():
@@ -2724,7 +2904,7 @@ def reset_pin_hole_box():
 
 
 def reset_back_wall_face_y():
-    depth = RESET_BUTTON_TO_STEM_TOP_MM + RESET_BUTTON_STEM_SHORT_OF_WALL_MM
+    depth = RESET_BUTTON_TO_ACTUATOR_TOP_MM + RESET_BUTTON_ACTUATOR_SHORT_OF_WALL_MM
     return cavity_wall_y(NORTH_EDGE_Y_OF_COLUMN_3_MM) - printed_fit(depth, SNUG_FIT_MM)
 
 
@@ -2740,6 +2920,31 @@ def reset_notch_x_range(side):
 
 def reset_notch_bottom_z():
     return reset_button_lead_z_range()[0] - half_fit_gap(0.0, SLIP_FIT_MM)
+
+
+def reset_socket_boxes():
+    """The side walls, from the back wall's face to the cavity wall, and
+    the front stop, from the cover's top to the cavity wall."""
+    center = RESET_BUTTON_CENTER_X_MM
+    half_inside = printed_fit(RESET_BUTTON_BODY_X_MM, SNUG_FIT_MM) / 2.0
+    face = reset_back_wall_face_y()
+    wall_y = cavity_wall_y(NORTH_EDGE_Y_OF_COLUMN_3_MM)
+    stop_face = face + printed_fit(RESET_BUTTON_COVER_TOP_MM, SNUG_FIT_MM)
+    swelling = PRINT_SWELLING_PER_SIDE_MM
+    half_stop = RESET_BUTTON_BUMPS_FROM_MIDDLE_MM - RESET_FRONT_STOP_CLEAR_OF_BUMPS_MM - swelling
+    stop_top = (RESET_BUTTON_ACTUATOR.z_range[0] - RESET_FRONT_STOP_UNDER_ACTUATOR_MM
+                - PRINT_RISE_OF_TOP_FACES_MM)
+    z_range = (0.0, RESET_BUTTON_BODY_Z_MM)
+    return (
+        MountBox("west side wall", "reset button",
+                 (center - half_inside - RESET_SIDE_WALL_MM, center - half_inside),
+                 (face, wall_y), z_range),
+        MountBox("east side wall", "reset button",
+                 (center + half_inside, center + half_inside + RESET_SIDE_WALL_MM),
+                 (face, wall_y), z_range),
+        MountBox("front stop", "reset button", (center - half_stop, center + half_stop),
+                 (stop_face, wall_y), (0.0, stop_top)),
+    )
 
 
 def reset_back_wall_boxes():
@@ -2897,6 +3102,7 @@ def mount_bodies(fits=DEFAULT_MOUNT_FITS):
     return (
         power_switch_cradle_boxes()
         + reset_back_wall_boxes()
+        + reset_socket_boxes()
         + battery_pocket_boxes(fits)
         + battery_rib_boxes()
         + nano_bodies(fits)
@@ -2905,9 +3111,9 @@ def mount_bodies(fits=DEFAULT_MOUNT_FITS):
 
 def wall_openings(fits=DEFAULT_MOUNT_FITS):
     """The openings through the north wall, each as its boxes from the
-    cavity out: the shell's channel and the window, the lever slot, the
-    pin hole."""
-    return (usb_opening_boxes(fits), (power_switch_lever_slot_box(),), (reset_pin_hole_box(),))
+    cavity out: the shell's channel and the window, the knob slot, which
+    runs through the ledge in front of the wall too, the pin hole."""
+    return (usb_opening_boxes(fits), (power_switch_knob_slot_box(),), (reset_pin_hole_box(),))
 
 
 def mount_voids(fits=DEFAULT_MOUNT_FITS):
@@ -2929,7 +3135,9 @@ def mount_voids(fits=DEFAULT_MOUNT_FITS):
 # beyond them, since its wires are soldered on its top side. Its pins 1
 # to 12 take the socket strips instead, with the room over each strip
 # (nano_strip_rooms()). The battery's lead leaves its northeast corner,
-# along either edge.
+# along either edge. The power switch's and the reset button's leads are
+# cut to taste (README.md), so each of the two gets its room behind its
+# leads at their full length and at the shortest cut README.md allows.
 WIRE_ROOM_BEHIND_LEADS_MM = 3.0
 WIRE_ROOM_BESIDE_LEADS_MM = 1.0
 WIRE_ROOM_ABOVE_LEADS_MM = 1.5
@@ -2941,23 +3149,37 @@ def wire_room(part, label, x_range, y_range, z_range):
     return Envelope(part, f"wire room {label}", x_range, y_range, z_range, CAVITY)
 
 
+def room_behind_leads(part, label, x_range, tip_y, lead_top_z):
+    """The room behind a row of leads pointing south, their tips at
+    tip_y."""
+    return wire_room(part, label, grown_range(x_range, WIRE_ROOM_BESIDE_LEADS_MM),
+                     (tip_y - WIRE_ROOM_BEHIND_LEADS_MM, tip_y),
+                     (0.0, lead_top_z + WIRE_ROOM_ABOVE_LEADS_MM))
+
+
 def lead_wire_rooms():
     behind = WIRE_ROOM_BEHIND_LEADS_MM
     beside = WIRE_ROOM_BESIDE_LEADS_MM
     above = WIRE_ROOM_ABOVE_LEADS_MM
-    pins = POWER_SWITCH_PINS
+    switch_leads = POWER_SWITCH_LEADS
+    switch_back = POWER_SWITCH_BODY.y_range[0]
     west_lead, east_lead = RESET_BUTTON_WEST_LEAD, RESET_BUTTON_EAST_LEAD
+    button_leads = (west_lead.x_range[0], east_lead.x_range[1])
     posts = BATTERY_CONNECTOR_POSTS
     plug = BATTERY_PLUG
     battery = BATTERY
     corner_x, corner_y = battery.x_range[1], battery.y_range[1]
     return (
-        wire_room("power switch", "behind the pins", grown_range(pins.x_range, beside),
-                  (pins.y_range[0] - behind, pins.y_range[0]), (0.0, pins.z_range[1] + above)),
-        wire_room("reset button", "behind the leads",
-                  (west_lead.x_range[0] - beside, east_lead.x_range[1] + beside),
-                  (west_lead.y_range[0] - behind, west_lead.y_range[0]),
-                  (0.0, west_lead.z_range[1] + above)),
+        room_behind_leads("power switch", "behind the leads", switch_leads.x_range,
+                          switch_leads.y_range[0], switch_leads.z_range[1]),
+        room_behind_leads("power switch", "behind the leads cut to the shortest",
+                          switch_leads.x_range, switch_back - POWER_SWITCH_SHORTEST_LEAD_MM,
+                          switch_leads.z_range[1]),
+        room_behind_leads("reset button", "behind the leads", button_leads,
+                          west_lead.y_range[0], west_lead.z_range[1]),
+        room_behind_leads("reset button", "behind the leads cut to the shortest", button_leads,
+                          RESET_BUTTON_BACK_Y_MM - RESET_BUTTON_SHORTEST_LEAD_MM,
+                          west_lead.z_range[1]),
         wire_room("battery connector", "behind the posts",
                   (posts.x_range[1], posts.x_range[1] + behind), grown_range(posts.y_range, beside),
                   (0.0, posts.z_range[1] + above)),

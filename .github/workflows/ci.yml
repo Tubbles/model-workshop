@@ -141,7 +141,7 @@ jobs:
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
       - uses: ./.github/actions/freecad-image
-      - name: Export tray, nano clamp tab and nano bay test STL
+      - name: Export tray, nano clamp tab, power switch retainer and nano bay test STL
         run: |
           mkdir -p tray
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
@@ -149,10 +149,12 @@ jobs:
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
             freecadcmd model/kbdkid5/scripts/export_clamp_tab.py --pass tray/kbdkid5_Nano_Clamp_Tab.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_power_switch_retainer.py --pass tray/kbdkid5_Power_Switch_Retainer.stl
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
             freecadcmd model/kbdkid5/scripts/export_tray.py --pass tray/kbdkid5_Tray_Left.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
             freecadcmd model/kbdkid5/scripts/export_tray.py --pass tray/kbdkid5_Tray_Right.stl right
-      - name: Upload tray, nano clamp tab and nano bay test STL
+      - name: Upload tray, nano clamp tab, power switch retainer and nano bay test STL
         uses: actions/upload-artifact@v4
         with:
           name: kbdkid5-tray-${{ env.SHORT_SHA }}

@@ -42,7 +42,7 @@ check_layout.py's problem functions with the bay's fits (the mounts
 inside the tray and clear of the parts, the sockets, the standoffs and
 the joint, the clamp's tab within its strain and under the PCB, no
 void below the floor's top, the openings around the shell and the
-lever, the board going in past the foot, the seat, the socket strips
+knob, the board going in past the foot, the seat, the socket strips
 clear of the tray, the pry slot, the wire rooms), on top of
 build_tray()'s own probes of what it built, its closed floor among
 them. Any problem stops the export.

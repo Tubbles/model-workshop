@@ -69,7 +69,11 @@ CI uploads the socket strips and the switch hole strip from a job of their own a
 
 For a test print, `pin_hole_diameter` overrides the half's pin hole fit as modelled, and the others the figures the mounts rest on: the nice!nano's board length and width (the defaults are the user's caliper, so these suit another board), how much wider than the board its pocket prints, how hard the clamp's tab presses the board (how far below the tab's seat on the board its block's top stands), the bar's clearance over the USB-C shell, and lips reaching that far onto the battery header's front rim (none by default, DESIGN.md says why).
 
-Glue a magnet into each of the joint's slots, against the thin skin at the joint face, with alternating poles along the joint, the right half opposite to the left, so the halves pull together and center themselves. To join the halves, press the dowel pins into the left half's holes, then push the right half on. Glue an S-04-02-N magnet to the bottom of the parking hole in each half's thumb key east wall, where it holds a pin while the halves are used apart. Glue the battery header into its pocket and the reset button to the floor.
+Every part goes into its socket in the tray, and then gets a blob of hot glue on top, which only keeps it down against vibration. Use hot glue and nothing permanent, so every part can come out undamaged and go into a new print (DESIGN.md, Parts in the tray).
+
+Put a magnet into each of the joint's slots, against the thin skin at the joint face, with alternating poles along the joint, the right half opposite to the left, so the halves pull together and center themselves, and hold it with a blob of hot glue. To join the halves, press the dowel pins into the left half's holes, then push the right half on. Hot glue an S-04-02-N magnet to the bottom of the parking hole in each half's thumb key east wall, where it holds a pin while the halves are used apart. Push the battery header into its pocket.
+
+The power switch's three leads come bent down. Straighten each with flat-nose pliers so it points straight back from the body, level with where it leaves it, and cut off the lead the wiring leaves unused if you like. Slide the switch north along the floor behind column 2's north wall, knob first through the slot, between the cradle's end blocks, until its face meets the ledge, then drop its retainer (below) into the grooves behind it, the retainer's opening over the leads. To take the switch out, lift the PCB off, pull the retainer out and slide the switch back south. Cut the reset button's two leads to taste, then press the button down into its socket behind the pin hole in column 3's north wall, between the side walls, its actuator toward the hole, its cover against the stop on the floor and its leads in the notches of the wall behind it. Cut no lead of either part shorter than 2 mm behind the body (the reset button's measured from its base's bottom face), which leaves the power switch's solder joints behind its retainer and room for the wires behind both (DESIGN.md, Parts in the tray).
 
 To fit the nice!nano, solder its socket strips on first, press the M2 x 3 heat-set insert into the block south of it, lay the board in nose first, its USB-C shell under the bar at the USB window, put the clamp's tab (below) on with its nose over the board's south edge and screw it down with an M2 x 4. To take it out, with the PCB out, undo the screw and lift the tab off, bring a toothpick down the pry slot from over the south rim, through the slot's east part, the 2.8 mm beside the face nearest the screw, so it passes the last solder tail of the board's west row, its point down the recess and under the board's south edge, and lift.
 
@@ -77,6 +81,11 @@ To fit the nice!nano, solder its socket strips on first, press the M2 x 3 heat-s
 
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_clamp_tab.py --pass tab.stl
+
+`model/kbdkid5/scripts/export_power_switch_retainer.py` exports the power switch's retainer, the same for both halves, printed flat with the face that bears on the switch on the bed.
+
+    docker run --rm -v "$PWD":/work -w /work freecad-headless \
+        freecadcmd model/kbdkid5/scripts/export_power_switch_retainer.py --pass retainer.stl
 
 `model/kbdkid5/scripts/export_nano_bay_test.py` exports one nice!nano bay cut out of the left tray at the tray's defaults, to settle the bay on a real board before printing whole trays (DESIGN.md, the nice!nano's bullets). `nano_length` and `nano_width` fit the bay to a calipered board.
 
@@ -86,7 +95,7 @@ To try it, fit the board as in the tray, with an M2 x 4, or on the test bay an M
         freecadcmd model/kbdkid5/scripts/export_nano_bay_test.py --pass bay.stl \
         [nano_length=33.2] [nano_width=18.2]
 
-CI uploads both halves, the tab and the test bay as the `kbdkid5-tray-<short commit hash>` artifact: `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`, `kbdkid5_Nano_Clamp_Tab.stl` and `kbdkid5_Nano_Bay_Test.stl`.
+CI uploads both halves, the tab, the retainer and the test bay as the `kbdkid5-tray-<short commit hash>` artifact: `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`, `kbdkid5_Nano_Clamp_Tab.stl`, `kbdkid5_Power_Switch_Retainer.stl` and `kbdkid5_Nano_Bay_Test.stl`.
 
 ## Parts to buy
 

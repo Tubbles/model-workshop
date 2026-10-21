@@ -19,7 +19,7 @@ screw clamp (its block and foot, the insert bore, the standoff the
 block takes in, and its tab, tray_shape.py's, seated on the block,
 overlapping nothing of the tray), the pocket and the east wall, the
 seat with its channels and the socket strips' pockets, the pry slot
-and recess, the lever slot and the cradle, the reset pin hole and the
+and recess, the knob slot and the cradle, the reset pin hole and the
 back wall, the battery header's pocket and the battery's ribs, and that
 the PCB connector's zone, layout.py's wire rooms and the nice!nano's
 socket strips with the rooms over them hold no plastic as printed.
@@ -185,25 +185,31 @@ DESIGN_PRY_SLOT_WIDTH_MM = 5.0
 DESIGN_PRY_RECESS_UNDER_BOARD_MM = 2.0
 DESIGN_PRY_RECESS_FLOOR_UNDER_MM = 1.2  # the whole floor, the seat left out over it
 DESIGN_POWER_SWITCH_CENTER_X_MM = 47.149
-DESIGN_LEVER_SLOT_MM = (4.0, 2.0)  # along x, along z
-DESIGN_LEVER_SLOT_CENTER_Z_MM = 1.95
-DESIGN_CRADLE_OPENING_MM = 9.2
-DESIGN_CRADLE_DEPTH_MM = 3.9  # from the wall's inner face to the back arms
-DESIGN_CRADLE_PIN_SLOT_MM = 6.0
+DESIGN_KNOB_SLOT_MM = (7.5, 4.1)  # along x, along z, through the ledge and the wall
+DESIGN_KNOB_SLOT_CENTER_Z_MM = 2.8
+DESIGN_CRADLE_OPENING_MM = 11.4
 DESIGN_CRADLE_END_MM = 1.2
-DESIGN_CRADLE_ARM_MM = 0.8
+DESIGN_CRADLE_END_LENGTH_MM = 6.0  # from the ledge's face
 DESIGN_CRADLE_TOP_Z_MM = 3.0
+DESIGN_RETAINER_GROOVE_MM = 1.65  # along y, from the end blocks' south ends
+DESIGN_RETAINER_SOCKET_ACROSS_MM = 12.6  # between the grooves' walls
+DESIGN_RETAINER_LIP_MM = 1.2  # along y
 DESIGN_RESET_CENTER_X_MM = 66.199
 DESIGN_RESET_PIN_HOLE_MM = 3.0
-DESIGN_RESET_PIN_HOLE_AXIS_Z_MM = 1.75
+DESIGN_RESET_PIN_HOLE_AXIS_Z_MM = 3.095
 DESIGN_RESET_PIN_HOLE_FLAT_MM = 1.24
 DESIGN_RESET_BACK_WALL_DEPTH_MM = 4.9  # from the wall's inner face
 DESIGN_RESET_BACK_WALL_MM = 1.2
-DESIGN_RESET_BACK_WALL_TOP_Z_MM = 3.5
-DESIGN_RESET_NOTCH_WIDTH_MM = 1.55
-DESIGN_RESET_NOTCH_FROM_CENTER_MM = 3.425  # each notch's middle
-DESIGN_RESET_NOTCH_BOTTOM_Z_MM = 0.9
+DESIGN_RESET_BACK_WALL_TOP_Z_MM = 6.19
+DESIGN_RESET_NOTCH_WIDTH_MM = 1.2
+DESIGN_RESET_NOTCH_FROM_CENTER_MM = 2.5  # each notch's middle
+DESIGN_RESET_NOTCH_BOTTOM_Z_MM = 2.645
 DESIGN_RESET_BACK_WALL_BEYOND_NOTCHES_MM = 1.0
+DESIGN_RESET_SIDE_WALLS_APART_MM = 6.59
+DESIGN_RESET_SIDE_WALL_MM = 1.2
+DESIGN_RESET_FRONT_STOP_MM = 2.0  # along x
+DESIGN_RESET_FRONT_STOP_DEPTH_MM = 0.9  # from the wall's inner face
+DESIGN_RESET_FRONT_STOP_TOP_Z_MM = 0.945
 DESIGN_BATTERY_HEADER_X_MM = (85.0, 91.0)
 DESIGN_BATTERY_HEADER_MIDDLE_Y_MM = 74.6
 DESIGN_BATTERY_POCKET_MM = (6.4, 6.3)  # inside, along x, along y
@@ -1335,39 +1341,46 @@ def measure_nano_pry_slot(tray, right, design, figures):
 def measure_power_switch(tray, right, figures):
     center = DESIGN_POWER_SWITCH_CENTER_X_MM
     inner, outer = north_wall_faces("power switch")
-    in_slot = (center, (inner + outer) / 2.0, DESIGN_LEVER_SLOT_CENTER_Z_MM)
+    in_slot = (center, (inner + outer) / 2.0, DESIGN_KNOB_SLOT_CENTER_Z_MM)
     across = run_span(tray, right, in_slot, "x", False)
     up = run_span(tray, right, in_slot, "z", False)
     through = run_span(tray, right, in_slot, "y", False)
-    if through[0] > inner or through[1] < outer:
-        figures.problems.append("the lever slot does not pass through the wall")
+    if through[0] > inner - DESIGN_LEDGE_WIDTH_MM or through[1] < outer:
+        figures.problems.append("the knob slot does not pass through the ledge and the wall")
     body_y = inner - 2.0
     opening = run_span(tray, right, (center, body_y, 1.5), "x", False)
     ends = [
         run_span(tray, right, (opening[0] - 0.1, body_y, 1.5), "x", True),
         run_span(tray, right, (opening[1] + 0.1, body_y, 1.5), "x", True),
     ]
-    beside_pins = (opening[0] + 0.5, body_y, 1.5)
-    depth = run_span(tray, right, beside_pins, "y", False)
-    arm = run_span(tray, right, (beside_pins[0], depth[0] - 0.1, 1.5), "y", True)
-    pin_slot = run_span(tray, right, (center, depth[0] - 0.1, 1.5), "x", False)
-    top = run_span(tray, right, (span_middle(ends[0]), body_y, 1.5), "z", True)[1]
+    in_end = (ends[0][1] - 0.3, body_y, 1.5)  # east of the groove's wall
+    end_south = run_span(tray, right, in_end, "y", True)[0]
+    top = run_span(tray, right, in_end, "z", True)[1]
+    in_groove = (in_end[0], end_south - DESIGN_RETAINER_GROOVE_MM / 2.0, 1.5)
+    groove = run_span(tray, right, in_groove, "y", False)
+    socket = run_span(tray, right, in_groove, "x", False)
+    lip = run_span(tray, right, (in_end[0], groove[0] - 0.1, 1.5), "y", True)
     slot_texts = [
-        figures.check("wide", span_length(across), DESIGN_LEVER_SLOT_MM[0], 1),
-        figures.check("tall", span_length(up), DESIGN_LEVER_SLOT_MM[1], 1),
+        figures.check("wide", span_length(across), DESIGN_KNOB_SLOT_MM[0], 1),
+        figures.check("tall", span_length(up), DESIGN_KNOB_SLOT_MM[1], 1),
         figures.check("off x", span_middle(across) - center, 0.0, 2),
-        figures.check("middle z", span_middle(up), DESIGN_LEVER_SLOT_CENTER_Z_MM, 2),
+        figures.check("middle z", span_middle(up), DESIGN_KNOB_SLOT_CENTER_Z_MM, 2),
     ]
     cradle_texts = [
         figures.check("opening", span_length(opening), DESIGN_CRADLE_OPENING_MM, 1),
         figures.check("off x", span_middle(opening) - center, 0.0, 2),
         figures.check("ends", min(span_length(end) for end in ends), DESIGN_CRADLE_END_MM, 1),
-        figures.check("deep to the back arms", depth[1] - depth[0], DESIGN_CRADLE_DEPTH_MM, 1),
-        figures.check("back arms", span_length(arm), DESIGN_CRADLE_ARM_MM, 1),
-        figures.check("pin slot", span_length(pin_slot), DESIGN_CRADLE_PIN_SLOT_MM, 1),
+        figures.check("ends from the ledge's face", inner - DESIGN_LEDGE_WIDTH_MM - end_south,
+                      DESIGN_CRADLE_END_LENGTH_MM, 1),
         figures.check("top z", top, DESIGN_CRADLE_TOP_Z_MM, 1),
+        figures.check("retainer's groove", span_length(groove), DESIGN_RETAINER_GROOVE_MM, 2),
+        figures.check("from the ends", end_south - groove[1], 0.0, 2),
+        figures.check("its socket across", span_length(socket), DESIGN_RETAINER_SOCKET_ACROSS_MM,
+                      1),
+        figures.check("off x", span_middle(socket) - center, 0.0, 2),
+        figures.check("lip", span_length(lip), DESIGN_RETAINER_LIP_MM, 1),
     ]
-    return [f"lever slot: {', '.join(slot_texts)}", f"cradle:     {', '.join(cradle_texts)}"]
+    return [f"knob slot:  {', '.join(slot_texts)}", f"cradle:     {', '.join(cradle_texts)}"]
 
 
 def measure_reset_button(tray, right, figures):
@@ -1386,25 +1399,44 @@ def measure_reset_button(tray, right, figures):
     in_wall = (center, in_front[0] - DESIGN_RESET_BACK_WALL_MM / 2.0, 2.0)
     wall = run_span(tray, right, in_wall, "y", True)
     wall_top = run_span(tray, right, in_wall, "z", True)[1]
+    in_notch_z = DESIGN_RESET_NOTCH_BOTTOM_Z_MM + 0.5
     notch_texts = []
     for side in (-1.0, 1.0):
-        notch_point = (center + side * DESIGN_RESET_NOTCH_FROM_CENTER_MM, in_wall[1], 2.0)
+        notch_point = (center + side * DESIGN_RESET_NOTCH_FROM_CENTER_MM, in_wall[1], in_notch_z)
         notch = run_span(tray, right, notch_point, "x", False)
         bottom = run_span(tray, right, notch_point, "z", False)[0]
         outer_edge = notch[1] if side > 0 else notch[0]
-        end = run_span(tray, right, (outer_edge + side * 0.1, in_wall[1], 2.0), "x", True)
+        end = run_span(tray, right, (outer_edge + side * 0.1, in_wall[1], in_notch_z), "x", True)
         notch_texts.extend([
             figures.check("notch", span_length(notch), DESIGN_RESET_NOTCH_WIDTH_MM, 2),
             figures.check("from the middle", abs(span_middle(notch) - center),
                           DESIGN_RESET_NOTCH_FROM_CENTER_MM, 2),
-            figures.check("bottom z", bottom, DESIGN_RESET_NOTCH_BOTTOM_Z_MM, 1),
+            figures.check("bottom z", bottom, DESIGN_RESET_NOTCH_BOTTOM_Z_MM, 3),
             figures.check("wall beyond", span_length(end), DESIGN_RESET_BACK_WALL_BEYOND_NOTCHES_MM,
                           1),
         ])
+    in_socket = (center, in_front[0] + 2.0, DESIGN_RESET_BACK_WALL_TOP_Z_MM - 0.5)
+    apart = run_span(tray, right, in_socket, "x", False)
+    side_wall = run_span(tray, right, (apart[0] - DESIGN_RESET_SIDE_WALL_MM / 2.0, in_socket[1],
+                                       in_socket[2]), "x", True)
+    in_stop = (center, inner - DESIGN_RESET_FRONT_STOP_DEPTH_MM / 2.0, 0.5)
+    stop_across = run_span(tray, right, in_stop, "x", True)
+    stop_south = run_span(tray, right, in_stop, "y", True)[0]
+    stop_top = run_span(tray, right, in_stop, "z", True)[1]
+    socket_texts = [
+        figures.check("side walls apart", span_length(apart), DESIGN_RESET_SIDE_WALLS_APART_MM, 2),
+        figures.check("off x", span_middle(apart) - center, 0.0, 2),
+        figures.check("thick", span_length(side_wall), DESIGN_RESET_SIDE_WALL_MM, 1),
+        figures.check("front stop", span_length(stop_across), DESIGN_RESET_FRONT_STOP_MM, 1),
+        figures.check("off x", span_middle(stop_across) - center, 0.0, 2),
+        figures.check("from the wall's inner face", inner - stop_south,
+                      DESIGN_RESET_FRONT_STOP_DEPTH_MM, 1),
+        figures.check("top z", stop_top, DESIGN_RESET_FRONT_STOP_TOP_Z_MM, 3),
+    ]
     hole_texts = [
         figures.check("pin hole across", span_length(across), DESIGN_RESET_PIN_HOLE_MM, 1),
         figures.check("off x", span_middle(across) - center, 0.0, 2),
-        figures.check("axis z", up[0] + radius, DESIGN_RESET_PIN_HOLE_AXIS_Z_MM, 2),
+        figures.check("axis z", up[0] + radius, DESIGN_RESET_PIN_HOLE_AXIS_Z_MM, 3),
         f"top {up[1] - up[0] - radius:.3f} above the axis",
         figures.check("flat top", flat, DESIGN_RESET_PIN_HOLE_FLAT_MM, 2),
     ]
@@ -1412,9 +1444,10 @@ def measure_reset_button(tray, right, figures):
         figures.check("back wall from the wall's inner face", in_front[1] - in_front[0],
                       DESIGN_RESET_BACK_WALL_DEPTH_MM, 1),
         figures.check("thick", span_length(wall), DESIGN_RESET_BACK_WALL_MM, 1),
-        figures.check("top z", wall_top, DESIGN_RESET_BACK_WALL_TOP_Z_MM, 1),
+        figures.check("top z", wall_top, DESIGN_RESET_BACK_WALL_TOP_Z_MM, 2),
     ] + notch_texts
-    return [f"reset:      {', '.join(hole_texts)}", f"back wall:  {', '.join(wall_texts)}"]
+    return [f"reset:      {', '.join(hole_texts)}", f"back wall:  {', '.join(wall_texts)}",
+            f"socket:     {', '.join(socket_texts)}"]
 
 
 def measure_battery_pocket(tray, right, design, figures):
