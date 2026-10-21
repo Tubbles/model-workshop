@@ -23,7 +23,6 @@ stacked under the frame: nothing overlapping, the backing touching only
 the bosses' ends, every pad 0.1 under its socket's bottom.
 """
 
-import math
 import os
 import sys
 
@@ -84,19 +83,31 @@ def parse_arguments(argument_list):
     return arguments
 
 
+def boss_end_area_on_backing(right):
+    """The bosses' ends' rings where the backing lies under them in
+    plan. Two of the left half's bosses by the nice!nano stand 0.8 over
+    the west strip's cutout, so the backing takes less than the whole
+    ring there."""
+    plan = shape.backing_face(right)
+    return sum(
+        cells.circle_face(center, cells.BOSS_DIAMETER_MM / 2.0)
+        .cut(cells.circle_face(center, cells.INSERT_BORE_DIAMETER_MM / 2.0))
+        .common(plan).Area
+        for center in shape.boss_centers(right))
+
+
 def check_stack(frame, stacked, right):
     """Nothing overlapping, and the backing touching the frame over the
-    bosses' ends' rings alone."""
+    bosses' ends' rings alone, where it lies under them."""
     if frame.common(stacked).Volume > MEASURE_TOLERANCE_MM:
         raise SystemExit("error: the backing overlaps the frame")
     sunk = frame.copy()
     sunk.translate(App.Vector(0.0, 0.0, -CONTACT_PROBE_DEPTH_MM))
     contact = sunk.common(stacked).Volume / CONTACT_PROBE_DEPTH_MM
-    expected = len(shape.boss_centers(right)) * math.pi * (
-        (cells.BOSS_DIAMETER_MM / 2.0) ** 2 - (cells.INSERT_BORE_DIAMETER_MM / 2.0) ** 2)
+    expected = boss_end_area_on_backing(right)
     if abs(contact - expected) > CONTACT_VOLUME_RELATIVE_TOLERANCE * expected:
         raise SystemExit(f"error: the backing touches the frame over {contact:.4f} mm2, the "
-                         f"bosses' ends are {expected:.4f} mm2")
+                         f"bosses' ends over it are {expected:.4f} mm2")
     return contact
 
 
