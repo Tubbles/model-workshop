@@ -5,19 +5,20 @@ printing whole trays (work items 006, 009, 010 and 011). BAY_FITS can
 step the fit over several bays again, side by side in one strip.
 
 Each bay is build_tray()'s left tray (tray_shape.py) with the bay's
-layout.MountFits, cut by one box around the nice!nano's corner, so the
-bay is the tray's geometry and not a copy of it. The box reaches past
-the tray's west and north faces, so it holds the floor, the west and
-north walls at full height with the ledge and the west socket strip's
-pocket in it, the USB window, the north block, the screw clamp's block
-and foot with the standoff at (18.574, 37.782) they take in, the east
-wall with the east strip's pocket, the seat the board lies on, the pry
-slot and the pry recess the seat leaves free.
-Its east face (BAY_EAST_X_MM) cuts the floor and the north wall and
-ledge east of the battery's northwest rib, its south face
-(BAY_SOUTH_Y_MM) the floor and the west wall and ledge south of the
-clamp's block, so the bay keeps that standoff and the rib whole and
-floor beyond the rib and the block to join and to hold.
+layout.MountFits, cut by one box around the nice!nano's bay on column
+2, so the bay is the tray's geometry and not a copy of it. The box
+reaches past the tray's north faces, so it holds the floor, column 2's
+north wall at full height with its ledge as cut, the column 1/2 step's
+wall and ledge with the west socket strip's pocket in it, the USB
+window, the north block, the screw clamp's block and foot, the west
+and east walls with the strips' pockets and their raised pieces, the
+seat the board lies on, the pry slot and the pry recess the seat
+leaves free. Its west face (BAY_WEST_X_MM) cuts the floor and columns
+0 and 1's north wall and ledge west of the step, its east face
+(BAY_EAST_X_MM) the floor and column 3's north wall and ledge west of
+the battery's west rib, its south face (BAY_SOUTH_Y_MM) the floor
+south of the clamp's block, so the bay keeps floor beyond the walls
+and the block to hold.
 The box crosses nothing else: every other feature of the tray lies
 wholly inside it or wholly outside, at least BAY_BOX_MARGIN_MM from
 its faces, and the faces keep BAY_BOX_MARGIN_MM plus the corner's
@@ -102,8 +103,9 @@ DEFAULT_BAY_INDEX = 0
 # outside by CUT_EXTRA_MM. Every feature of the tray but the walls, the
 # ledge and the floor keeps BAY_BOX_MARGIN_MM from its faces, inside or
 # outside.
-BAY_EAST_X_MM = 28.0
-BAY_SOUTH_Y_MM = 31.0
+BAY_WEST_X_MM = 34.0
+BAY_EAST_X_MM = 60.124
+BAY_SOUTH_Y_MM = 36.478
 BAY_BOX_MARGIN_MM = 0.5
 
 # The bays lie this far apart, bridged by the floor's thickness from
@@ -116,7 +118,7 @@ BAY_GAP_MM = 2.0
 NOTCH_WIDTH_MM = 1.0
 NOTCH_DEPTH_MM = 0.8
 NOTCH_PITCH_MM = 2.0
-NOTCH_MIDDLE_X_MM = 7.0
+NOTCH_MIDDLE_X_MM = 47.0
 
 USAGE = f"""\
 usage: freecadcmd model/kbdkid5/scripts/export_nano_bay_test.py --pass <bay.stl>
@@ -200,7 +202,7 @@ def common_figures(fits):
 
 
 def bay_figures(fits):
-    pocket = layout.nano_pocket_east_x(fits) - layout.west_ledge_face_x()
+    pocket = layout.nano_pocket_east_x(fits) - layout.nano_pocket_west_x()
     printed = pocket - 2.0 * layout.PRINT_SWELLING_PER_SIDE_MM
     return (
         f"the pocket {pocket:.1f} across as modelled, {printed:.1f} as printed, the east wall's "
@@ -211,19 +213,15 @@ def bay_figures(fits):
 # The box against the tray's features, in plan.
 
 
-def tray_outer_west_x():
-    return min(x for x, _ in layout.tray_outer_polygon())
-
-
 def tray_outer_north_y():
-    """The north wall's outer face behind the nice!nano."""
-    return layout.outer_face_y(layout.NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM)
+    """The northmost outer face the box spans, column 3's."""
+    return layout.outer_face_y(layout.NORTH_EDGE_Y_OF_COLUMN_3_MM)
 
 
 def bay_box_plan():
     """(x range, y range) of the box each bay is cut by."""
     return (
-        (tray_outer_west_x() - CUT_EXTRA_MM, BAY_EAST_X_MM),
+        (BAY_WEST_X_MM, BAY_EAST_X_MM),
         (BAY_SOUTH_Y_MM, tray_outer_north_y() + CUT_EXTRA_MM),
     )
 
@@ -310,7 +308,8 @@ def outline_corner_radii(corner_radius):
 def box_cutting_faces():
     """(label, start, end) of the box's faces that cut the tray, in plan."""
     (west, east), (south, north) = bay_box_plan()
-    return (("east face", (east, south), (east, north)),
+    return (("west face", (west, south), (west, north)),
+            ("east face", (east, south), (east, north)),
             ("south face", (west, south), (east, south)))
 
 
@@ -361,7 +360,7 @@ def cut_bay(tray):
 
 
 def bay_pitch():
-    return BAY_EAST_X_MM - tray_outer_west_x() + BAY_GAP_MM
+    return BAY_EAST_X_MM - BAY_WEST_X_MM + BAY_GAP_MM
 
 
 def bridge(index):
@@ -429,7 +428,7 @@ def on_the_bed(strip):
     """The strip moved so the floor's underside lies on z = 0 and the
     westernmost bay's southwest corner on x = y = 0."""
     moved = strip.copy()
-    moved.translate(App.Vector(-tray_outer_west_x(), -BAY_SOUTH_Y_MM, -FLOOR_UNDERSIDE_Z_MM))
+    moved.translate(App.Vector(-BAY_WEST_X_MM, -BAY_SOUTH_Y_MM, -FLOOR_UNDERSIDE_Z_MM))
     return moved
 
 
@@ -450,10 +449,11 @@ def main():
     if corner_problems:
         raise SystemExit("error: the box cuts a rounded corner:\n  " + "\n  ".join(corner_problems))
     print(f"box:        x {format_range(x_range)}, y {format_range(y_range)}, over the tray's "
-          f"height: its east face cuts the floor, the north wall and the ledge at x "
-          f"{BAY_EAST_X_MM}, its south face the floor, the west wall and the ledge at y "
-          f"{BAY_SOUTH_Y_MM}, each {BAY_BOX_MARGIN_MM} plus the corner's radius from every "
-          f"outline vertex and beyond that by at least {corner_clearance}")
+          f"height: its west face cuts the floor, the north wall and the ledge at x "
+          f"{BAY_WEST_X_MM}, its east face the floor, the north wall and the ledge at x "
+          f"{BAY_EAST_X_MM}, its south face the floor at y {BAY_SOUTH_Y_MM}, each "
+          f"{BAY_BOX_MARGIN_MM} plus the corner's radius from every outline vertex and beyond "
+          f"that by at least {corner_clearance}")
     print(f"clamp:      in every bay {common_figures(bay_fits(0, arguments.board_size))}")
     bays = []
     for index in range(len(BAY_FITS)):

@@ -15,10 +15,10 @@ diameter, the plastic behind and over them, the flat top, the lead-in),
 the magnet slots, the parking hole, the sockets' clearance from the
 tray as built, and the mounts: the USB shell's channel and the USB
 window, the nice!nano's north block with the bar over the shell, the
-screw clamp (its block and foot, the insert bore, the standoff the
-block takes in, and its tab, tray_shape.py's, seated on the block,
-overlapping nothing of the tray), the pocket and the east wall, the
-seat with its channels and the socket strips' pockets, the pry slot
+screw clamp (its block and foot, the insert bore, and its tab,
+tray_shape.py's, seated on the block, overlapping nothing of the
+tray), the pocket and the west and east walls with their raised
+pieces, the seat with its channels and the socket strips' pockets, the pry slot
 and recess, the knob slot and the cradle, the reset pin hole and the
 back wall, the battery header's pocket and the battery's ribs, and that
 the PCB connector's zone, layout.py's wire rooms and the nice!nano's
@@ -79,8 +79,8 @@ DESIGN_STANDOFF_DIAMETER_MM = 5.8
 DESIGN_STANDOFF_BORE_MM = 3.2
 DESIGN_MOUNTING_DRILLS_MM = (
     (18.574, 18.732),
-    (18.574, 37.782),
-    (76.041, 43.260),
+    (18.574, 56.832),
+    (56.091, 23.460),
     (94.774, 60.404),
     (114.141, 19.765),
 )
@@ -127,18 +127,19 @@ DESIGN_LEAST_SOCKET_CLEARANCE_MM = 0.5
 # placed on either half by half_point(). The nice!nano's mounts follow
 # the board, so they are given from its edges, and the board from its
 # fixed corner (the west edge and the USB end), its size DESIGN.md's
-# unless a key=value word overrides it.
+# unless a key=value word overrides it. The board lies on column 2, 0.3
+# from the column 1/2 step's ledge face, the pocket's west face.
 DESIGN_PRINT_SWELLING_PER_SIDE_MM = 0.2  # a 45 degree face: this times the square root of 2
-DESIGN_NANO_WEST_X_MM = 0.9
-DESIGN_NANO_USB_END_Y_MM = 75.316
+DESIGN_NANO_WEST_X_MM = 38.524
+DESIGN_NANO_USB_END_Y_MM = 80.078
 DESIGN_NANO_SIZE_MM = (18.20, 33.20)  # along x, along y
 DESIGN_NANO_SEAT_Z_MM = 1.2  # the board's underside, the seat's top
 DESIGN_NANO_TOP_Z_MM = 2.8
-DESIGN_NANO_FROM_WEST_LEDGE_FACE_MM = 0.3
+DESIGN_NANO_FROM_STEP_LEDGE_FACE_MM = 0.3
 DESIGN_SHELL_WIDTH_MM = 8.94
 DESIGN_SHELL_TOP_Z_MM = 4.36
 DESIGN_SHELL_PAST_BOARD_MM = 0.87  # the shell's mouth past the board's USB end
-DESIGN_NORTH_EDGES_Y_MM = {"nice!nano": 75.486, "power switch": 80.248, "reset button": 82.629}
+DESIGN_NORTH_EDGES_Y_MM = {"nice!nano": 80.248, "power switch": 75.486, "reset button": 82.629}
 DESIGN_USB_WINDOW_MM = (10.5, 4.5)  # along x, along z
 DESIGN_USB_WINDOW_CENTER_Z_MM = 2.78
 DESIGN_USB_WINDOW_CORNER_RADIUS_MM = 1.95
@@ -151,12 +152,20 @@ DESIGN_NANO_BAR_HEIGHT_MM = 1.5
 DESIGN_NANO_BAR_DEPTH_MM = 0.62  # to the shell's mouth
 DESIGN_USB_CHANNEL_PAST_MOUTH_MM = 0.32  # its width the bar's opening, its top the bar's underside
 DESIGN_NANO_NORTH_BLOCK_PAST_BOARD_MM = 0.5  # its ends past the board's edges, the cut-away's
-# The pocket across: the board as a fit from the west ledge's face, its
-# swelling and DESIGN_NANO_POCKET_FIT_MM's clearance.
+# The pocket across: the board as a fit from the pocket's west face, its
+# swelling and DESIGN_NANO_POCKET_FIT_MM's clearance. The walls beside
+# it, their raised pieces up to the PCB's underside over the stretches
+# given, along y.
 DESIGN_NANO_POCKET_FIT_MM = 0.1
-DESIGN_NANO_EAST_WALL_OUTER_X_MM = 21.5  # the battery's northwest rib's inner face
+DESIGN_NANO_EAST_WALL_OUTER_X_MM = 59.124
+DESIGN_NANO_WEST_WALL_OUTER_X_MM = 36.124
 DESIGN_NANO_EAST_WALL_TOP_Z_MM = 5.2
-DESIGN_NANO_EAST_WALL_NORTH_Y_MM = 65.3
+DESIGN_NANO_WALLS_NORTH_Y_MM = {"west": 65.3, "east": 79.648}
+DESIGN_NANO_RAISED_WALLS_Y_MM = {
+    "west": ((49.710, 59.837),),
+    "east": ((43.278, 47.931), (53.581, 66.981), (72.631, 79.648)),
+}
+DESIGN_NANO_RAISED_WALL_TOP_Z_MM = 9.5
 # The seat under the board and the socket strips' pockets over its top
 # (the user's request of 2026-10-20), given from the board's edges: the
 # seat's edges inside its long edges, the pockets' faces in the west
@@ -167,9 +176,8 @@ DESIGN_NANO_STRIP_POCKETS_OUTSIDE_EDGES_MM = 0.775
 DESIGN_NANO_STRIP_POCKETS_FROM_USB_END_MM = (1.6565, 33.9335)  # north end, south end
 # The screw clamp at the board's south end (work items 009 and 010), at
 # the default press: the foot across the pocket, the block from the west
-# ledge's face to the east wall's outer face, its bore on the board's
-# center line, and the standoff the block, the foot and the east wall
-# take in.
+# wall's outer face to the east wall's, its bore on the board's center
+# line.
 DESIGN_CLAMP_FOOT_TOP_Z_MM = 2.8
 DESIGN_CLAMP_SCREW_FROM_BOARD_MM = 6.5  # the bore's axis from the board's south end
 DESIGN_CLAMP_BLOCK_ALONG_MM = 5.8
@@ -177,14 +185,13 @@ DESIGN_CLAMP_BLOCK_TOP_Z_MM = 4.8  # the board's top plus the nose's depth less 
 DESIGN_CLAMP_NOSE_DEPTH_MM = 2.1
 DESIGN_CLAMP_BORE_MM = 3.2
 DESIGN_CLAMP_INSERT_ROOM_PRINTED_MM = 4.6  # the bore's bottom counted 0.2 higher
-DESIGN_MERGED_STANDOFF_MM = (18.574, 37.782)
 # The pry slot through the clamp's block and foot and the recess under
 # it and the board's south end (work item 010).
 DESIGN_PRY_SLOT_FROM_LEDGE_FACE_MM = 1.0
 DESIGN_PRY_SLOT_WIDTH_MM = 5.0
 DESIGN_PRY_RECESS_UNDER_BOARD_MM = 2.0
 DESIGN_PRY_RECESS_FLOOR_UNDER_MM = 1.2  # the whole floor, the seat left out over it
-DESIGN_POWER_SWITCH_CENTER_X_MM = 47.149
+DESIGN_POWER_SWITCH_CENTER_X_MM = 9.049
 DESIGN_KNOB_SLOT_MM = (7.5, 4.1)  # along x, along z, through the ledge and the wall
 DESIGN_KNOB_SLOT_CENTER_Z_MM = 2.8
 DESIGN_CRADLE_OPENING_MM = 11.4
@@ -217,12 +224,16 @@ DESIGN_BATTERY_POCKET_WALL_MM = 1.2
 DESIGN_BATTERY_POCKET_TOP_Z_MM = 4.5
 DESIGN_BATTERY_POST_SLOT_MM = 3.14
 DESIGN_BATTERY_POST_SLOT_BOTTOM_Z_MM = 1.21
-DESIGN_BATTERY_X_MM = (22.0, 56.37)
-DESIGN_BATTERY_Y_MM = (8.1, 59.63)
+# The battery, turned: its width and length, its center, its length's
+# angle north of east. Its frame runs across its width, 90 degrees
+# clockwise of its length, and along its length, from its center.
+DESIGN_BATTERY_SIZE_MM = (34.37, 51.53)  # across, along
+DESIGN_BATTERY_CENTER_MM = (93.1, 35.6)
+DESIGN_BATTERY_LENGTH_ANGLE_DEGREES = 21.5
 DESIGN_BATTERY_RIB_CLEARANCE_MM = 0.5
 DESIGN_BATTERY_RIB_MM = (0.8, 6.0, 1.0)  # thick, arm from the pocket's corner, tall
-DESIGN_BATTERY_RIB_CORNERS = ((-1, -1), (-1, 1), (1, -1))  # (east, north): all but the northeast
-DESIGN_BATTERY_RIB_ARMS_IN_EAST_WALL = (((-1, 1), "y"),)  # the northwest rib's arm along y
+DESIGN_BATTERY_LEAD_CORNER = (-1, 1)  # (across, along): the northeast corner, no rib
+DESIGN_BATTERY_RIB_CORNERS = ((-1, -1), (1, -1), (1, 1))  # (across, along): the west, southwest, east
 DESIGN_PCB_CONNECTOR_ZONE_MM = ((20.0, 37.0), (65.5, 74.5))
 
 # The walls are measured at these points of DESIGN.md's outline, (where,
@@ -230,8 +241,7 @@ DESIGN_PCB_CONNECTOR_ZONE_MM = ((20.0, 37.0), (65.5, 74.5))
 # above the ledge and clear of every cut. The slant's is its middle,
 # between two magnet slots. The ledge is measured at the west one.
 WALL_PROBE_Z_MM = 10.0
-# Under the ledge's top, over the nice!nano clamp's block (z 4.8), which
-# the west ledge's probe at y 34.0 runs into below that.
+# Under the ledge's top.
 LEDGE_PROBE_Z_MM = 6.0
 FLOOR_PROBE_MM = (60.0, 40.0)  # open floor, clear of every standoff and boss
 SLANT_PROBE_ALONG_MM = 31.25
@@ -936,7 +946,7 @@ class Board:
         self.south = DESIGN_NANO_USB_END_Y_MM - length
         self.center = (self.west + self.east) / 2.0
         self.width = width
-        self.ledge_face = self.west - DESIGN_NANO_FROM_WEST_LEDGE_FACE_MM
+        self.ledge_face = self.west - DESIGN_NANO_FROM_STEP_LEDGE_FACE_MM  # the pocket's west face
 
 
 class MountDesign:
@@ -1152,9 +1162,8 @@ def clamp_block_south_y(board):
 def measure_nano_clamp(tray, right, design, figures):
     """The clamp's foot, its north face against the board's end gap, the
     block with its top, its east face and the insert bore, the bore's
-    axis from the board's south end, the floor left under it, the room
-    it leaves the insert as printed, and the standoff the block takes in,
-    its bore open down to the floor."""
+    axis from the board's south end, the floor left under it and the
+    room it leaves the insert as printed."""
     board = design.board
     stop_face = board.south - DESIGN_NANO_FOOT_GAP_MM
     in_foot = (board.center, stop_face - 0.5, DESIGN_CLAMP_FOOT_TOP_Z_MM / 2.0)
@@ -1173,9 +1182,6 @@ def measure_nano_clamp(tray, right, design, figures):
     bore_bottom = run_span(tray, right, in_bore, "z", False)[0]
     under_bore = run_span(tray, right, (board.center, screw_y, bore_bottom - 0.1), "z", True)
     room = block_top - bore_bottom - DESIGN_PRINT_SWELLING_PER_SIDE_MM
-    in_standoff_bore = (DESIGN_MERGED_STANDOFF_MM[0], DESIGN_MERGED_STANDOFF_MM[1], 1.0)
-    standoff_bore = run_span(tray, right, in_standoff_bore, "x", False)
-    standoff_bore_bottom = run_span(tray, right, in_standoff_bore, "z", False)[0]
     follows = design.clamp_press_overridden
     texts = [
         figures.check("foot from the board's south end", board.south - foot_along[1],
@@ -1193,48 +1199,80 @@ def measure_nano_clamp(tray, right, design, figures):
         figures.check("floor under it", span_length(under_bore), DESIGN_FLOOR_MM, 1),
         check_or_report(figures, "the insert's room as printed", room,
                         unless(follows, DESIGN_CLAMP_INSERT_ROOM_PRINTED_MM), 2),
-        figures.check(f"the standoff taken in at {DESIGN_MERGED_STANDOFF_MM}: its bore",
-                      span_length(standoff_bore), DESIGN_STANDOFF_BORE_MM, 1),
-        figures.check("down to z", standoff_bore_bottom, 0.0, 2),
     ]
     return f"clamp:      {', '.join(texts)}"
 
 
 def pocket_east_x(design):
-    """The pocket's east face: the board as a fit from the west ledge's
+    """The pocket's east face: the board as a fit from the pocket's west
     face, the print's swelling on both sides and the fit's clearance."""
     board = design.board
     return (board.ledge_face + board.width + 2.0 * DESIGN_PRINT_SWELLING_PER_SIDE_MM
             + design.pocket_fit)
 
 
-def measure_nano_east_wall(tray, right, design, figures):
-    """The pocket across the board, from the west ledge's face to the
-    east wall's inner face, and the wall: its outer face, its top, its
-    north face, and its south end running into the clamp's block."""
+def unraised_y(side, south):
+    """The middle of the first stretch of a wall that does not rise,
+    from its south end north."""
+    for low, high in DESIGN_NANO_RAISED_WALLS_Y_MM[side]:
+        if low > south + 1e-6:
+            return (south + low) / 2.0
+        south = high
+    return (south + DESIGN_NANO_WALLS_NORTH_Y_MM[side]) / 2.0
+
+
+def measure_raised_pieces(tray, right, side, outer_x, figures):
+    """(texts) of a wall's raised pieces: each one's ends along y and its
+    top, at its middle in the wall's outer part."""
+    inward = 1.0 if side == "west" else -1.0
+    x = outer_x + inward * 0.5
+    texts = []
+    for low, high in DESIGN_NANO_RAISED_WALLS_Y_MM[side]:
+        point = (x, (low + high) / 2.0, (DESIGN_NANO_EAST_WALL_TOP_Z_MM
+                                          + DESIGN_NANO_RAISED_WALL_TOP_Z_MM) / 2.0)
+        along = run_span(tray, right, point, "y", True)
+        top = run_span(tray, right, point, "z", True)[1]
+        texts.extend([
+            figures.check("raised from y", along[0], low, 3),
+            figures.check("to", along[1], high, 3),
+            figures.check("top z", top, DESIGN_NANO_RAISED_WALL_TOP_Z_MM, 1),
+        ])
+    return texts
+
+
+def measure_nano_walls(tray, right, design, figures):
+    """The pocket across the board, from its west face to its east face,
+    and each wall: its outer face, its top where it does not rise, its
+    north face, its south end running into the clamp's block, and its
+    raised pieces."""
     board = design.board
-    middle_y = (board.south + DESIGN_NANO_EAST_WALL_NORTH_Y_MM) / 2.0
+    middle_y = (board.south + DESIGN_NANO_WALLS_NORTH_Y_MM["west"]) / 2.0
     over_seat = (DESIGN_NANO_SEAT_Z_MM + DESIGN_NANO_TOP_Z_MM) / 2.0
     pocket = run_span(tray, right, (board.center, middle_y, over_seat), "x", False)
-    # Beside the merged standoff's bore, so the run south meets plastic
-    # only, the wall's, the standoff's and the block's.
-    in_wall = (DESIGN_NANO_EAST_WALL_OUTER_X_MM - 0.5, middle_y, 2.0)
-    across = run_span(tray, right, in_wall, "x", True)
-    along = run_span(tray, right, in_wall, "y", True)
-    top = run_span(tray, right, in_wall, "z", True)[1]
     texts = [
         figures.check("pocket from x", pocket[0], round(board.ledge_face, 3), 3),
         figures.check("across", span_length(pocket), round(pocket_east_x(design) - board.ledge_face,
                                                              3), 3),
-        figures.check("the wall's inner face from the board's east edge", pocket[1] - board.east,
-                      round(pocket_east_x(design) - board.east, 3), 3),
-        figures.check("its outer face x", across[1], DESIGN_NANO_EAST_WALL_OUTER_X_MM, 1),
-        figures.check("top z", top, DESIGN_NANO_EAST_WALL_TOP_Z_MM, 1),
-        figures.check("north face y", along[1], DESIGN_NANO_EAST_WALL_NORTH_Y_MM, 1),
-        figures.check("running into the clamp's block, to its south face y", along[0],
-                      round(clamp_block_south_y(board), 3), 3),
+        figures.check("the east wall's inner face from the board's east edge",
+                      pocket[1] - board.east, round(pocket_east_x(design) - board.east, 3), 3),
     ]
-    return f"east wall:  {', '.join(texts)}"
+    block_north = clamp_block_south_y(board) + DESIGN_CLAMP_BLOCK_ALONG_MM
+    for side, outer_x, outer_end in (("west", DESIGN_NANO_WEST_WALL_OUTER_X_MM, 0),
+                                     ("east", DESIGN_NANO_EAST_WALL_OUTER_X_MM, 1)):
+        inward = 1.0 if side == "west" else -1.0
+        in_wall = (outer_x + inward * 0.5, unraised_y(side, block_north), 2.0)
+        across = run_span(tray, right, in_wall, "x", True)
+        along = run_span(tray, right, in_wall, "y", True)
+        top = run_span(tray, right, in_wall, "z", True)[1]
+        texts.extend([
+            figures.check(f"the {side} wall's outer face x", across[outer_end], outer_x, 3),
+            figures.check("top z", top, DESIGN_NANO_EAST_WALL_TOP_Z_MM, 1),
+            figures.check("north face y", along[1], DESIGN_NANO_WALLS_NORTH_Y_MM[side], 3),
+            figures.check("running into the clamp's block, to its south face y", along[0],
+                          round(clamp_block_south_y(board), 3), 3),
+        ])
+        texts.extend(measure_raised_pieces(tray, right, side, outer_x, figures))
+    return f"walls:      {', '.join(texts)}"
 
 
 def strip_pockets_middle_y(board):
@@ -1268,9 +1306,10 @@ def measure_nano_seat(tray, right, design, figures):
 
 
 def measure_nano_strip_pockets(tray, right, design, figures):
-    """The socket strips' pockets over the board's top: the west ledge's
-    face and the east wall's inner face cut back, both open from the
-    board's top up, the west one's ends and the east one's south end."""
+    """The socket strips' pockets over the board's top: the walls' inner
+    faces cut back, both open from the board's top up, the west one's
+    ends, its north end in the column 1/2 step's ledge, and the east
+    one's south end."""
     board = design.board
     y = strip_pockets_middle_y(board)
     z = (DESIGN_NANO_TOP_Z_MM + DESIGN_NANO_EAST_WALL_TOP_Z_MM) / 2.0
@@ -1499,85 +1538,112 @@ def measure_battery_pocket(tray, right, design, figures):
     return f"pocket:     {', '.join(texts)}"
 
 
+def battery_axes():
+    """(across, along): the unit vectors of the pouch's width and length
+    in the left half's frame."""
+    angle = math.radians(DESIGN_BATTERY_LENGTH_ANGLE_DEGREES)
+    along = (math.cos(angle), math.sin(angle))
+    return (along[1], -along[0]), along
+
+
+def battery_place(across, along, z):
+    """A point given in the pouch's frame, as the left half's (x, y, z)."""
+    (across_x, across_y), (along_x, along_y) = battery_axes()
+    x, y = DESIGN_BATTERY_CENTER_MM
+    return (x + across * across_x + along * along_x, y + across * across_y + along * along_y, z)
+
+
+def battery_run(tray, right, point, axis, material):
+    """(low, high) in the pouch's frame along "across", "along" or "z" of
+    the material (or the empty) run through the point given in that
+    frame, measured on the given half."""
+    across_axis, along_axis = battery_axes()
+    plan = {"across": across_axis, "along": along_axis}.get(axis)
+    direction = UP if plan is None else vector(half_vector(plan, right))
+    low, high = run_through(tray, half_place(right, battery_place(*point)), direction, material)
+    origin = point[("across", "along", "z").index(axis)]
+    return origin + low, origin + high
+
+
 def battery_rib_pocket():
+    """(across range, along range) of the ribs' inner faces."""
     clearance = DESIGN_BATTERY_RIB_CLEARANCE_MM
-    return (
-        (DESIGN_BATTERY_X_MM[0] - clearance, DESIGN_BATTERY_X_MM[1] + clearance),
-        (DESIGN_BATTERY_Y_MM[0] - clearance, DESIGN_BATTERY_Y_MM[1] + clearance),
-    )
+    return tuple((-size / 2.0 - clearance, size / 2.0 + clearance)
+                 for size in DESIGN_BATTERY_SIZE_MM)
 
 
 def battery_rib_arm(tray, right, corner, outward, axis):
     """(thickness, arm from the pocket's corner, top z) of the rib arm
-    running along axis from the pocket's corner, (east, north) outward."""
-    (corner_x, corner_y), (east, north) = corner, outward
+    running along axis ("across" or "along") from the pocket's corner,
+    (across, along) outward."""
+    (corner_across, corner_along), (across_sign, along_sign) = corner, outward
     thickness, arm, _height = DESIGN_BATTERY_RIB_MM
-    if axis == "x":
-        point = (corner_x - east * arm / 2.0, corner_y + north * thickness / 2.0, 0.5)
-        across, along_index, sign = "y", 0, east
+    if axis == "across":
+        point = (corner_across - across_sign * arm / 2.0,
+                 corner_along + along_sign * thickness / 2.0, 0.5)
+        sideways, along_index, sign = "along", 0, across_sign
     else:
-        point = (corner_x + east * thickness / 2.0, corner_y - north * arm / 2.0, 0.5)
-        across, along_index, sign = "x", 1, north
-    width = span_length(run_span(tray, right, point, across, True))
-    along = run_span(tray, right, point, axis, True)
-    free_end = along[0] if sign > 0 else along[1]
-    top = run_span(tray, right, point, "z", True)[1]
+        point = (corner_across + across_sign * thickness / 2.0,
+                 corner_along - along_sign * arm / 2.0, 0.5)
+        sideways, along_index, sign = "across", 1, along_sign
+    width = span_length(battery_run(tray, right, point, sideways, True))
+    run = battery_run(tray, right, point, axis, True)
+    free_end = run[0] if sign > 0 else run[1]
+    top = battery_run(tray, right, point, "z", True)[1]
     return width, abs(free_end - corner[along_index]), top
 
 
-def check_rib_arm_in_east_wall(tray, right, corner, outward, axis, figures):
-    """A rib arm the nice!nano's east wall takes in: the wall's plastic
-    up to the wall's top all over the arm's middle line."""
-    (corner_x, corner_y), (east, north) = corner, outward
-    thickness, arm, _height = DESIGN_BATTERY_RIB_MM
-    alongs = (0.1, arm)
-    if axis == "x":
-        ends = [(corner_x - east * along, corner_y + north * thickness / 2.0) for along in alongs]
-    else:
-        ends = [(corner_x + east * thickness / 2.0, corner_y - north * along) for along in alongs]
-    for x, y in ends:
-        top = run_span(tray, right, (x, y, 0.5), "z", True)[1]
-        if abs(top - DESIGN_NANO_EAST_WALL_TOP_Z_MM) > 1e-6:
-            figures.problems.append(f"the battery rib arm at ({x:.3f}, {y:.3f}) stands to z "
-                                    f"{top:.3f}, not inside the east wall")
-
-
 def measure_battery_ribs(tray, right, figures):
-    (low_x, high_x), (low_y, high_y) = battery_rib_pocket()
+    """The ribs at the pouch's corners but its lead's, turned with it:
+    each arm's thickness, reach and height, the pocket they bound across
+    and along it, its middle on the pouch's, and no rib at the lead's
+    corner."""
+    (low_across, high_across), (low_along, high_along) = battery_rib_pocket()
     thickness, arm, height = DESIGN_BATTERY_RIB_MM
     widths, arms, tops = [], [], []
-    for east, north in DESIGN_BATTERY_RIB_CORNERS:
-        corner = (high_x if east > 0 else low_x, high_y if north > 0 else low_y)
-        for axis in ("x", "y"):
-            if ((east, north), axis) in DESIGN_BATTERY_RIB_ARMS_IN_EAST_WALL:
-                check_rib_arm_in_east_wall(tray, right, corner, (east, north), axis, figures)
-                continue
-            width, reach, top = battery_rib_arm(tray, right, corner, (east, north), axis)
+    for corner_signs in DESIGN_BATTERY_RIB_CORNERS:
+        across_sign, along_sign = corner_signs
+        corner = (high_across if across_sign > 0 else low_across,
+                  high_along if along_sign > 0 else low_along)
+        for axis in ("across", "along"):
+            width, reach, top = battery_rib_arm(tray, right, corner, corner_signs, axis)
             widths.append(width)
             arms.append(reach)
             tops.append(top)
-    inside_x = run_span(tray, right, ((low_x + high_x) / 2.0, low_y + arm / 2.0, 0.5), "x", False)
-    inside_y = run_span(tray, right, (low_x + arm / 2.0, (low_y + high_y) / 2.0, 0.5), "y", False)
-    for point in ((high_x - arm / 2.0, high_y + thickness / 2.0, 0.5),
-                  (high_x + thickness / 2.0, high_y - arm / 2.0, 0.5)):
-        if tray.isInside(half_place(right, point), SAME_PLACE_MM, True):
+    lead_across, lead_along = DESIGN_BATTERY_LEAD_CORNER
+    # Measured along the sides away from the lead's corner, where both
+    # ends have a rib.
+    near_along = low_along if lead_along > 0 else high_along
+    near_across = low_across if lead_across > 0 else high_across
+    inside_across = battery_run(tray, right, (0.0, near_along + lead_along * arm / 2.0, 0.5),
+                                "across", False)
+    inside_along = battery_run(tray, right, (near_across + lead_across * arm / 2.0, 0.0, 0.5),
+                               "along", False)
+    corner = (high_across if lead_across > 0 else low_across,
+              high_along if lead_along > 0 else low_along)
+    for point in ((corner[0] - lead_across * arm / 2.0, corner[1] + lead_along * thickness / 2.0,
+                   0.5),
+                  (corner[0] + lead_across * thickness / 2.0, corner[1] - lead_along * arm / 2.0,
+                   0.5)):
+        if tray.isInside(half_place(right, battery_place(*point)), SAME_PLACE_MM, True):
             figures.problems.append(
-                "a battery rib stands at the northeast corner, which DESIGN.md leaves free"
+                "a battery rib stands at its lead's corner, which DESIGN.md leaves free"
             )
-    measured_middle = (span_middle(inside_x), span_middle(inside_y))
-    battery_middle = (span_middle(DESIGN_BATTERY_X_MM), span_middle(DESIGN_BATTERY_Y_MM))
+    measured_middle = (span_middle(inside_across), span_middle(inside_along))
     texts = [
-        figures.check("inside", span_length(inside_x), round(high_x - low_x, 2), 1),
-        figures.check("by", span_length(inside_y), round(high_y - low_y, 2), 1),
-        figures.check("off the battery's middle", worst_offset(measured_middle, battery_middle),
-                      0.0, 2),
+        figures.check("inside across", span_length(inside_across),
+                      round(high_across - low_across, 2), 1),
+        figures.check("along", span_length(inside_along), round(high_along - low_along, 2), 1),
+        figures.check("off the battery's middle", worst_offset(measured_middle, (0.0, 0.0)), 0.0,
+                      2),
         figures.check("thick", max(widths, key=lambda width: abs(width - thickness)), thickness, 1),
         figures.check("arms", max(arms, key=lambda reach: abs(reach - arm)), arm, 1),
         figures.check("tall", max(tops, key=lambda top: abs(top - height)), height, 1),
-        "no rib at the northeast corner",
-        "the northwest rib's arm along y inside the nice!nano's east wall",
+        "no rib at the lead's corner",
     ]
-    return f"battery:    {len(widths)} rib arms at 3 corners, {', '.join(texts)}"
+    return (f"battery:    turned {DESIGN_BATTERY_LENGTH_ANGLE_DEGREES} degrees about "
+            f"{DESIGN_BATTERY_CENTER_MM}, {len(widths)} rib arms at "
+            f"{len(DESIGN_BATTERY_RIB_CORNERS)} corners, {', '.join(texts)}")
 
 
 def half_box(right, x_range, y_range, z_range):
@@ -1591,6 +1657,15 @@ def half_box(right, x_range, y_range, z_range):
         z_range[1] - z_range[0],
         App.Vector(low_x, low_y, z_range[0]),
     )
+
+
+def half_prism(right, envelope):
+    """An envelope's plan grown by the print's swelling, turned if it is,
+    as a prism over its z range on the given half."""
+    plan = layout.offset_polygon(layout.plan_corners(envelope), DESIGN_PRINT_SWELLING_PER_SIDE_MM)
+    points = [vector(half_point(point, right), envelope.z_range[0]) for point in plan]
+    face = Part.Face(Part.makePolygon(points + [points[0]]))
+    return face.extrude(UP * (envelope.z_range[1] - envelope.z_range[0]))
 
 
 def grown_by_swelling(value_range):
@@ -1608,11 +1683,7 @@ def measure_kept_clear(tray, right, fits, figures):
     zone = half_box(right, x_range, y_range, (0.0, DESIGN_LEDGE_TOP_Z_MM)).common(tray).Volume
 
     def plastic_in(envelopes):
-        return sum(
-            half_box(right, grown_by_swelling(envelope.x_range),
-                     grown_by_swelling(envelope.y_range), envelope.z_range).common(tray).Volume
-            for envelope in envelopes
-        )
+        return sum(half_prism(right, envelope).common(tray).Volume for envelope in envelopes)
 
     rooms = layout.wire_rooms(fits, right)
     strips = layout.nano_strip_envelopes(fits) + layout.nano_strip_rooms(fits)
@@ -1632,7 +1703,7 @@ def measure_mounts(tray, right, design, fits, figures):
         measure_usb_channel(tray, right, design, figures),
         measure_nano_north_block(tray, right, design, figures),
         measure_nano_clamp(tray, right, design, figures),
-        measure_nano_east_wall(tray, right, design, figures),
+        measure_nano_walls(tray, right, design, figures),
         measure_nano_seat(tray, right, design, figures),
         measure_nano_strip_pockets(tray, right, design, figures),
         measure_nano_pry_slot(tray, right, design, figures),

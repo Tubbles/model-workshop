@@ -25,16 +25,16 @@ The parts' mounts (work item 004) are layout.py's MountBoxes, the
 bodies the tray adds and the voids it cuts, checked as boxes (the USB
 window and the reset pin hole lie inside theirs), the nice!nano's
 clamp tab and screw head (work item 009) with the bodies: inside the
-tray, clear of the parts, the sockets, the standoffs (but the one the
-nice!nano's bodies take in) and the joint, no void in the cavity below
+tray, clear of the parts, the sockets, the standoffs and the joint, no
+void in the cavity below
 the floor's top, the clamp's tab within its strain and under the PCB,
 and the openings around what passes them as printed, the shell
 wherever its play lets it go, and the board going in past the clamp's
 foot (work item 010). The nice!nano's seat leaves the pads beside it
 and the socket strips' tails under it room as printed, and the strips
 on the board with the room over them up to the PCB keep clear of the
-tray as printed, through their pockets in the west ledge and the east
-wall (the user's request of 2026-10-20). The strips, each an insulator
+tray as printed, through their pockets in the bay's walls and the column
+1/2 step's ledge (the user's request of 2026-10-20). The strips, each an insulator
 over its sleeves, and their tails are nice!nano part envelopes, so
 every check of the parts covers them, and the nice!nano's own pad rooms
 are checked against them, the overlaps DESIGN.md names printed and any
@@ -113,14 +113,17 @@ DESIGN_HEIGHTS_Z_MM = (  # (what, z)
 DESIGN_TRAY_HEIGHT_MM = 14.6
 DESIGN_MINIMUM_PCB_UNDERSIDE_Z_MM = 6.63
 DESIGN_NANO_SIZE_MM = (18.20, 33.20)  # along x, along y
-DESIGN_NANO_FROM_WEST_LEDGE_FACE_MM = 0.3
+DESIGN_NANO_FROM_STEP_LEDGE_FACE_MM = 0.3
+DESIGN_NANO_EAST_OF_COLUMN_2_MM = 0.475
 DESIGN_NANO_USB_MOUTH_BEHIND_OUTER_FACE_MM = 0.5
 DESIGN_POWER_SWITCH_KNOB_PROUD_MM = {False: 3.2, True: 2.8}  # as modelled, as printed
-DESIGN_BATTERY_SIZE_MM = (34.37, 51.53)  # along x, along y
-DESIGN_BATTERY_FROM_STANDOFFS_MM = 0.53
-DESIGN_BATTERY_FROM_LEDGE_MM = 0.36
+DESIGN_BATTERY_SIZE_MM = (34.37, 51.53)  # across, along
+DESIGN_BATTERY_CENTER_MM = (93.1, 35.6)
+DESIGN_BATTERY_LENGTH_ANGLE_DEGREES = 21.5
+DESIGN_BATTERY_FROM_STANDOFFS_MM = 2.36
+DESIGN_BATTERY_FROM_LEDGE_MM = 2.42
 DESIGN_BATTERY_BELOW_SOCKETS_MM = 3.37
-DESIGN_BATTERY_COLUMNS = {1, 2}
+DESIGN_BATTERY_COLUMNS = {3, 4, 5}
 DESIGN_PCB_CONNECTOR_CLEAR_ZONE_FROM_LEDGE_MM = 0.39
 DESIGN_TAB_NOTCH_KEYS = {"S100", "S101", "S102", "S103"}
 DESIGN_TAB_TIP_PAST_WEST_EDGE_MM = 0.231
@@ -144,7 +147,6 @@ DESIGN_BOTTOM_ROW_FROM_SOUTH_LEDGE_FACE_MM = 0.39
 DESIGN_STANDOFF_FLATS = (
     # (key, standoff, its socket's clearance before the flat, plastic
     # the flat leaves around the bore)
-    ("S141", (76.041, 43.260), 0.627, 0.927),
     ("S150", (94.774, 60.404), 0.487, 0.787),
 )
 DESIGN_STANDOFF_FLAT_BOTTOM_Z_MM = 6.48
@@ -155,7 +157,7 @@ DESIGN_RIGHT_TAB_NOTCH_KEYS = {"S163"}
 DESIGN_RIGHT_TAB_TIP_PAST_THUMB_EDGE_MM = 0.231
 DESIGN_RIGHT_LEDGE_RELIEF_KEYS = {"S103", "S113", "S123", "S133", "S143", "S153", "S163"}
 DESIGN_RIGHT_STANDOFF_FLATS = ()
-DESIGN_RIGHT_CLOSEST_SOCKET_TO_STANDOFF_MM = 1.391
+DESIGN_RIGHT_CLOSEST_SOCKET_TO_STANDOFF_MM = 1.114
 # Along the slant: boss, four slots, boss.
 DESIGN_BOSS_TO_SLOT_GAP_MM = 2.99
 DESIGN_SLOT_TO_SLOT_GAP_MM = 2.84
@@ -180,58 +182,64 @@ DESIGN_DEFAULT_SLIT_MM = (0.6, 1.6)  # across the blade, along it
 DESIGN_SLIT_CLEARANCE_MM = (0.2, 0.4)  # per side as modelled: across the blade, along it
 # The parts' mounts (work item 004).
 DESIGN_MOUNT_FROM_OTHER_PARTS_MM = 0.5  # every mount body from every part but its own
-DESIGN_MOUNTS_LEAST_FROM_OTHER_PARTS_MM = 0.5  # the nice!nano's, from the battery
+DESIGN_MOUNTS_LEAST_FROM_OTHER_PARTS_MM = 3.7  # the nice!nano's clamp block, from the battery
 DESIGN_MOUNT_VOIDS_FROM_STANDOFFS_MM = 0.5
-DESIGN_MOUNT_VOIDS_LEAST_FROM_STANDOFFS_MM = 9.074  # the pry slot, from the one it runs past
-DESIGN_MERGED_STANDOFF_MM = (18.574, 37.782)  # the nice!nano's clamp block, foot and east wall
-DESIGN_NANO_FREE_MIDDLE_X_MM = (3.105, 16.895)
+DESIGN_MOUNT_VOIDS_LEAST_FROM_STANDOFFS_MM = 15.467  # the pry slot, from the center one
+DESIGN_NANO_FREE_MIDDLE_X_MM = (40.729, 54.519)
 # The nice!nano's bay (work item 010): the pocket, the east wall, the
 # north block, at the default fits.
-DESIGN_NANO_POCKET_MM = 18.7  # across, from the west ledge's face (0.6)
+DESIGN_NANO_POCKET_MM = 18.7  # across, from the column 1/2 step's ledge face (38.224)
 DESIGN_NANO_PLAY_PRINTED_MM = {"across": 0.1, "along": 0.1}
 DESIGN_NANO_POCKET_LENGTH_MM = 33.56  # the foot's face to the north block's
 DESIGN_NANO_END_FACE_SWELLING_MM = 0.13  # each, calipered on the first heavy duty bay
-DESIGN_NANO_EAST_WALL_X_MM = (19.3, 21.5)
-DESIGN_NANO_EAST_WALL_Y_MM = (38.516, 65.3)
+DESIGN_NANO_EAST_WALL_X_MM = (56.924, 59.124)
+DESIGN_NANO_EAST_WALL_Y_MM = (43.278, 79.648)
 DESIGN_NANO_EAST_WALL_TOP_Z_MM = 5.2
-DESIGN_NANO_NORTH_BLOCK_X_MM = (0.4, 19.6)  # the ledge cut-away's
-DESIGN_NANO_NORTH_BLOCK_Y_MM = (75.566, 75.886)
+DESIGN_NANO_WEST_WALL_X_MM = (36.124, 38.224)
+DESIGN_NANO_WEST_WALL_Y_MM = (43.278, 65.3)
+DESIGN_NANO_RAISED_WALLS_Y_MM = {
+    "west": ((49.710, 59.837),),
+    "east": ((43.278, 47.931), (53.581, 66.981), (72.631, 79.648)),
+}
+DESIGN_NANO_RAISED_WALL_TOP_Z_MM = 9.5
+DESIGN_NANO_NORTH_BLOCK_X_MM = (38.024, 57.224)  # the ledge cut-away's
+DESIGN_NANO_NORTH_BLOCK_Y_MM = (80.328, 80.648)
 DESIGN_NANO_NORTH_BLOCK_TOP_Z_MM = 6.16
 # The nice!nano's seat and the channels beside it (the user's request to
 # raise the bay, 2026-10-20).
 DESIGN_NANO_SEAT_TOP_Z_MM = 1.2
-DESIGN_NANO_SEAT_X_MM = (3.805, 16.195)
-DESIGN_NANO_SEAT_Y_MM = (42.006, 75.566)  # the foot's face to the north block's
+DESIGN_NANO_SEAT_X_MM = (41.429, 53.819)
+DESIGN_NANO_SEAT_Y_MM = (46.768, 80.328)  # the foot's face to the north block's
 DESIGN_NANO_CHANNELS_BEYOND_PADS_PRINTED_MM = 0.5  # the seat's edges from the pads' inner edges
 DESIGN_NANO_TAILS_OVER_CHANNELS_MM = {False: 0.39, True: 0.057}  # nominal modelled, worst printed
 # The socket strips on the board (Mill-Max 315-43-112-41-003000) and
 # their pockets, at their worst case.
-DESIGN_NANO_STRIP_X_MM = {"west": (0.625, 3.925), "east": (16.075, 19.375)}
-DESIGN_NANO_STRIP_Y_MM = (41.8825, 72.9895)
+DESIGN_NANO_STRIP_X_MM = {"west": (38.249, 41.549), "east": (53.699, 56.999)}
+DESIGN_NANO_STRIP_Y_MM = (46.6445, 77.7515)
 DESIGN_NANO_STRIP_TOP_Z_MM = 5.213
 DESIGN_NANO_STRIP_INSULATOR_BOTTOM_Z_MM = 3.41  # 0.61 over the board's top
 DESIGN_NANO_STRIP_PAST_BOARD_END_MM = 0.2335  # the insulator, over the clamp's foot
 DESIGN_NANO_INSULATOR_OVER_FOOT_PRINTED_MM = 0.56  # the foot's top rising as a top face
-DESIGN_NANO_STRIP_POCKET_X_MM = (0.125, 19.875)  # the west ledge's face, the east wall's
-DESIGN_NANO_STRIP_POCKET_Y_MM = (41.3825, 73.6595)
+DESIGN_NANO_STRIP_POCKET_X_MM = (37.749, 57.499)  # the west wall's and step ledge's face, the east wall's
+DESIGN_NANO_STRIP_POCKET_Y_MM = (46.1445, 78.4215)
 DESIGN_NANO_STRIPS_CLEAR_PRINTED_MM = 0.25  # of the tray up to the PCB's underside, the board west
 DESIGN_NANO_STRIPS_CLEAR_WORST_SPLIT_MM = 0.19  # the same, the end faces' swelling split worst
 DESIGN_NANO_STRIPS_UNDER_SOCKETS_MM = 2.267
-DESIGN_NANO_STRIP_SOCKET_KEYS = {False: {"S100", "S101", "S110", "S111"}, True: {"S100", "S101"}}
+DESIGN_NANO_STRIP_SOCKET_KEYS = {False: {"S120", "S121", "S130", "S131"}, True: {"S120", "S121"}}
 # The nice!nano's screw clamp (work items 009 and 010), at the default
 # press.
-DESIGN_CLAMP_TAB_X_MM = (7.1, 12.9)
-DESIGN_CLAMP_BLOCK_X_MM = (0.6, 21.5)
-DESIGN_CLAMP_BLOCK_Y_MM = (32.716, 38.516)
+DESIGN_CLAMP_TAB_X_MM = (44.724, 50.524)
+DESIGN_CLAMP_BLOCK_X_MM = (36.124, 59.124)
+DESIGN_CLAMP_BLOCK_Y_MM = (37.478, 43.278)
 DESIGN_CLAMP_FOOT_FROM_BOARD_MM = 0.11  # the foot's north face from the board's south end
-DESIGN_CLAMP_FOOT_X_MM = (0.6, 19.3)
+DESIGN_CLAMP_FOOT_X_MM = (38.224, 56.924)
 DESIGN_CLAMP_FOOT_TOP_Z_MM = 2.8
 DESIGN_CLAMP_SCREW_FROM_BOARD_MM = 6.5  # the screw's axis from the board's south end
 DESIGN_CLAMP_BLOCK_TOP_Z_MM = 4.8
 DESIGN_CLAMP_INSERT_ROOM_PRINTED_MM = 4.6  # the bore's bottom counted 0.2 higher
 DESIGN_CLAMP_INSERT_LENGTH_MM = 3.0  # M2 x 3
 DESIGN_CLAMP_SCREW_REACH_MM = 2.8  # an M2 x 4 through the tab as printed
-DESIGN_CLAMP_TAB_Y_MM = (32.716, 43.616)
+DESIGN_CLAMP_TAB_Y_MM = (37.478, 48.378)
 DESIGN_CLAMP_TAB_REACH_MM = 1.5  # onto the board
 DESIGN_CLAMP_NOSE_FROM_BOARD_END_MM = (0.5, 1.5)
 DESIGN_CLAMP_TAB_THICKNESS_MM = {True: 1.2, False: 1.0}  # as printed, as modelled
@@ -247,9 +255,9 @@ DESIGN_CLAMP_NOSE_ONTO_BOARD_WORST_SPLIT_MM = 0.05  # the least, the end faces' 
 DESIGN_CLAMP_HEAD_TOP_Z_MM = 8.0
 DESIGN_CLAMP_UNDER_PCB_MM = 1.5  # the head
 DESIGN_CLAMP_MINIMUM_UNDER_PCB_MM = 0.5
-DESIGN_CLAMP_HEAD_FROM_SOCKETS_MM = 1.586  # S101's, on both halves
+DESIGN_CLAMP_HEAD_FROM_SOCKETS_MM = 1.587  # S121's, on both halves
 DESIGN_CLAMP_TAB_UNDER_SOCKET_MM = 1.38  # the plate as printed, lifted by the press
-DESIGN_CLAMP_SOCKET_KEYS = {"S101"}  # over the tab
+DESIGN_CLAMP_SOCKET_KEYS = {"S121"}  # over the tab
 DESIGN_KNOB_IN_SLOT_PRINTED_MM = 0.25  # per side
 # The power switch's retainer as printed and fitted: under the switches'
 # center posts and side pegs where it lies under them, still in its
@@ -257,7 +265,7 @@ DESIGN_KNOB_IN_SLOT_PRINTED_MM = 0.25  # per side
 # its opening from the leads, beside them and over them.
 DESIGN_RETAINER_UNDER_POSTS_MM = 0.5
 DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM = 1.1
-DESIGN_RETAINER_FROM_SOCKETS_MM = 2.648  # S120's
+DESIGN_RETAINER_FROM_SOCKETS_MM = 2.649  # S100's
 DESIGN_RETAINER_BESIDE_LEADS_PRINTED_MM = 0.25
 DESIGN_RETAINER_OVER_LEADS_MM = 0.5
 DESIGN_NANO_BAR_DEPTH_MM = 0.62
@@ -286,7 +294,7 @@ DESIGN_NANO_STRIP_TILT_LEAST_CLEARANCE_MM = 0.1
 DESIGN_SHELL_PAST_CHANNEL_ALL_ON_FOOT_MM = 0.13
 DESIGN_SHELL_INTO_WINDOW_ROUND_ALL_ON_FOOT_MM = 0.018
 DESIGN_RESET_PIN_HOLE_AXIS_MM = (66.199, 3.095)  # x, z
-DESIGN_MOUNTS_FROM_PCB_ZONE_PRINTED_MM = 0.0  # the nice!nano's east wall
+DESIGN_MOUNTS_FROM_PCB_ZONE_PRINTED_MM = 0.0  # the nice!nano's west wall
 DESIGN_WIRE_ROOM_BEHIND_LEADS_MM = 3.0
 DESIGN_WIRE_ROOM_OVER_PADS_MM = 3.0
 DESIGN_WIRE_ROOM_LEAST_CLEARANCE_PRINTED_MM = 0.147
@@ -312,18 +320,18 @@ DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
 # order: the post, the pegs, the blades, the NC pad's.
 DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
-DESIGN_PRY_SLOT_X_MM = (1.6, 6.6)
-DESIGN_PRY_SLOT_Y_MM = (32.716, 42.006)  # through the clamp's block and foot
+DESIGN_PRY_SLOT_X_MM = (39.224, 44.224)
+DESIGN_PRY_SLOT_Y_MM = (37.478, 46.768)  # through the clamp's block and foot
 DESIGN_PRY_SLOT_FROM_LEDGE_MM = 1.0
 DESIGN_PRY_SLOT_FROM_INSERT_BORE_MM = 1.8
-DESIGN_PRY_RECESS_Y_MM = (32.716, 44.116)
+DESIGN_PRY_RECESS_Y_MM = (37.478, 48.878)
 DESIGN_PRY_RECESS_UNDER_BOARD_MM = 2.0
 DESIGN_PRY_RECESS_BOTTOM_Z_MM = 0.0  # the floor's top, the seat left out
 DESIGN_PRY_RECESS_FLOOR_UNDER_MM = 1.2  # the whole floor
 DESIGN_PRY_TOOTHPICK_ANGLE_DEGREES = 18.0  # the least, over the rim, the board north
 DESIGN_PRY_TOOTHPICK_REACH_PRINTED_MM = 1.68  # its point under the board, the board north
 DESIGN_PRY_TOOTHPICK_REACH_WORST_SPLIT_MM = 1.55  # the same, the end faces' split worst
-DESIGN_PRY_TOOTHPICK_LANE_X_MM = (3.605, 6.4)  # as printed, east of the west row's last tail
+DESIGN_PRY_TOOTHPICK_LANE_X_MM = (41.229, 44.024)  # as printed, east of the west row's last tail
 DESIGN_PRY_LAST_TAIL_FROM_BOARD_END_MM = 0.969  # the west row's, its south edge
 
 # Only the sum of the bay's end faces' swelling was calipered (layout.py's
@@ -578,8 +586,14 @@ def polygon_centroid(polygon):
 
 
 def box_polygon(envelope):
-    (low_x, high_x), (low_y, high_y) = envelope.x_range, envelope.y_range
-    return ((low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y))
+    """An Envelope's or a MountBox's plan, its corners if it is turned."""
+    return layout.plan_corners(envelope)
+
+
+def plan_side_lengths(envelope):
+    """(first side, second side) of a box's plan."""
+    first, second, third, _fourth = box_polygon(envelope)
+    return math.dist(first, second), math.dist(second, third)
 
 
 def ranges_overlap(first, second):
@@ -1168,9 +1182,9 @@ def check_heights():
 
 
 def nano_figures():
-    west_ledge_face_x = min(x for x, _ in layout.OUTLINE_VERTICES_MM) + layout.ledge_reach()
+    step_ledge_face_x = layout.COLUMN_1_2_STEP_X_MM + layout.ledge_reach()
     nano = layout.NANO_BOARD
-    north_outer_face_y = layout.outer_face_y(layout.NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM)
+    north_outer_face_y = layout.outer_face_y(layout.NANO_NORTH_EDGE_Y_MM)
     return [
         require_figure(
             "nice!nano width", nano.x_range[1] - nano.x_range[0], DESIGN_NANO_SIZE_MM[0], 2
@@ -1179,10 +1193,16 @@ def nano_figures():
             "nice!nano length", nano.y_range[1] - nano.y_range[0], DESIGN_NANO_SIZE_MM[1], 1
         ),
         require_figure(
-            "nice!nano from the west ledge's face",
-            nano.x_range[0] - west_ledge_face_x,
-            DESIGN_NANO_FROM_WEST_LEDGE_FACE_MM,
+            "nice!nano from the column 1/2 step's ledge face",
+            nano.x_range[0] - step_ledge_face_x,
+            DESIGN_NANO_FROM_STEP_LEDGE_FACE_MM,
             1,
+        ),
+        require_figure(
+            "its center line east of column 2's",
+            sum(nano.x_range) / 2.0 - layout.COLUMN_X_MM[2],
+            DESIGN_NANO_EAST_OF_COLUMN_2_MM,
+            3,
         ),
         require_figure(
             "USB mouth behind the north wall's outer face",
@@ -1194,8 +1214,12 @@ def nano_figures():
 
 
 def power_switch_figures():
-    north_edge_y = layout.NORTH_EDGE_Y_OF_COLUMN_2_MM
+    north_edge_y = layout.POWER_SWITCH_NORTH_EDGE_Y_MM
     return [
+        require_figure(
+            "power switch on column 0, off its center line by",
+            layout.POWER_SWITCH_CENTER_X_MM - layout.COLUMN_X_MM[0], 0.0, 3,
+        ),
         require_figure(
             "power switch's north face past the ledge's face",
             layout.POWER_SWITCH_BODY.y_range[1] - layout.ledge_face_y(north_edge_y),
@@ -1217,7 +1241,7 @@ def power_switch_figures():
 def knob_proud_as_printed():
     """The knob's tip past the outer face as printed: the swollen ledge
     face pushes the snug body south, and the outer face swells north."""
-    north_edge_y = layout.NORTH_EDGE_Y_OF_COLUMN_2_MM
+    north_edge_y = layout.POWER_SWITCH_NORTH_EDGE_Y_MM
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
     knob_past_body = layout.POWER_SWITCH_KNOB.y_range[1] - layout.POWER_SWITCH_BODY.y_range[1]
     tip = layout.ledge_face_y(north_edge_y) - swelling + knob_past_body
@@ -1225,14 +1249,19 @@ def knob_proud_as_printed():
 
 
 def battery_figures():
-    battery = layout.BATTERY
+    """The pouch's size, from its turned corners, and its place."""
+    width, length = plan_side_lengths(layout.BATTERY)
+    corners = box_polygon(layout.BATTERY)
+    along = vector_between(corners[0], corners[3])
+    center = polygon_centroid(corners)
     return [
-        require_figure(
-            "battery width", battery.x_range[1] - battery.x_range[0], DESIGN_BATTERY_SIZE_MM[0], 2
-        ),
-        require_figure(
-            "battery length", battery.y_range[1] - battery.y_range[0], DESIGN_BATTERY_SIZE_MM[1], 2
-        ),
+        require_figure("battery width", width, DESIGN_BATTERY_SIZE_MM[0], 2),
+        require_figure("battery length", length, DESIGN_BATTERY_SIZE_MM[1], 2),
+        require_figure("its center x", center[0], DESIGN_BATTERY_CENTER_MM[0], 1),
+        require_figure("y", center[1], DESIGN_BATTERY_CENTER_MM[1], 1),
+        require_figure("its length north of east, degrees",
+                       math.degrees(math.atan2(along[1], along[0])),
+                       DESIGN_BATTERY_LENGTH_ANGLE_DEGREES, 1),
     ]
 
 
@@ -2240,25 +2269,15 @@ def check_mount_sockets(right=False):
     return f"mounts:    {half_label(right)}{reaching}; under a socket by at least {under}"
 
 
-def merges_standoff(box, center, fits):
-    """Whether the body takes in the standoff: the nice!nano's bodies the
-    one at layout.NANO_MERGED_STANDOFF_MM, standing under its top, whose
-    bore tray_shape.py keeps open."""
-    return (center == layout.NANO_MERGED_STANDOFF_MM and box in layout.nano_bodies(fits)
-            and box.z_range[1] < layout.STANDOFF_HEIGHT_MM)
-
-
 def mount_standoff_clearances(fits=layout.DEFAULT_MOUNT_FITS):
-    """(problems, bodies, voids, merged): the bodies and the clamp's tab
-    and screw head clear of the standoffs (the standoffs are the same on
-    both halves in the left half's frame) unless they take one in, the
-    voids DESIGN_MOUNT_VOIDS_FROM_STANDOFFS_MM from them, so their bases
-    stay whole, with the Tightest of each, and the labels of the bodies
-    that take in a standoff."""
+    """(problems, bodies, voids): the bodies and the clamp's tab and
+    screw head clear of the standoffs (the standoffs are the same on both
+    halves in the left half's frame), none taking one in, the voids
+    DESIGN_MOUNT_VOIDS_FROM_STANDOFFS_MM from them, so their bases stay
+    whole, with the Tightest of each."""
     radius = layout.STANDOFF_DIAMETER_MM / 2.0
     problems = []
     bodies, voids = Tightest(), Tightest()
-    merged = []
     for boxes, tightest, minimum in (
         (standing_bodies(fits), bodies, 0.0),
         (layout.mount_voids(fits), voids, DESIGN_MOUNT_VOIDS_FROM_STANDOFFS_MM),
@@ -2266,29 +2285,22 @@ def mount_standoff_clearances(fits=layout.DEFAULT_MOUNT_FITS):
         for box in boxes:
             for center in layout.MOUNTING_DRILL_CENTERS_MM:
                 clearance = circle_separation(center, radius, box_polygon(box))
-                if clearance < -TOLERANCE_MM and merges_standoff(box, center, fits):
-                    merged.append(box.label)
-                    continue
                 where = f"the {describe_mount(box)} and the standoff at {center}"
                 tightest.update(clearance, where)
                 if clearance < minimum - TOLERANCE_MM:
                     problems.append(f"{where}: {clearance:.3f}, less than {minimum}")
-    return problems, bodies, voids, merged
+    return problems, bodies, voids
 
 
 def check_mount_standoffs():
-    problems, bodies, voids, merged = mount_standoff_clearances()
+    problems, bodies, voids = mount_standoff_clearances()
     figures = [
         require_figure("voids from the standoffs", voids.value,
                        DESIGN_MOUNT_VOIDS_LEAST_FROM_STANDOFFS_MM, 3),
-        require_figure("the standoff taken in at x", layout.NANO_MERGED_STANDOFF_MM[0],
-                       DESIGN_MERGED_STANDOFF_MM[0], 3),
-        require_figure("y", layout.NANO_MERGED_STANDOFF_MM[1], DESIGN_MERGED_STANDOFF_MM[1], 3),
     ]
     fail_on(problems + failed(figures), "mounts on the standoffs")
-    return (f"mounts:    bodies clear of the standoffs by {bodies}, but the {', '.join(merged)}, "
-            f"which take in the one at {layout.NANO_MERGED_STANDOFF_MM}; {figures[0][1]} "
-            f"({voids.where}); {joined(figures[1:])}")
+    return (f"mounts:    bodies clear of the standoffs by {bodies}; {figures[0][1]} "
+            f"({voids.where})")
 
 
 def mount_joint_problems(right, fits=layout.DEFAULT_MOUNT_FITS):
@@ -2482,22 +2494,47 @@ def clamp_figures():
 
 def nano_play_as_printed(fits=layout.DEFAULT_MOUNT_FITS):
     """{way: play} of the board in its pocket as printed: across between
-    the west ledge's face and the east wall's inner face, along between
-    the foot's face and the north block's, swollen by the pocket's
-    measured end face swelling."""
+    the pocket's west face and its east face, along between the foot's
+    face and the north block's, swollen by the pocket's measured end
+    face swelling."""
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
     across = ((layout.nano_pocket_east_x(fits) - swelling)
-              - (layout.west_ledge_face_x() + swelling) - fits.nano_width)
+              - (layout.nano_pocket_west_x() + swelling) - fits.nano_width)
     along = (layout.nano_north_stop_y_as_printed(fits) - layout.nano_south_stop_y_as_printed(fits)
              - fits.nano_length)
     return {"across": across, "along": along}
 
 
+def raised_wall_stretches(side):
+    """The y ranges of a wall's raised pieces."""
+    return [box.y_range for box in layout.nano_raised_wall_boxes()
+            if box.label.startswith(f"{side} wall's")]
+
+
+def raised_wall_figures():
+    """Each wall's raised pieces against DESIGN.md's, and their top."""
+    figures = []
+    for side, stated in DESIGN_NANO_RAISED_WALLS_Y_MM.items():
+        stretches = raised_wall_stretches(side)
+        if len(stretches) != len(stated):
+            figures.append((False, f"the {side} wall rises over {len(stretches)} stretches, "
+                                   f"DESIGN.md says {len(stated)}"))
+            continue
+        for (low, high), (stated_low, stated_high) in zip(stretches, stated):
+            figures.append(require_figure(f"the {side} wall raised from y", low, stated_low, 3))
+            figures.append(require_figure("to", high, stated_high, 3))
+    tops = {box.z_range[1] for box in layout.nano_raised_wall_boxes()}
+    figures.append(require_figure_for_all("their top z", sorted(tops),
+                                          DESIGN_NANO_RAISED_WALL_TOP_Z_MM, 1))
+    return figures
+
+
 def nano_bay_figures():
-    """The pocket, the board's play in it as printed, the east wall and
-    the north block at the default fits."""
-    pocket = layout.nano_pocket_east_x() - layout.west_ledge_face_x()
+    """The pocket, the board's play in it as printed, the walls and the
+    north block at the default fits."""
+    pocket = layout.nano_pocket_east_x() - layout.nano_pocket_west_x()
     outer, under_pocket, _south_of_pocket = layout.nano_east_wall_boxes()
+    west_outer, west_under_pocket, _ = layout.nano_west_wall_boxes()
     west_side, east_side = layout.nano_north_block_boxes()[:2]
     bar = layout.nano_north_block_boxes()[-1]
     play = nano_play_as_printed()
@@ -2517,6 +2554,12 @@ def nano_bay_figures():
         require_figure("y", outer.y_range[0], DESIGN_NANO_EAST_WALL_Y_MM[0], 3),
         require_figure("to", outer.y_range[1], DESIGN_NANO_EAST_WALL_Y_MM[1], 1),
         require_figure("top z", outer.z_range[1], DESIGN_NANO_EAST_WALL_TOP_Z_MM, 1),
+        require_figure("west wall from x", west_outer.x_range[0], DESIGN_NANO_WEST_WALL_X_MM[0],
+                       3),
+        require_figure("to", west_under_pocket.x_range[1], DESIGN_NANO_WEST_WALL_X_MM[1], 3),
+        require_figure("y", west_outer.y_range[0], DESIGN_NANO_WEST_WALL_Y_MM[0], 3),
+        require_figure("to", west_outer.y_range[1], DESIGN_NANO_WEST_WALL_Y_MM[1], 1),
+    ] + raised_wall_figures() + [
         require_figure("north block from x", west_side.x_range[0],
                        DESIGN_NANO_NORTH_BLOCK_X_MM[0], 1),
         require_figure("to", east_side.x_range[1], DESIGN_NANO_NORTH_BLOCK_X_MM[1], 1),
@@ -2545,15 +2588,15 @@ def check_nano_clamp():
 
 def nano_shell_play(fits=layout.DEFAULT_MOUNT_FITS):
     """{direction: how far} the shell can move from its modelled place
-    as printed: west and east the board between the west ledge's face
-    and the east wall's and the shell between the north block's sides,
+    as printed: west and east the board between the pocket's faces and
+    the shell between the north block's sides,
     north the board's USB end before the block."""
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
     shell = layout.nano_usb_shell_envelope(fits)
     board = layout.nano_board_envelope(fits)
     west_side, east_side = layout.nano_north_block_boxes(fits)[:2]
     return {
-        "west": min(board.x_range[0] - (layout.west_ledge_face_x() + swelling),
+        "west": min(board.x_range[0] - (layout.nano_pocket_west_x() + swelling),
                     shell.x_range[0] - (west_side.x_range[1] + swelling)),
         "east": min((layout.nano_pocket_east_x(fits) - swelling) - board.x_range[1],
                     (east_side.x_range[0] - swelling) - shell.x_range[1]),
@@ -2899,10 +2942,7 @@ def wire_room_depths():
     """(behind the leads, over the nice!nano's pads): each lead room's
     smaller extent in plan, the room behind the lead, and each pad
     room's height."""
-    behind = [
-        min(room.x_range[1] - room.x_range[0], room.y_range[1] - room.y_range[0])
-        for room in layout.lead_wire_rooms()
-    ]
+    behind = [min(plan_side_lengths(room)) for room in layout.lead_wire_rooms()]
     over = [room.z_range[1] - room.z_range[0] for room in layout.nano_wire_rooms()]
     return behind, over
 
@@ -3052,7 +3092,7 @@ def check_wire_rooms(right=False):
 # as printed, the strips' tails hang over the channels' bottom, the
 # floor's top, as printed, and the strips with the rooms over them up to
 # the PCB's underside keep clear of the tray as printed, which their
-# pockets in the west ledge and the east wall see to. How far the
+# pockets in the bay's walls and the step's ledge see to. How far the
 # strips' tops stay under the sockets over them is reported for both
 # halves.
 
@@ -3484,7 +3524,7 @@ def check_pry_slot(right=False):
     figures = [
         require_figure("slot from x", slot.x_range[0], DESIGN_PRY_SLOT_X_MM[0], 1),
         require_figure("to", slot.x_range[1], DESIGN_PRY_SLOT_X_MM[1], 1),
-        require_figure("from the ledge's face", slot.x_range[0] - layout.west_ledge_face_x(),
+        require_figure("from the pocket's west face", slot.x_range[0] - layout.nano_pocket_west_x(),
                        DESIGN_PRY_SLOT_FROM_LEDGE_MM, 1),
         require_figure("from the insert's bore", pry_slot_from_insert_bore(),
                        DESIGN_PRY_SLOT_FROM_INSERT_BORE_MM, 2),

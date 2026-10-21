@@ -21,7 +21,8 @@ slant, the standoffs bored for M2 heat-set inserts, and the dowel pin
 bosses and the parking hole's boss, up to the PCB's underside, with the
 fills that close the crevices beside them. Then the cuts, all exactly as
 layout.py gives them: the ledge cut-aways layout.py declares for the
-parts in the tray, the west socket strip's pocket in the west ledge,
+parts in the tray, the west socket strip's pocket in the column 1/2
+step's ledge,
 the sockets' notches, pockets and reliefs, and the standoffs' flats.
 Every cut but the sockets' wall pockets is clipped to the cavity so it
 never reaches the wall, and a cut that finds nothing left to remove (a
@@ -29,10 +30,11 @@ tab's relief inside its notch) is skipped. Then the parts' mounts
 (work item 004), layout.py's boxes in its order: the power switch's
 cradle with its retainer's socket, the reset button's back wall, side
 walls and front stop, the battery header's pocket and
-the battery's corner ribs, then the nice!nano's north block with the
+the battery's corner ribs, turned with the pouch, then the nice!nano's north block with the
 sill under its opening, its screw clamp's block and foot (work items
-009 and 010), its east wall, cut back over the board's top for the east
-socket strip, and the seat the board lies on, which leaves the pry
+009 and 010), its west and east walls, cut back over the board's top
+for the socket strips, with their raised pieces up to the PCB's
+underside, and the seat the board lies on, which leaves the pry
 recess free, no body filling a standoff's bore, then the USB shell's
 channel and the USB window, the knob slot through the ledge and the
 north wall, the reset pin hole through the north wall, the nice!nano's
@@ -910,18 +912,18 @@ def check_floor_closed(tray, corner_radius):
 # as a MountBox. The bodies are fused one by one after the standoffs'
 # flats, so a body can fill a ledge cut-away's margins, then the
 # voids are cut. A body is built without the standoffs' bores it
-# reaches, so the standoff the nice!nano's clamp block, foot and east
-# wall take in keeps its bore. Each is checked against a volume worked
+# reaches, so a standoff a body met would keep its bore. Each is
+# checked against a volume worked
 # out from the layout alone where the tray around it is known (the
 # nice!nano's bodies, the voids in the wall, the clamp's block and
 # foot), and probed.
 
 
 def box_prism(box, extra_below=0.0, extra_above=0.0):
-    """A MountBox as a solid, its z range run on by the given extras."""
-    (low_x, high_x), (low_y, high_y) = box.x_range, box.y_range
-    corners = ((low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y))
-    return plan_prism(corners, box.z_range[0] - extra_below, box.z_range[1] + extra_above)
+    """A MountBox as a solid, turned if it is, its z range run on by the
+    given extras."""
+    return plan_prism(layout.plan_corners(box), box.z_range[0] - extra_below,
+                      box.z_range[1] + extra_above)
 
 
 def box_point(box, x_fraction=0.5, y_fraction=0.5, z=None):
@@ -1032,27 +1034,41 @@ def require_solid_at(tray, point, want_solid, what):
         raise SystemExit(f"error: {what}")
 
 
-def body_probe_fractions(box):
+def stands_on(box, point, others):
+    """Whether one of the other boxes stands on the box's top at the
+    point in plan, as the walls' raised pieces stand on the walls."""
+    return any(abs(other.z_range[0] - box.z_range[1]) < 1e-9
+               and other.x_range[0] < point.x < other.x_range[1]
+               and other.y_range[0] < point.y < other.y_range[1]
+               for other in others)
+
+
+def body_probe_fractions(box, others=()):
     """Where in a body's box, as fractions of its x and y ranges, to probe
     its top: its middle, or failing that the middle of a tenth of the box
-    at one of its faces, the first clear of the standoffs, which stand
-    taller than the bodies that take one in."""
+    at one of its faces, or a point along its middle line, the first
+    clear of the standoffs and of the other boxes that stand on it."""
     radius = layout.STANDOFF_DIAMETER_MM / 2.0
-    for fractions in ((0.5, 0.5), (0.5, 0.95), (0.5, 0.05), (0.95, 0.5), (0.05, 0.5)):
+    candidates = ((0.5, 0.5), (0.5, 0.95), (0.5, 0.05), (0.95, 0.5), (0.05, 0.5)) + tuple(
+        (0.5, index / 20.0) for index in range(1, 20))
+    for fractions in candidates:
         point = box_point(box, *fractions)
-        if all(math.hypot(point.x - x, point.y - y) > radius + 0.05
-               for x, y in layout.MOUNTING_DRILL_CENTERS_MM):
+        if (all(math.hypot(point.x - x, point.y - y) > radius + 0.05
+                for x, y in layout.MOUNTING_DRILL_CENTERS_MM)
+                and not stands_on(box, point, others)):
             return fractions
-    raise SystemExit(f"error: no point in the {box.label} clear of the standoffs to probe")
+    raise SystemExit(f"error: no point in the {box.label} clear of the standoffs and the "
+                     "bodies on it to probe")
 
 
 def check_nano_bodies(tray, fits):
-    """The nice!nano's bodies stand this tall and no taller, the foot's
-    north face is where the board's south end stops, and the standoff
-    they take in keeps its bore open to the floor."""
-    for box in layout.nano_bodies(fits):
+    """The nice!nano's bodies stand this tall and no taller, where no
+    other body stands on them, and the foot's north face is where the
+    board's south end stops."""
+    bodies = layout.nano_bodies(fits)
+    for box in bodies:
         top = box.z_range[1]
-        fractions = body_probe_fractions(box)
+        fractions = body_probe_fractions(box, bodies)
         require_solid_at(tray, box_point(box, *fractions, z=top - 0.05), True,
                          f"the {box.label} is not this tall")
         require_solid_at(tray, box_point(box, *fractions, z=top + 0.05), False,
@@ -1066,13 +1082,6 @@ def check_nano_bodies(tray, fits):
                                (stop_y + 0.05, False, "open in front of the stop")):
         require_solid_at(tray, App.Vector(middle_x, y, over_seat), want_solid,
                          f"the clamp's foot is not {how}")
-    x, y = layout.NANO_MERGED_STANDOFF_MM
-    radius = layout.STANDOFF_BORE_DIAMETER_MM / 2.0
-    for z in (0.05, 1.0, layout.nano_east_wall_top_z() - 0.05):
-        require_solid_at(tray, App.Vector(x, y, z), False,
-                         f"the standoff at {(x, y)} lost its bore at z {z}")
-        require_solid_at(tray, App.Vector(x + radius + 0.05, y, z), True,
-                         f"the standoff at {(x, y)} is open beside its bore at z {z}")
 
 
 def add_mounts(tray, fits):

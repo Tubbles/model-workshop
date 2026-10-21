@@ -137,10 +137,10 @@ def wall_tray_obstacles(right):
               + check_layout.dowel_bosses(right) + check_layout.boss_fills(right))
     pieces.append(("parking boss", layout.parking_boss_polygon(), layout.parking_boss_z_range()))
     boxes = list(layout.mount_bodies()) + list(layout.nano_clamp_part_boxes())
-    pieces.extend((f"{box.part} {box.label}", layout.box_corners(box.x_range, box.y_range),
-                   box.z_range) for box in boxes)
-    pieces.extend((f"{envelope.part} {envelope.piece}",
-                   layout.box_corners(envelope.x_range, envelope.y_range), envelope.z_range)
+    pieces.extend((f"{box.part} {box.label}", layout.plan_corners(box), box.z_range)
+                  for box in boxes)
+    pieces.extend((f"{envelope.part} {envelope.piece}", layout.plan_corners(envelope),
+                   envelope.z_range)
                   for envelope in layout.part_envelopes() if envelope.part != "PCB connector")
     for center in layout.MOUNTING_DRILL_CENTERS_MM:
         for z_range, flats in check_layout.standoff_bands(center, right):

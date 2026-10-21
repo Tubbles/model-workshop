@@ -502,13 +502,19 @@ def mirror_for_right_half(point):
 
 # Mounting (DESIGN.md, "Mounting"): 2.4 mm drills, as kbdkid4's
 # board.lp mounting pads, for M2 screws into heat-set inserts in the
-# tray's standoffs. kbdkid4's (18.574, 56.832) moved to (18.574,
-# 37.782), out from under the nice!nano.
+# tray's standoffs. kbdkid4's (18.574, 56.832) is back where it was,
+# the nice!nano having moved to column 2, and the center standoff moved
+# one key south and one key west, from (76.041, 43.260) toward (56.991,
+# 24.210), out of the battery's way (the user, 2026-10-21: "Then we
+# might need to shift the center standoff down one key and towards the
+# outside one key, in order to accomodate the battery?"), and from
+# there 0.9 west and 0.75 south, where the plate's head hole keeps
+# 0.79 and 0.97 from S133's cutout instead of 0.22 and 0.03.
 MOUNTING_DRILL_DIAMETER_MM = 2.4
 MOUNTING_DRILL_CENTERS_MM = (
     (18.574, 18.732),
-    (18.574, 37.782),
-    (76.041, 43.260),
+    (18.574, 56.832),
+    (56.091, 23.460),
     (94.774, 60.404),
     (114.141, 19.765),
 )
@@ -566,6 +572,9 @@ STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
 # passes a window in the wall), PROUD nowhere (it stands out past the
 # wall by design, through an opening of its own in the wall and, for
 # the power switch's knob, the ledge in front of it).
+# A box turned in plan (the battery's, turned_envelope()) also carries
+# its corners, counter-clockwise, its x and y ranges then the corners'
+# bounding ranges: plan_corners() gives any box's plan.
 CAVITY = "cavity"
 THROUGH_WALL = "through the wall"
 PROUD = "proud of the wall"
@@ -579,6 +588,27 @@ class Envelope:
     y_range: tuple
     z_range: tuple
     containment: str
+    corners: tuple = None
+
+
+def bounding_ranges(corners):
+    xs = [x for x, _ in corners]
+    ys = [y for _, y in corners]
+    return (min(xs), max(xs)), (min(ys), max(ys))
+
+
+def turned_envelope(part, piece, corners, z_range, containment):
+    x_range, y_range = bounding_ranges(corners)
+    return Envelope(part, piece, x_range, y_range, z_range, containment, tuple(corners))
+
+
+def plan_corners(box):
+    """An Envelope's or a MountBox's corners in plan, counter-clockwise
+    from its southwest corner unless it is turned."""
+    if box.corners is not None:
+        return box.corners
+    (low_x, high_x), (low_y, high_y) = box.x_range, box.y_range
+    return ((low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y))
 
 
 def cavity_wall_y(outline_edge_y):
@@ -596,18 +626,28 @@ def ledge_face_y(outline_edge_y):
     return outline_edge_y + TRAY_GAP_MM - TRAY_LEDGE_WIDTH_MM
 
 
-# North outline edges, by column (OUTLINE_VERTICES_MM).
+# North outline edges, by column (OUTLINE_VERTICES_MM), and the step
+# between columns 1 and 2, where the north edge rises from columns 0
+# and 1's to column 2's.
 NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM = 75.486
 NORTH_EDGE_Y_OF_COLUMN_2_MM = 80.248
 NORTH_EDGE_Y_OF_COLUMN_3_MM = 82.629
+COLUMN_1_2_STEP_X_MM = 37.624
 
 # nice!nano v2 (DESIGN.md): the board, its flat underside on a seat
 # NANO_SEAT_HEIGHT_MM over the floor's top (the user, 2026-10-20:
 # "Could you raise up the whole bay the nano rests in and pocket the two
 # 12 pin strips on the sides?"), which the socket strips' solder tails
-# under the board clear by 0.387 (nano_tail_envelopes()). Its west edge
-# 0.3 from the west ledge's face, its USB end where the shell's mouth
-# lies 0.5 behind the north wall's outer face. Its size is the user's
+# under the board clear by 0.387 (nano_tail_envelopes()). It lies on
+# column 2 (the user, 2026-10-21: "I think we could move the nano to be
+# centered on the third key column from the outside", so that the
+# standoff and the ledge at columns 0 and 1's north west corner come
+# back), 0.475 east of that column's center line: its west edge 0.3
+# from the column 1/2 step's ledge face (nano_pocket_west_x()), which
+# the bay's pocket starts from as it did from the west ledge's, since
+# centered the board and its west strip would reach into that ledge.
+# Its USB end lies where the shell's mouth sits 0.5 behind column 2's
+# north wall's outer face. Its size is the user's
 # caliper of 2026-10-20: the width the middle of "The nano width is
 # 18.17~18.23 mm", which supersedes the 18.30 read with the shell on
 # 2026-10-19 ("The nano measures, with the usb connector included: 18.30
@@ -621,8 +661,9 @@ NORTH_EDGE_Y_OF_COLUMN_3_MM = 82.629
 # 33.20 board would make it 0.97, and the mouth would then lie 0.4
 # behind the wall's outer face.
 NANO_SEAT_HEIGHT_MM = 1.2
-NANO_WEST_X_MM = 0.9
-NANO_USB_END_Y_MM = 75.316
+NANO_NORTH_EDGE_Y_MM = NORTH_EDGE_Y_OF_COLUMN_2_MM
+NANO_WEST_X_MM = COLUMN_1_2_STEP_X_MM + TRAY_LEDGE_WIDTH_MM - TRAY_GAP_MM + 0.3  # 38.524
+NANO_USB_END_Y_MM = 80.078
 NANO_WIDTH_MM = 18.20
 NANO_LENGTH_MM = 33.20
 NANO_BOARD_THICKNESS_MM = 1.6
@@ -658,8 +699,10 @@ NANO_USB_SHELL = Envelope(
 # work/research/downloads/electrokit-41011898-knitter-mfp120/), whose
 # drawing is the MFP 140-R's, with A and B the table's for the MFP
 # 120-R. The body, A 11.0 along x (the knob's travel), 6 along y, 5.6
-# tall, centered at x 47.149, lies on the floor with its north face on
-# column 2's ledge face (DESIGN.md: y 79.648), so the ledge stands
+# tall, centered on column 0 at x 9.049 (moved there from column 2 with
+# the nice!nano's move, the user, 2026-10-21: "Yeah the power switch is
+# much easier to situate I think"), lies on the floor with its north
+# face on columns 0 and 1's ledge face (y 74.886), so the ledge stands
 # whole in front of it. The knob, 3.4 along x and 3.2 tall, reaches 5
 # past the north face and sweeps the window B, 6.6 along x, both
 # centered on the body as the drawing draws them. The three leads, 0.8
@@ -674,7 +717,8 @@ NANO_USB_SHELL = Envelope(
 # POWER_SWITCH_SHORTEST_LEAD_MM at the least (README.md), which leaves
 # their tips, and the wires' joints on them, behind the retainer that
 # holds the body in (power_switch_retainer_envelope()).
-POWER_SWITCH_CENTER_X_MM = 47.149
+POWER_SWITCH_NORTH_EDGE_Y_MM = NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM
+POWER_SWITCH_CENTER_X_MM = 9.049
 POWER_SWITCH_BODY_X_MM = 11.0
 POWER_SWITCH_BODY_Y_MM = 6.0
 POWER_SWITCH_BODY_Z_MM = 5.6
@@ -682,7 +726,7 @@ POWER_SWITCH_KNOB_WIDTH_MM = 3.4  # along x
 POWER_SWITCH_KNOB_HEIGHT_MM = 3.2  # along z
 POWER_SWITCH_KNOB_LENGTH_MM = 5.0  # past the body's north face
 POWER_SWITCH_KNOB_WINDOW_MM = 6.6  # B, along x: the knob's sweep
-POWER_SWITCH_NORTH_FACE_Y_MM = ledge_face_y(NORTH_EDGE_Y_OF_COLUMN_2_MM)
+POWER_SWITCH_NORTH_FACE_Y_MM = ledge_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM)
 POWER_SWITCH_BODY = Envelope(
     "power switch",
     "body",
@@ -941,9 +985,53 @@ BATTERY_PLUG = Envelope(
     CAVITY,
 )
 
-# Battery (DESIGN.md): the 34.37 x 51.53 x 4.11 pouch.
-BATTERY = Envelope(
-    "battery", "pouch", (22.0, 56.37), (8.1, 59.63), (0.0, BATTERY_TOP_Z_MM), CAVITY
+# Battery (DESIGN.md): the 34.37 x 51.53 x 4.11 pouch, turned in plan
+# under columns 3 to 5 (the user, 2026-10-21: "its placement is
+# completely free, it doesn't need to align to anything arbitrary,
+# whatever position and rotation is needed for the whole assembly to
+# work"): its center at BATTERY_CENTER_MM, its length
+# BATTERY_LENGTH_ANGLE_DEGREES north of east, nearly square to the
+# slant. A search over the tray put it there, where it keeps the most
+# room from the standoffs, the ledge and the joint (2.36 at the least),
+# its three ribs and its lead's rooms fitting. Unturned, at 90 degrees,
+# its width would lie along x. The pouch's own frame (battery_point())
+# runs across its width and along its length from its center, the
+# width's direction 90 degrees clockwise of the length's, so that a
+# corner's signs are (east, north) of the unturned pouch.
+BATTERY_WIDTH_MM = 34.37
+BATTERY_LENGTH_MM = 51.53
+BATTERY_CENTER_MM = (93.1, 35.6)
+BATTERY_LENGTH_ANGLE_DEGREES = 21.5
+
+
+def battery_axes():
+    """(across, along): the unit vectors of the pouch's width and
+    length."""
+    angle = math.radians(BATTERY_LENGTH_ANGLE_DEGREES)
+    along = (math.cos(angle), math.sin(angle))
+    return (along[1], -along[0]), along
+
+
+def battery_point(across, along):
+    """A point given in the pouch's frame."""
+    (across_x, across_y), (along_x, along_y) = battery_axes()
+    x, y = BATTERY_CENTER_MM
+    return (x + across * across_x + along * along_x, y + across * across_y + along * along_y)
+
+
+def battery_box_corners(across_range, along_range):
+    """A box given in the pouch's frame, as its corners counter-clockwise."""
+    (low_across, high_across), (low_along, high_along) = across_range, along_range
+    return tuple(battery_point(across, along) for across, along in (
+        (low_across, low_along), (high_across, low_along), (high_across, high_along),
+        (low_across, high_along)))
+
+
+BATTERY = turned_envelope(
+    "battery", "pouch",
+    battery_box_corners((-BATTERY_WIDTH_MM / 2.0, BATTERY_WIDTH_MM / 2.0),
+                        (-BATTERY_LENGTH_MM / 2.0, BATTERY_LENGTH_MM / 2.0)),
+    (0.0, BATTERY_TOP_Z_MM), CAVITY,
 )
 
 # The PCB connector's clear zone (DESIGN.md): no tray feature above
@@ -1083,7 +1171,6 @@ RIGHT_SOCKET_LEDGE_RELIEF_KEYS = ("S103", "S113", "S123", "S133", "S143", "S153"
 STANDOFF_RELIEF_CLEARANCE_MM = 1.0
 STANDOFF_RELIEF_MINIMUM_WALL_MM = 0.6
 SOCKET_STANDOFF_FLATS = (  # (standoff center, key)
-    ((76.041, 43.260), "S141"),
     ((94.774, 60.404), "S150"),
 )
 # No right half socket comes within the clearance of a standoff.
@@ -1263,20 +1350,23 @@ def all_socket_standoff_flats(right=False):
 
 def ledge_cutaway_edge_index(cutaway):
     """The north outline edge a ledge cut-away lies on: horizontal at
-    the cut-away's y, covering its x range, running west (the outline
-    runs counter-clockwise)."""
+    the cut-away's y, overlapping its x range, running west (the outline
+    runs counter-clockwise). The cut-away may run past the edge's ends,
+    as the nice!nano's runs 0.55 past column 2's north edge's east end,
+    into the corner of the column 2/3 step's ledge, which the board's
+    northeast corner reaches."""
     low_x, high_x = cutaway.x_range
     for index in range(len(OUTLINE_VERTICES_MM)):
         start, end = outline_edge_ends(index)
         if (
             abs(start[1] - cutaway.north_edge_y) < 1e-9
             and abs(end[1] - cutaway.north_edge_y) < 1e-9
-            and end[0] <= low_x
-            and high_x <= start[0]
+            and end[0] < high_x
+            and low_x < start[0]
         ):
             return index
     raise ValueError(
-        f"no north outline edge at y {cutaway.north_edge_y} covers the "
+        f"no north outline edge at y {cutaway.north_edge_y} meets the "
         f"{cutaway.part}'s ledge cut-away over x {cutaway.x_range}"
     )
 
@@ -1784,23 +1874,23 @@ def ledge_inner_polygon():
     )
 
 
-def west_ledge_face_x():
-    """The west ledge's inner face, which locates the nice!nano's west
-    edge."""
-    return min(x for x, _ in OUTLINE_VERTICES_MM) + ledge_reach()
+def nano_pocket_west_x():
+    """The nice!nano's pocket's west face, the column 1/2 step's ledge
+    face, which locates the board's west edge."""
+    return COLUMN_1_2_STEP_X_MM + ledge_reach()
 
 
 # The parts' mounts (DESIGN.md, "Parts in the tray", and work item 004).
 # Everything the tray adds to hold a part, and every void it cuts for
-# one, is an axis-aligned box in the left half's frame (MountBox), so
-# check_layout.py checks the mounts the way it checks the parts. Two
-# shapes are not boxes and lie inside theirs: the USB window with its
-# rounded corners and outer chamfer, and the reset pin hole, a
-# flat-topped teardrop. The nice!nano's clamp block is bored for its
-# insert like a standoff, the bore no box of its own, and the standoff
-# that the block, the foot and the east wall merge
-# (NANO_MERGED_STANDOFF_MM) keeps its own bore: tray_shape.py builds no
-# body into a standoff's bore. The clamp's tab and screw head are no
+# one, is a box in the left half's frame (MountBox), axis-aligned but
+# for the battery's ribs, which turn with the pouch, so check_layout.py
+# checks the mounts the way it checks the parts. Two shapes are not
+# boxes and lie inside theirs: the USB window with its rounded corners
+# and outer chamfer, and the reset pin hole, a flat-topped teardrop.
+# The nice!nano's clamp block is bored for its insert like a standoff,
+# the bore no box of its own. No mount takes in a standoff, and
+# tray_shape.py builds no body into a standoff's bore either way. The
+# clamp's tab and screw head are no
 # part of the tray, but check_layout.py checks them with the mount
 # bodies (nano_clamp_part_boxes()). The right tray is built in the left
 # half's frame and mirrored (the module docstring), which is right for a
@@ -1819,13 +1909,21 @@ def west_ledge_face_x():
 @dataclass(frozen=True)
 class MountBox:
     """A box the tray adds (a mount body) or cuts (a mount void): in plan
-    x_range by y_range, over z_range. `part` is the part it serves."""
+    x_range by y_range, over z_range. `part` is the part it serves. A
+    turned one (the battery's ribs) carries its corners, as a turned
+    Envelope does."""
 
     label: str
     part: str
     x_range: tuple
     y_range: tuple
     z_range: tuple
+    corners: tuple = None
+
+
+def turned_mount_box(label, part, corners, z_range):
+    x_range, y_range = bounding_ranges(corners)
+    return MountBox(label, part, x_range, y_range, z_range, tuple(corners))
 
 
 def centered_range(middle, width):
@@ -1872,7 +1970,7 @@ NANO_EXTRA_PADS_FROM_B_MINUS_ROW_MM = (2.54, 5.08, 7.62)
 # item 010), the clamp's press on the board and the bar's clearance
 # over the shell (work items 006 and 009), and the battery header's
 # front lips (none by default, DESIGN.md says why). The pocket's fit
-# is a slip fit at the least: the board lies 0.3 from the west ledge's
+# is a slip fit at the least: the board lies 0.3 from the pocket's west
 # face, 0.1 from it as printed, so at the slip fit the east wall's inner
 # face as printed meets the board's east edge, where a snug pocket's
 # would come 0.1 inside the board. The user calipered the slip fit
@@ -1910,7 +2008,7 @@ def nano_south_end_y(fits):
 
 
 def nano_west_x():
-    """The board's west edge, 0.3 from the west ledge's face whatever
+    """The board's west edge, 0.3 from the pocket's west face whatever
     its width."""
     return NANO_BOARD.x_range[0]
 
@@ -2004,7 +2102,7 @@ def part_envelopes(fits=DEFAULT_MOUNT_FITS):
 def nano_ledge_cutaway(fits=DEFAULT_MOUNT_FITS):
     """The north ledge's cut-away over the board the fits size."""
     return ledge_cutaway(
-        "nice!nano", nano_board_envelope(fits).x_range, NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM
+        "nice!nano", nano_board_envelope(fits).x_range, NANO_NORTH_EDGE_Y_MM
     )
 
 
@@ -2051,7 +2149,7 @@ def usb_window_box(fits=DEFAULT_MOUNT_FITS):
         "USB window",
         "nice!nano",
         centered_range(x, USB_WINDOW_WIDTH_MM),
-        (nano_usb_shell_mouth_y(), outer_face_y(NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM)),
+        (nano_usb_shell_mouth_y(), outer_face_y(NANO_NORTH_EDGE_Y_MM)),
         centered_range(z, USB_WINDOW_HEIGHT_MM),
     )
 
@@ -2062,7 +2160,7 @@ def usb_shell_channel_box(fits=DEFAULT_MOUNT_FITS):
         "nice!nano",
         centered_range(nano_center_x(fits), nano_bar_opening()),
         (
-            cavity_wall_y(NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM),
+            cavity_wall_y(NANO_NORTH_EDGE_Y_MM),
             nano_usb_shell_mouth_y() + nano_usb_channel_past_mouth(fits),
         ),
         (NANO_USB_SHELL.z_range[0], nano_bar_underside_z(fits)),
@@ -2087,7 +2185,7 @@ def usb_opening_boxes(fits=DEFAULT_MOUNT_FITS):
 # inner face, between the board's USB end and the wall (work item 010,
 # the user: "make the cradle more of a heavy duty pocket in an
 # extrusion"). It reaches over the ledge cut-away's whole width, so it
-# merges with the ledge at both ends, and from the floor to the bar's
+# meets the ledge at both ends, and from the floor to the bar's
 # top. Its south face, nano_north_end_gap() north of the board's USB
 # end, is the board's north stop. The shell passes it in an opening of its own, the
 # shell's slip fit across (the shell plus 0.5), from the board's seat up
@@ -2127,7 +2225,7 @@ def nano_north_block_boxes(fits=DEFAULT_MOUNT_FITS):
     and the bar over the opening."""
     low_x, high_x = nano_ledge_cutaway(fits).x_range
     opening = centered_range(nano_center_x(fits), nano_bar_opening())
-    y_range = (nano_north_block_south_y(fits), cavity_wall_y(NORTH_EDGE_Y_OF_COLUMNS_0_AND_1_MM))
+    y_range = (nano_north_block_south_y(fits), cavity_wall_y(NANO_NORTH_EDGE_Y_MM))
     underside = nano_bar_underside_z(fits)
     top = underside + NANO_BAR_HEIGHT_MM
     return (
@@ -2142,10 +2240,9 @@ def nano_north_block_boxes(fits=DEFAULT_MOUNT_FITS):
 # tab of its own print over the board's south edge, pulled down by an M2
 # screw into an M2 heat-set insert in the clamp block south of the
 # board. Nothing flexes in the tray, and its floor stays closed. The
-# block runs across the pocket from the west ledge's face on to the east
-# wall's outer face, NANO_CLAMP_BLOCK_DEPTH_MM along y, so it takes in
-# the standoff at NANO_MERGED_STANDOFF_MM with the foot and the east
-# wall, and is bored for the insert on the board's center line down to
+# block runs across the pocket from the west wall's outer face to the
+# east wall's, NANO_CLAMP_BLOCK_DEPTH_MM along y, and is bored for the
+# insert on the board's center line down to
 # the floor's top, like the standoffs, the floor's thickness under it.
 # A foot up to the board's top runs on north from it across the pocket
 # to the pocket's length south of the north block's face
@@ -2191,9 +2288,6 @@ NANO_CLAMP_SCREW_LENGTH_MM = 4.0  # M2 x 4, under the head
 NANO_CLAMP_SCREW_HEAD_DIAMETER_MM = 3.77
 NANO_CLAMP_SCREW_HEAD_HEIGHT_MM = 2.0
 NANO_CLAMP_SCREW_HOLE_DIAMETER_MM = printed_fit(MOUNTING_DRILL_DIAMETER_MM, SNUG_FIT_MM)
-# The standoff the clamp block, the foot and the east wall take in
-# (DESIGN.md, Mounting: moved there out from under the nice!nano).
-NANO_MERGED_STANDOFF_MM = MOUNTING_DRILL_CENTERS_MM[1]
 
 
 def nano_clamp_tab_x_range(fits=DEFAULT_MOUNT_FITS):
@@ -2216,15 +2310,15 @@ def nano_clamp_block_top_z(fits=DEFAULT_MOUNT_FITS):
 
 
 def nano_clamp_boxes(fits=DEFAULT_MOUNT_FITS):
-    """The block, from the west ledge's face to the east wall's outer
-    face about the screw's axis, and the foot, from the block on to the
-    stop across the pocket."""
+    """The block, from the west wall's outer face to the east wall's
+    about the screw's axis, and the foot, from the block on to the stop
+    across the pocket."""
     block_y = centered_range(nano_clamp_screw_center(fits)[1], NANO_CLAMP_BLOCK_DEPTH_MM)
-    west = west_ledge_face_x()
     return (
-        MountBox("clamp's block", "nice!nano", (west, nano_east_wall_outer_x()), block_y,
+        MountBox("clamp's block", "nice!nano",
+                 (nano_west_wall_outer_x(fits), nano_east_wall_outer_x(fits)), block_y,
                  (0.0, nano_clamp_block_top_z(fits))),
-        MountBox("clamp's foot", "nice!nano", (west, nano_pocket_east_x(fits)),
+        MountBox("clamp's foot", "nice!nano", (nano_pocket_west_x(), nano_pocket_east_x(fits)),
                  (block_y[1], nano_clamp_stop_y(fits)), (0.0, NANO_CLAMP_FOOT_HEIGHT_MM)),
     )
 
@@ -2324,58 +2418,116 @@ def nano_free_middle_x_range(fits=DEFAULT_MOUNT_FITS):
     return (nano_west_x() + clear, nano_east_x(fits) - clear)
 
 
-# The east wall along the board's east edge (work item 010, the user:
-# "Make them tall, thick walls that really cover the nano"): from the
-# pocket's east face, the board's width as the pocket's fit from the
-# west ledge's face, to the battery's northwest rib's inner face, so
-# that rib merges into it, NANO_EAST_WALL_ABOVE_BOARD_MM over the
-# board's top (the 4.0 tall wall the user accepted with the board on
-# the floor, doc/log/2026-10-19.md), from the clamp's block north to
-# where its north face as printed meets the PCB connector's zone, which
-# keeps tray features out above the floor. North of that the board's
-# east edge has no wall. Over the board's top its inner part is cut
-# back for the east socket strip (nano_strip_pocket_x_range()), so the
-# wall is three boxes: its outer part beyond the strip's pocket at full
-# height, its inner part up to the board's top, which locates the
-# board's east edge, and its inner part south of the strip's pocket at
-# full height.
+# The bay's walls along the board's long edges (work item 010, the
+# user: "Make them tall, thick walls that really cover the nano"). The
+# east wall runs from the pocket's east face, the board's width as the
+# pocket's fit from its west face, NANO_BAY_WALL_MM east, and the west
+# wall from the pocket's west face west to the east wall's outer face
+# mirrored about the board's center line, so the clamp's block between
+# their outer faces stays centered on the screw. Both stand
+# NANO_EAST_WALL_ABOVE_BOARD_MM over the board's top (the 4.0 tall wall
+# the user accepted with the board on the floor, doc/log/2026-10-19.md)
+# from the clamp's block north. The west wall ends where its north face
+# as printed meets the PCB connector's zone, which keeps tray features
+# out above the floor. The east wall runs on to column 2's ledge face,
+# where the ledge is cut away over the board, so that its raised
+# pieces (below) reach as far north as they can. Over the board's top
+# each wall's inner part is cut back for its socket strip
+# (nano_strip_pocket_x_range()), so each wall is three boxes: its outer
+# part beyond the strip's pocket at full height, its inner part up to
+# the board's top, which locates the board's edge, and its inner part
+# south of the strip's pocket at full height.
 NANO_EAST_WALL_ABOVE_BOARD_MM = 2.4
+NANO_BAY_WALL_MM = 2.2
 
 
 def nano_pocket_east_x(fits=DEFAULT_MOUNT_FITS):
     """The pocket's east face, the east wall's inner face."""
-    return west_ledge_face_x() + printed_fit(fits.nano_width, fits.nano_pocket_fit)
+    return nano_pocket_west_x() + printed_fit(fits.nano_width, fits.nano_pocket_fit)
 
 
 def nano_east_wall_top_z():
     return NANO_BOARD.z_range[1] + NANO_EAST_WALL_ABOVE_BOARD_MM
 
 
-def nano_east_wall_outer_x():
-    """The east wall's outer face, the battery's northwest rib's inner
-    face."""
-    return battery_rib_pocket()[0][0]
+def nano_east_wall_outer_x(fits=DEFAULT_MOUNT_FITS):
+    return nano_pocket_east_x(fits) + NANO_BAY_WALL_MM
+
+
+def nano_west_wall_outer_x(fits=DEFAULT_MOUNT_FITS):
+    return 2.0 * nano_center_x(fits) - nano_east_wall_outer_x(fits)
+
+
+def nano_bay_wall_boxes(name, outer_x, inner_x, pocket_face_x, north, fits):
+    """A wall's outer part, its inner part under the strip's pocket's
+    floor the wall's whole length and its inner part over that floor
+    south of the pocket."""
+    pocket_south = nano_strip_pocket_y_range()[0]
+    south = nano_clamp_boxes(fits)[0].y_range[1]
+    top = nano_east_wall_top_z()
+    return (
+        MountBox(f"{name} wall", "nice!nano", tuple(sorted((pocket_face_x, outer_x))),
+                 (south, north), (0.0, top)),
+        MountBox(f"{name} wall under the strip's pocket", "nice!nano",
+                 tuple(sorted((inner_x, pocket_face_x))), (south, north),
+                 (0.0, NANO_BOARD.z_range[1])),
+        MountBox(f"{name} wall south of the strip's pocket", "nice!nano",
+                 tuple(sorted((inner_x, pocket_face_x))), (south, pocket_south),
+                 (NANO_BOARD.z_range[1], top)),
+    )
 
 
 def nano_east_wall_boxes(fits=DEFAULT_MOUNT_FITS):
-    """The wall's outer part, its inner part under the strip's pocket's
-    floor the wall's whole length and its inner part over that floor
-    south of the pocket. The inner boxes do not overlap, so neither
-    shares with the other the standoff both reach."""
-    inner = nano_pocket_east_x(fits)
-    pocket_face = nano_strip_pocket_x_range(fits)[1]
-    pocket_south = nano_strip_pocket_y_range()[0]
-    south = nano_clamp_boxes(fits)[0].y_range[1]
-    north = PCB_CONNECTOR_CLEAR_ZONE.y_range[0] - PRINT_SWELLING_PER_SIDE_MM
+    return nano_bay_wall_boxes("east", nano_east_wall_outer_x(fits), nano_pocket_east_x(fits),
+                               nano_strip_pocket_x_range(fits)[1],
+                               ledge_face_y(NANO_NORTH_EDGE_Y_MM), fits)
+
+
+def nano_west_wall_boxes(fits=DEFAULT_MOUNT_FITS):
+    return nano_bay_wall_boxes("west", nano_west_wall_outer_x(fits), nano_pocket_west_x(),
+                               nano_strip_pocket_x_range(fits)[0],
+                               PCB_CONNECTOR_CLEAR_ZONE.y_range[0] - PRINT_SWELLING_PER_SIDE_MM,
+                               fits)
+
+
+# The walls' raised pieces (the user, 2026-10-21: "raise the bay
+# walls"): each wall's outer part rises on from its top to the PCB's
+# underside, the frame's, over every stretch where it keeps the ledge's
+# clearance from the sockets in plan (LEDGE_RELIEF_CLEARANCE_MM) from
+# every socket of either half, each socket's pieces taken as their
+# bounding boxes, so that with column 2's ledge cut away over the
+# nice!nano the walls carry the PCB or the frame beside the bay. A
+# stretch shorter than NANO_RAISED_WALL_SHORTEST_MM is left at the
+# wall's height: it would stand as a pillar, carrying little, with a
+# cutout of its own in the frame's backing. The strips' pockets stay
+# open above, so their wires still come in from over them.
+NANO_RAISED_WALL_SHORTEST_MM = 2.0
+
+
+def socket_y_ranges_beside(x_range, clearance):
+    """The y ranges, grown by clearance, of the sockets' pieces of
+    either half whose x ranges come within clearance of x_range."""
+    blocked = []
+    for right in (False, True):
+        for key in KEY_CENTERS_MM:
+            for polygon in socket_polygons_on_half(key, right):
+                (low_x, high_x), (low_y, high_y) = bounding_ranges(polygon)
+                if low_x - clearance < x_range[1] and x_range[0] < high_x + clearance:
+                    blocked.append((low_y - clearance, high_y + clearance))
+    return sorted(blocked)
+
+
+def nano_raised_wall_boxes(fits=DEFAULT_MOUNT_FITS):
     top = nano_east_wall_top_z()
-    return (
-        MountBox("east wall", "nice!nano", (pocket_face, nano_east_wall_outer_x()),
-                 (south, north), (0.0, top)),
-        MountBox("east wall under the strip's pocket", "nice!nano", (inner, pocket_face),
-                 (south, north), (0.0, NANO_BOARD.z_range[1])),
-        MountBox("east wall south of the strip's pocket", "nice!nano", (inner, pocket_face),
-                 (south, pocket_south), (NANO_BOARD.z_range[1], top)),
-    )
+    boxes = []
+    for wall in (nano_west_wall_boxes(fits)[0], nano_east_wall_boxes(fits)[0]):
+        blocked = socket_y_ranges_beside(wall.x_range, LEDGE_RELIEF_CLEARANCE_MM)
+        stretches = [(low, high) for low, high in ranges_less(wall.y_range, blocked)
+                     if high - low >= NANO_RAISED_WALL_SHORTEST_MM]
+        boxes.extend(MountBox(f"{wall.label}'s raised piece {index + 1}", "nice!nano",
+                              wall.x_range, stretch, (top, PCB_UNDERSIDE_Z_MM))
+                     for index, stretch in enumerate(stretches))
+    return tuple(boxes)
 
 
 # The pads' and pins' extents, which the seat's channels under the board,
@@ -2554,8 +2706,8 @@ def nano_strip_rooms(fits=DEFAULT_MOUNT_FITS):
     )
 
 
-# The strips' pockets: over the board's top the west ledge's face and
-# the east wall's inner face are cut back over each strip's worst case
+# The strips' pockets: over the board's top the walls' inner faces are
+# cut back over each strip's worst case
 # grown by the print's swelling and NANO_BOARD_PLAY_ALLOWANCE_MM, open
 # above, so that as printed they clear it by that allowance wherever the
 # board moves in its pocket: the most the user's caliper leaves it
@@ -2563,18 +2715,19 @@ def nano_strip_rooms(fits=DEFAULT_MOUNT_FITS):
 # 18.17~18.23 mm", 2026-10-20: 18.46 less 18.17 is 0.29), about the
 # third of a millimeter the user felt along it ("maybe 1/3 of a
 # millimeter lengthwise"). Below the board's top the faces still locate
-# its edges. The west pocket is a TrayCut out of the ledge
-# (nano_strip_ledge_pocket()), the east one splits the east wall
-# (nano_east_wall_boxes()). Both run NANO_STRIP_POCKET_NORTH_EXTENSION_MM
+# its edges. Each pocket splits its wall (nano_bay_wall_boxes()), and
+# the west one is also a TrayCut out of the column 1/2 step's ledge
+# (nano_strip_ledge_pocket()), which it reaches at its north end. Both
+# run NANO_STRIP_POCKET_NORTH_EXTENSION_MM
 # further north for the board going in tilted (check_layout.py's tilt
 # figures): its top rises toward its south end, so the strips lean
 # north and the west strip's north top corner comes toward the ledge
 # north of its pocket. With all of the end faces' swelling on the foot,
 # the north block's face standing as modelled, the corner reached
 # 0.069 into the ledge there as printed. The extension, the
-# least in 0.01 steps, keeps it 0.1 clear at that split. The east
-# pocket's north end lies north of the east wall's, so only the ledge
-# changes.
+# least in 0.01 steps, keeps it 0.1 clear at that split. North of the
+# east pocket the east wall's inner part stays at the board's top, so
+# only the ledge changes.
 NANO_BOARD_PLAY_ALLOWANCE_MM = 0.3
 NANO_STRIP_POCKET_NORTH_EXTENSION_MM = 0.17
 
@@ -2594,17 +2747,19 @@ def nano_strip_pocket_y_range():
     return (south, north + NANO_STRIP_POCKET_NORTH_EXTENSION_MM)
 
 
-def west_outline_edge_index():
-    """The outline's west edge, x = 0, which the west ledge runs along."""
-    west_x = min(x for x, _ in OUTLINE_VERTICES_MM)
-    return nearest_outline_edge_index((west_x, sum(nano_strip_pocket_y_range()) / 2.0))
+def column_1_2_step_edge_index():
+    """The outline's edge down the column 1/2 step, from column 2's
+    north edge to columns 0 and 1's."""
+    return OUTLINE_VERTICES_MM.index((COLUMN_1_2_STEP_X_MM, NORTH_EDGE_Y_OF_COLUMN_2_MM))
 
 
 def nano_strip_ledge_pocket(fits=DEFAULT_MOUNT_FITS):
-    """The west strip's pocket in the west ledge, from the board's top up
-    through the ledge's top, from the pocket's face out past the ledge's
-    face like the other ledge cuts."""
-    index = west_outline_edge_index()
+    """The west strip's pocket in the column 1/2 step's ledge, from the
+    board's top up through the ledge's top, from the pocket's face out
+    past the ledge's face like the other ledge cuts, along the strip's
+    whole pocket, most of which lies south of the step in the open
+    cavity."""
+    index = column_1_2_step_edge_index()
     face_x = nano_strip_pocket_x_range(fits)[0]
     ends = [outline_edge_coordinates((face_x, y), index) for y in nano_strip_pocket_y_range()]
     along_range = tuple(sorted(along for along, _ in ends))
@@ -2656,7 +2811,7 @@ def nano_seat_boxes(fits=DEFAULT_MOUNT_FITS):
 # the south wall with a pry recess in the floor to go along with it? So
 # I can pry with e.g. a toothpick"). The slot runs through the clamp's
 # block and foot, NANO_PRY_SLOT_WIDTH_MM across from
-# NANO_PRY_SLOT_FROM_LEDGE_MM east of the west ledge's face, west of the
+# NANO_PRY_SLOT_FROM_LEDGE_MM east of the pocket's west face, west of the
 # screw, from the floor up through their tops. The recess is the seat
 # left out under the slot's width from the foot's face to
 # NANO_PRY_RECESS_UNDER_BOARD_MM under the board's south end, down to
@@ -2684,7 +2839,7 @@ NANO_PRY_TOOTHPICK_TAPER_MM = 5.0
 
 
 def nano_pry_slot_x_range():
-    west = west_ledge_face_x() + NANO_PRY_SLOT_FROM_LEDGE_MM
+    west = nano_pocket_west_x() + NANO_PRY_SLOT_FROM_LEDGE_MM
     return (west, west + NANO_PRY_SLOT_WIDTH_MM)
 
 
@@ -2733,7 +2888,7 @@ def power_switch_knob_slot_box():
         centered_range(
             POWER_SWITCH_CENTER_X_MM, printed_fit(knob.x_range[1] - knob.x_range[0], fit)
         ),
-        (POWER_SWITCH_NORTH_FACE_Y_MM, outer_face_y(NORTH_EDGE_Y_OF_COLUMN_2_MM)),
+        (POWER_SWITCH_NORTH_FACE_Y_MM, outer_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM)),
         centered_range(
             POWER_SWITCH_KNOB_Z_MM, printed_fit(knob.z_range[1] - knob.z_range[0], fit)
         ),
@@ -3038,53 +3193,63 @@ def battery_pocket_boxes(fits=DEFAULT_MOUNT_FITS):
 
 # The battery's corner ribs: an L at three corners, the pouch a fit with
 # 0.5 per side as modelled (0.3 as printed, since pouches vary), and
-# none at the corner its lead leaves, the northeast (DESIGN.md).
+# none at the corner its lead leaves (DESIGN.md), the one nearest the
+# header's plug. The ribs turn with the pouch, given in its frame
+# (battery_point()), their corners as (across, along) signs, and are
+# named for the compass point their corner lies toward from the
+# pouch's center.
 BATTERY_RIB_FIT_MM = 0.6
 BATTERY_RIB_HEIGHT_MM = 1.0
 BATTERY_RIB_THICKNESS_MM = 0.8
 BATTERY_RIB_ARM_MM = 6.0
-BATTERY_LEAD_CORNER = (1, 1)  # (east, north)
+BATTERY_LEAD_CORNER = (-1, 1)  # (across, along): the northeast corner
+COMPASS_POINTS = ("east", "northeast", "north", "northwest", "west", "southwest", "south",
+                  "southeast")
 
 
 def battery_rib_pocket():
-    """(x range, y range) the ribs' inner faces bound."""
-    return tuple(
-        centered_range(sum(value_range) / 2.0,
-                       printed_fit(value_range[1] - value_range[0], BATTERY_RIB_FIT_MM))
-        for value_range in (BATTERY.x_range, BATTERY.y_range)
-    )
+    """(across range, along range) in the pouch's frame that the ribs'
+    inner faces bound."""
+    return tuple(centered_range(0.0, printed_fit(size, BATTERY_RIB_FIT_MM))
+                 for size in (BATTERY_WIDTH_MM, BATTERY_LENGTH_MM))
 
 
-def corner_name(east, north):
-    return ("north" if north > 0 else "south") + ("east" if east > 0 else "west")
+def battery_corner_name(across, along):
+    """The compass point a corner of the pouch lies toward from its
+    center."""
+    x, y = battery_point(across * BATTERY_WIDTH_MM / 2.0, along * BATTERY_LENGTH_MM / 2.0)
+    angle = math.degrees(math.atan2(y - BATTERY_CENTER_MM[1], x - BATTERY_CENTER_MM[0]))
+    return COMPASS_POINTS[round(angle / 45.0) % 8]
 
 
 def battery_rib_boxes():
-    (low_x, high_x), (low_y, high_y) = battery_rib_pocket()
+    (low_across, high_across), (low_along, high_along) = battery_rib_pocket()
     thickness = BATTERY_RIB_THICKNESS_MM
     z_range = (0.0, BATTERY_RIB_HEIGHT_MM)
     boxes = []
-    for east in (-1, 1):
-        for north in (-1, 1):
-            if (east, north) == BATTERY_LEAD_CORNER:
+    for across in (-1, 1):
+        for along in (-1, 1):
+            if (across, along) == BATTERY_LEAD_CORNER:
                 continue
-            corner_x = high_x if east > 0 else low_x
-            corner_y = high_y if north > 0 else low_y
-            outer_x = corner_x + east * thickness
-            outer_y = corner_y + north * thickness
-            name = corner_name(east, north)
-            boxes.append(MountBox(
-                f"battery's {name} rib along x",
+            corner_across = high_across if across > 0 else low_across
+            corner_along = high_along if along > 0 else low_along
+            outer_across = corner_across + across * thickness
+            outer_along = corner_along + along * thickness
+            name = battery_corner_name(across, along)
+            boxes.append(turned_mount_box(
+                f"battery's {name} rib across its width",
                 "battery",
-                tuple(sorted((outer_x, corner_x - east * BATTERY_RIB_ARM_MM))),
-                tuple(sorted((corner_y, outer_y))),
+                battery_box_corners(
+                    tuple(sorted((outer_across, corner_across - across * BATTERY_RIB_ARM_MM))),
+                    tuple(sorted((corner_along, outer_along)))),
                 z_range,
             ))
-            boxes.append(MountBox(
-                f"battery's {name} rib along y",
+            boxes.append(turned_mount_box(
+                f"battery's {name} rib along its length",
                 "battery",
-                tuple(sorted((corner_x, outer_x))),
-                tuple(sorted((outer_y, corner_y - north * BATTERY_RIB_ARM_MM))),
+                battery_box_corners(
+                    tuple(sorted((corner_across, outer_across))),
+                    tuple(sorted((outer_along, corner_along - along * BATTERY_RIB_ARM_MM)))),
                 z_range,
             ))
     return tuple(boxes)
@@ -3092,13 +3257,12 @@ def battery_rib_boxes():
 
 def nano_bodies(fits=DEFAULT_MOUNT_FITS):
     return (nano_north_block_boxes(fits) + nano_clamp_boxes(fits) + nano_east_wall_boxes(fits)
-            + nano_seat_boxes(fits))
+            + nano_west_wall_boxes(fits) + nano_raised_wall_boxes(fits) + nano_seat_boxes(fits))
 
 
 def mount_bodies(fits=DEFAULT_MOUNT_FITS):
     """Every box of plastic the mounts add, in the order the tray
-    builder fuses them: the nice!nano's last, since its east wall takes
-    in the battery's northwest rib."""
+    builder fuses them, the nice!nano's last."""
     return (
         power_switch_cradle_boxes()
         + reset_back_wall_boxes()
@@ -3134,8 +3298,9 @@ def mount_voids(fits=DEFAULT_MOUNT_FITS):
 # above the nice!nano's B+, B- and P1 pads, WIRE_ROOM_BESIDE_PADS_MM
 # beyond them, since its wires are soldered on its top side. Its pins 1
 # to 12 take the socket strips instead, with the room over each strip
-# (nano_strip_rooms()). The battery's lead leaves its northeast corner,
-# along either edge. The power switch's and the reset button's leads are
+# (nano_strip_rooms()). The battery's lead leaves its northeast corner
+# (BATTERY_LEAD_CORNER), along either edge, its two rooms turned with
+# the pouch. The power switch's and the reset button's leads are
 # cut to taste (README.md), so each of the two gets its room behind its
 # leads at their full length and at the shortest cut README.md allows.
 WIRE_ROOM_BEHIND_LEADS_MM = 3.0
@@ -3167,8 +3332,17 @@ def lead_wire_rooms():
     button_leads = (west_lead.x_range[0], east_lead.x_range[1])
     posts = BATTERY_CONNECTOR_POSTS
     plug = BATTERY_PLUG
-    battery = BATTERY
-    corner_x, corner_y = battery.x_range[1], battery.y_range[1]
+    across_sign, along_sign = BATTERY_LEAD_CORNER
+    corner_across = across_sign * BATTERY_WIDTH_MM / 2.0
+    corner_along = along_sign * BATTERY_LENGTH_MM / 2.0
+    past_end = battery_box_corners(
+        tuple(sorted((corner_across - across_sign * BATTERY_RIB_ARM_MM,
+                      corner_across + across_sign * beside))),
+        tuple(sorted((corner_along, corner_along + along_sign * behind))))
+    past_side = battery_box_corners(
+        tuple(sorted((corner_across, corner_across + across_sign * behind))),
+        tuple(sorted((corner_along - along_sign * BATTERY_RIB_ARM_MM,
+                      corner_along + along_sign * beside))))
     return (
         room_behind_leads("power switch", "behind the leads", switch_leads.x_range,
                           switch_leads.y_range[0], switch_leads.z_range[1]),
@@ -3185,11 +3359,10 @@ def lead_wire_rooms():
                   (0.0, posts.z_range[1] + above)),
         wire_room("battery connector", "behind the plug", (plug.x_range[0] - behind,
                   plug.x_range[0]), plug.y_range, plug.z_range),
-        wire_room("battery", "north of its lead's corner",
-                  (corner_x - BATTERY_RIB_ARM_MM, corner_x + beside),
-                  (corner_y, corner_y + behind), battery.z_range),
-        wire_room("battery", "east of its lead's corner", (corner_x, corner_x + behind),
-                  (corner_y - BATTERY_RIB_ARM_MM, corner_y + beside), battery.z_range),
+        turned_envelope("battery", "wire room past its end at its lead's corner", past_end,
+                        BATTERY.z_range, CAVITY),
+        turned_envelope("battery", "wire room past its side at its lead's corner", past_side,
+                        BATTERY.z_range, CAVITY),
     )
 
 
@@ -3290,17 +3463,17 @@ FRAME_BOSS_EDGE_MARGIN_MM = 0.5
 FRAME_BACKING_SCREW_HEAD_DIAMETER_MM = 4.0
 FRAME_BOSS_CENTERS_MM = {
     False: (
-        (4.499, 32.507), (5.999, 13.457), (6.499, 52.307), (6.499, 70.857), (18.574, 12.307),
+        (5.999, 13.457), (5.999, 32.507), (5.999, 51.557), (18.574, 12.307), (18.574, 69.457),
         (25.049, 13.457), (25.049, 32.507), (25.049, 51.557), (25.049, 70.607), (37.624, 17.070),
-        (44.099, 18.220), (44.099, 37.270), (44.099, 56.320), (56.674, 19.320), (63.149, 20.601),
+        (42.099, 37.520), (44.099, 18.220), (44.099, 75.370), (44.349, 57.070), (63.149, 20.601),
         (63.149, 39.651), (63.149, 58.701), (75.724, 19.451), (75.724, 76.101), (82.199, 18.220),
         (82.199, 37.270), (82.199, 56.320), (82.199, 75.370), (94.774, 17.070), (101.249, 15.839),
         (101.249, 34.889), (101.249, 53.939), (101.249, 72.989),
     ),
     True: (
-        (11.849, 52.307), (12.099, 13.457), (12.099, 70.607), (18.574, 12.307), (18.574, 31.357),
+        (12.099, 13.457), (12.099, 32.507), (12.099, 51.557), (18.574, 12.307), (18.574, 69.457),
         (31.149, 13.457), (31.149, 32.507), (31.149, 51.557), (31.149, 70.607), (37.624, 12.307),
-        (50.199, 18.220), (50.199, 37.270), (50.199, 56.320), (56.424, 74.970), (56.674, 19.451),
+        (37.624, 36.120), (49.949, 57.070), (50.199, 18.220), (50.199, 75.370), (56.424, 36.370),
         (69.249, 20.601), (69.249, 39.651), (69.249, 58.701), (75.724, 19.451), (88.299, 18.220),
         (88.299, 37.270), (88.299, 56.320), (88.299, 75.370), (94.774, 17.070), (107.349, 15.839),
         (107.349, 34.889), (107.349, 53.939),
@@ -3397,14 +3570,16 @@ def frame_backing_tray_bodies(right=False):
     """(label, counter-clockwise polygon) of what of the tray but the
     ledge and the standoffs stands into the backing's heights inside its
     outline: the joint's dowel bosses and fills, the parking boss and its
-    fill (all to the frame's underside), the nice!nano's clamp screw's
-    head (to z 8.0) and the power switch's retainer (to z 7.6 as
-    printed)."""
+    fill, the nice!nano's walls' raised pieces (all to the frame's
+    underside), the nice!nano's clamp screw's head (to z 8.0) and the
+    power switch's retainer (to z 7.6 as printed)."""
     bodies = [(f"dowel boss at {along} along the slant", dowel_boss_polygon(along, right))
               for along in DOWEL_PIN_ALONGS_MM]
     bodies.append(("upper dowel boss's fill", upper_boss_fill_polygon(right)))
     bodies.append(("parking boss", parking_boss_polygon()))
     bodies.append(("parking boss's fill", parking_boss_fill_polygon()))
+    bodies.extend((f"nice!nano {box.label}", box_corners(box.x_range, box.y_range))
+                  for box in nano_raised_wall_boxes())
     head = [box for box in nano_clamp_part_boxes() if box.label == "clamp screw's head"]
     bodies.extend(("nice!nano clamp screw's head", box_corners(box.x_range, box.y_range))
                   for box in head)

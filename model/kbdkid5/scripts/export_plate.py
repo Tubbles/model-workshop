@@ -8,7 +8,8 @@ its diode. This script mirrors it for the right half, checks the
 result against the layout and prints what it measured: the plate
 inside the tray's cavity wall, its slanted edge's distance from the
 outline's slant, every cutout on its key and every head hole on its
-drill (both moved by the pattern shift). Then it writes the plate
+drill (both moved by the pattern shift), and the plate each head hole
+leaves to the nearest switch cutout. Then it writes the plate
 upside down, its top face on z = 0, so the covered variant's pit opens
 upward and it prints as is without supports.
 
@@ -311,6 +312,29 @@ def top_openings(plate):
     return cutouts, holes
 
 
+def hole_cutout_clearances(plate):
+    """(hole center, least distance to a switch cutout's edge, that
+    cutout's center) of every head hole on the plate's top face, measured
+    between the face's inner wires."""
+    face = top_face(plate)
+    holes, cutouts = [], []
+    for wire in face.Wires:
+        if wire.isSame(face.OuterWire):
+            continue
+        if all(isinstance(edge.Curve, Part.Circle) for edge in wire.Edges):
+            holes.append(wire)
+        else:
+            cutouts.append(wire)
+    clearances = []
+    for hole in holes:
+        center = hole.Edges[0].Curve.Center
+        distance, nearest = min(((hole.distToShape(cutout)[0], cutout) for cutout in cutouts),
+                                key=lambda pair: pair[0])
+        box = nearest.BoundBox
+        clearances.append(((center.x, center.y), distance, (box.Center.x, box.Center.y)))
+    return clearances
+
+
 def match_features(found, expected, what):
     """The worst distance between each expected (label, point) and the
     one found point within FEATURE_MATCH_RADIUS_MM of it. Every found
@@ -441,6 +465,9 @@ def print_measurements(plate, arguments):
           f"along x, worst residual {cutout_worst:.4f} mm")
     print(f"holes:      {hole_count} head holes, each on its drill moved {shift:+.2f} along "
           f"x, worst residual {hole_worst:.4f} mm")
+    for center, distance, cutout in hole_cutout_clearances(plate):
+        print(f"hole:       {format_point(center)} {distance:.3f} mm of plate to the nearest "
+              f"switch cutout, centered at {format_point(cutout)}")
 
 
 def recess_centers(build, arguments):
