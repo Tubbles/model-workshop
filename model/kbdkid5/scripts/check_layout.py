@@ -69,11 +69,14 @@ less room than reported here.
 
 The rules a standoff (its drill, body and bore) and a hand-wired
 frame's boss (the boss and its screw head) meet where they stand are
-records, PlacementRules, one per feature and obstacle, built from the
-obstacle functions by standoff_rules() and frame_boss_rules(): the
-feature, the obstacle, their heights, the minimum, where the feature
-may merge with the tray instead and which rule then still holds, and
-the sockets' flats. The checks iterate the records, and a placement
+records, PlacementRules, one per feature and obstacle, gathered from
+the obstacle functions by standoff_rules() and frame_boss_rules(), with
+standoff_merges() where a standoff may merge with the tray instead and
+which rule then still holds, and frame_boss_pair_rules() between the
+bosses: the feature, the obstacle, their heights, the minimum, and a
+socket's flat as a rule a solver can evaluate at any center
+(SocketFlat). Each check takes its rules from the gathered ones by
+name and fails where a name has none (rules_named()), and a placement
 solver (work item 016) reads the same records, so the two cannot
 drift. The standoffs' and the bosses' centers come in as arguments,
 the checks passing layout.py's.
@@ -820,9 +823,10 @@ def socket_clearances(obstacles, minimum, right=False):
 
 
 # The rules a placed feature meets (work item 016), one record per
-# feature and obstacle: what the checks below iterate and what a
-# placement solver reads. A rule holds in plan wherever the feature's
-# and the obstacle's heights overlap.
+# feature and obstacle: standoff_rules() and frame_boss_rules() gather
+# them, the checks below take theirs from those by name (rules_named()),
+# and a placement solver reads the same records. A rule holds in plan
+# wherever the feature's and the obstacle's heights overlap.
 
 CLEAR = "clear"  # the feature keeps the minimum from the obstacle
 INSIDE = "inside"  # the feature stays the minimum inside the obstacle, an outline
@@ -831,18 +835,30 @@ APART = "apart"  # the feature keeps the minimum from the same feature of every 
 
 
 @dataclasses.dataclass(frozen=True)
+class SocketFlat:
+    """A rule's flat, the rule that may stand in for its minimum: where
+    the socket of key on the given half comes within the minimum of a
+    standoff's body, the standoff gets that socket's flats as layout.py's
+    rule cuts them at its center (flats_cut()), the rule holds with them,
+    and each must leave minimum_wall of plastic around the insert bore
+    (flat_plastic(), thin_flats()). layout.SOCKET_STANDOFF_FLATS declares
+    the flats the layout has (check_socket_tray_rules())."""
+
+    key: str
+    right: bool
+    minimum_wall: float
+
+
+@dataclasses.dataclass(frozen=True)
 class PlacementRule:
     """A rule a feature of a placed part meets against one obstacle. The
     feature is a circle of radius about the part's center over
-    feature_z_range, with the flats cut into it there; the obstacle is a
+    feature_z_range, with the flats cut into it there (none as gathered:
+    a check puts in the ones layout.py declares, a solver the ones a
+    SocketFlat cuts, with_flats_cut()); the obstacle is a
     circle_clearance() kind and shape over obstacle_z_range. A z range
     of None means any height: the rule holds in plan whatever the
-    heights. A rule with a flat_key lets a flat stand in for its minimum:
-    that key's socket, coming within it, gets a flat
-    (layout.socket_standoff_flats()), which layout.SOCKET_STANDOFF_FLATS
-    must declare and which must leave
-    layout.STANDOFF_RELIEF_MINIMUM_WALL_MM of plastic around the bore
-    (check_socket_tray_rules())."""
+    heights. An APART rule holds between two parts (pair_clearance())."""
 
     name: str
     feature: str
@@ -855,7 +871,7 @@ class PlacementRule:
     relation: str = CLEAR
     minimum: float = 0.0
     flats: tuple = ()
-    flat_key: object = None
+    flat: object = None
     survivor: object = None
 
 
@@ -881,7 +897,10 @@ def circle_clearance(center, radius, kind, shape):
 def rule_clearance(center, rule):
     """How far a rule's feature at center keeps from its obstacle, or
     with INSIDE how far it stays inside it: negative when it reaches in,
-    or out."""
+    or out. An APART rule has no obstacle of its own: pair_clearance()
+    takes it."""
+    if rule.relation == APART:
+        raise ValueError(f"the {rule.name} rule holds between two parts: use pair_clearance()")
     if rule.relation == INSIDE:
         return signed_point_distance(center, rule.shape) - rule.radius
     if rule.flats:
@@ -889,40 +908,90 @@ def rule_clearance(center, rule):
     return circle_clearance(center, rule.radius, rule.kind, rule.shape)
 
 
-def rule_tallies(rules):
-    """A Tightest for each rule name among the rules, in their order."""
-    return {name: Tightest() for name in dict.fromkeys(rule.name for rule in rules)}
+def pair_clearance(first_center, second_center, rule):
+    """How far an APART rule's feature on two parts, at the two centers,
+    keeps between them."""
+    return math.dist(first_center, second_center) - 2.0 * rule.radius
+
+
+def flats_cut(center, rule):
+    """The flats a rule's SocketFlat cuts into the standoff at center, as
+    layout.py's rule cuts them: none without one, or where the socket
+    keeps the rule's minimum."""
+    if rule.flat is None:
+        return ()
+    return layout.socket_standoff_flats(center, rule.flat.key, rule.flat.right)
+
+
+def with_flats_cut(center, rule):
+    """The rule with the flats it cuts at center in it, for a center
+    anywhere: rule_clearance() then gives what the flats leave, and
+    thin_flats() the flats breaking the SocketFlat's own rule."""
+    return dataclasses.replace(rule, flats=flats_cut(center, rule))
+
+
+def thin_flats(center, rule):
+    """The flats a rule cuts at center that leave less than its
+    SocketFlat's minimum_wall of plastic around the bore."""
+    return [flat for flat in flats_cut(center, rule)
+            if flat_plastic(flat) < rule.flat.minimum_wall - TOLERANCE_MM]
+
+
+def rules_named(rules, names):
+    """The rules among rules with one of the names, in their order, or a
+    CheckFailure where a name has none, so a rule renamed or left out of
+    the gathered ones cannot drop out of its check."""
+    missing = [name for name in names if not any(rule.name == name for rule in rules)]
+    if missing:
+        raise CheckFailure(f"no gathered rule named {', '.join(missing)}")
+    return [rule for rule in rules if rule.name in names]
+
+
+def rules_against(rules, obstacle, shape):
+    """The rules among rules against one obstacle, by its label and
+    shape, or a CheckFailure where there is none."""
+    found = [rule for rule in rules if rule.obstacle == obstacle and rule.shape == shape]
+    if not found:
+        raise CheckFailure(f"no gathered rule against the {obstacle}")
+    return found
 
 
 # A standoff's rules, its drill's, body's and bore's, by the checks that
-# hold them. standoff_rules() gathers them for a standoff at a center.
+# hold them. standoff_rules() gathers them, and each check takes its own
+# from there.
 
 
 def standoff_body_rule(name, obstacle, polygon, z_range=None, minimum=0.0):
     """A rule of a standoff's body, clear of a convex polygon by the
     minimum where their heights meet."""
-    return PlacementRule(name, "body", layout.STANDOFF_DIAMETER_MM / 2.0, standoff_z_range(),
-                         obstacle, "polygon", polygon, z_range, CLEAR, minimum)
+    return PlacementRule(name=name, feature="body", radius=layout.STANDOFF_DIAMETER_MM / 2.0,
+                         feature_z_range=standoff_z_range(), obstacle=obstacle, kind="polygon",
+                         shape=polygon, obstacle_z_range=z_range, minimum=minimum)
+
+
+def standoff_drill_rule(name, obstacle, kind, shape, relation=CLEAR, minimum=0.0):
+    """A rule of a mounting drill, at any height, since it runs through
+    the PCB."""
+    return PlacementRule(name=name, feature="drill", radius=layout.MOUNTING_DRILL_DIAMETER_MM / 2.0,
+                         feature_z_range=None, obstacle=obstacle, kind=kind, shape=shape,
+                         relation=relation, minimum=minimum)
 
 
 def standoff_drill_rules():
     """The mounting drill INSIDE_OUTLINE_MINIMUM_MARGIN_MM inside the
     outline and clear of every key's footprint holes and socket on the
-    left half, at any height, since it runs through the PCB
-    (check_mounting_drills())."""
-    radius = layout.MOUNTING_DRILL_DIAMETER_MM / 2.0
-    rules = [PlacementRule("drill inside the outline", "drill", radius, None, "the outline",
-                           "outline", layout.OUTLINE_VERTICES_MM, None, INSIDE,
-                           INSIDE_OUTLINE_MINIMUM_MARGIN_MM)]
+    left half (check_mounting_drills())."""
+    rules = [standoff_drill_rule("drill inside the outline", "the outline", "outline",
+                                 layout.OUTLINE_VERTICES_MM, relation=INSIDE,
+                                 minimum=INSIDE_OUTLINE_MINIMUM_MARGIN_MM)]
     rules.extend(
-        PlacementRule("drill from the switch holes", "drill", radius, None,
-                      f"{name}'s {diameter} hole", "circle", (hole_center, diameter / 2.0))
+        standoff_drill_rule("drill from the switch holes", f"{name}'s {diameter} hole", "circle",
+                            (hole_center, diameter / 2.0))
         for name, center in layout.KEY_CENTERS_MM.items()
         for hole_center, diameter in layout.footprint_holes(center)
     )
     rules.extend(
-        PlacementRule("drill from the sockets", "drill", radius, None, f"{name}'s socket",
-                      "polygon", polygon)
+        standoff_drill_rule("drill from the sockets", f"{name}'s socket", "polygon", polygon)
         for name, polygon in socket_footprints()
     )
     return rules
@@ -936,18 +1005,21 @@ def standoff_part_rules(fits=layout.DEFAULT_MOUNT_FITS):
             for envelope in layout.part_envelopes(fits)]
 
 
-def standoff_socket_rules(center, right=False):
+def standoff_socket_rules(right=False):
     """The body layout.STANDOFF_RELIEF_CLEARANCE_MM from every socket on
-    the given half where their heights meet, band by band of its height
-    with the flats layout.py declares at center cut into it
-    (standoff_bands(), check_socket_standoffs()). A socket coming closer
-    gets a flat (flat_key)."""
+    the given half where their heights meet, a socket coming closer
+    getting its flats, each leaving
+    layout.STANDOFF_RELIEF_MINIMUM_WALL_MM around the bore (SocketFlat;
+    check_socket_standoffs(), check_socket_tray_rules())."""
     return [
-        PlacementRule("body from the sockets", "body", layout.STANDOFF_DIAMETER_MM / 2.0, z_range,
-                      f"{name}'s socket", "polygon", socket, socket_z_range(), CLEAR,
-                      layout.STANDOFF_RELIEF_CLEARANCE_MM, tuple(flats), name)
-        for z_range, flats in standoff_bands(center, right)
-        for name, socket in socket_footprints(right)
+        PlacementRule(name="body from the sockets", feature="body",
+                      radius=layout.STANDOFF_DIAMETER_MM / 2.0, feature_z_range=standoff_z_range(),
+                      obstacle=f"{key}'s socket", kind="polygon", shape=socket,
+                      obstacle_z_range=socket_z_range(),
+                      minimum=layout.STANDOFF_RELIEF_CLEARANCE_MM,
+                      flat=SocketFlat(key=key, right=right,
+                                      minimum_wall=layout.STANDOFF_RELIEF_MINIMUM_WALL_MM))
+        for key, socket in socket_footprints(right)
     ]
 
 
@@ -963,10 +1035,11 @@ def standoff_bore_rules(right=False):
     half's joint slots and holes where their heights meet, so a standoff
     merging with the joint block keeps its bore whole
     (check_standoff_bores())."""
-    return [PlacementRule("bore from the joint's voids", "bore",
-                          layout.STANDOFF_BORE_DIAMETER_MM / 2.0, standoff_z_range(), label,
-                          "polygon", polygon, z_range, CLEAR,
-                          layout.STANDOFF_RELIEF_MINIMUM_WALL_MM)
+    return [PlacementRule(name="bore from the joint's voids", feature="bore",
+                          radius=layout.STANDOFF_BORE_DIAMETER_MM / 2.0,
+                          feature_z_range=standoff_z_range(), obstacle=label, kind="polygon",
+                          shape=polygon, obstacle_z_range=z_range,
+                          minimum=layout.STANDOFF_RELIEF_MINIMUM_WALL_MM)
             for label, polygon, z_range in joint_voids(right)]
 
 
@@ -995,8 +1068,9 @@ def standoff_printed_rule(name, envelope):
     """A rule of a standoff's body as printed, grown by the print's
     swelling, clear of an envelope in plan at any height."""
     radius = layout.STANDOFF_DIAMETER_MM / 2.0 + layout.PRINT_SWELLING_PER_SIDE_MM
-    return PlacementRule(name, "body as printed", radius, standoff_z_range(),
-                         describe_envelope(envelope), "polygon", box_polygon(envelope))
+    return PlacementRule(name=name, feature="body as printed", radius=radius,
+                         feature_z_range=standoff_z_range(), obstacle=describe_envelope(envelope),
+                         kind="polygon", shape=box_polygon(envelope))
 
 
 def standoff_wire_room_rules(rooms):
@@ -1020,29 +1094,31 @@ def standoff_merges(right=False, fits=layout.DEFAULT_MOUNT_FITS):
     keeping its wall from them (standoff_bore_rules()), as the sixth
     standoff merges with the joint block (DESIGN.md, Tray)."""
     pieces = ledge_pieces(right, fits) + magnet_slots() + dowel_holes(right)
-    return [PlacementRule("body merging with the tray", "body", layout.STANDOFF_DIAMETER_MM / 2.0,
-                          standoff_z_range(), label, "polygon", polygon, z_range, MERGE,
+    return [PlacementRule(name="body merging with the tray", feature="body",
+                          radius=layout.STANDOFF_DIAMETER_MM / 2.0,
+                          feature_z_range=standoff_z_range(), obstacle=label, kind="polygon",
+                          shape=polygon, obstacle_z_range=z_range, relation=MERGE,
                           survivor="bore from the joint's voids")
             for label, polygon, z_range in pieces]
 
 
-def standoff_rules(center, right=False, fits=layout.DEFAULT_MOUNT_FITS):
-    """Every rule a standoff at center meets on the given half, as the
-    checks hold them, and where it may merge instead (standoff_merges()):
-    the drill's (on the left half, where check_mounting_drills() holds
-    them), the body's from the parts, the sockets (with the flats
-    declared at center), the joint's plastic, the parking hole and the
-    mounts, the bore's from the joint's voids, and the body's as printed
-    from the wire rooms and the nice!nano's strips wherever the board
-    can lie. The frame's bosses keep from the standoffs by their own
-    rules (frame_boss_rules())."""
+def standoff_rules(right=False, fits=layout.DEFAULT_MOUNT_FITS):
+    """Every rule a standoff meets on the given half, wherever it
+    stands, as the checks hold them: the drill's (on the left half,
+    where check_mounting_drills() holds them), the body's from the
+    parts, the sockets (with their flats), the joint's plastic, the
+    parking hole and the mounts, the bore's from the joint's voids, and
+    the body's as printed from the wire rooms and from the nice!nano's
+    strips wherever check_nano_strips() takes the board. Where it may
+    merge instead is standoff_merges()'s, and the frame's bosses keep
+    from the standoffs by their own rules (frame_boss_rules())."""
     drill = [] if right else standoff_drill_rules()
-    return (drill + standoff_part_rules(fits) + standoff_socket_rules(center, right)
+    strip_places = nano_strip_places(fits, WORST_SPLITS + EVEN_SPLIT)
+    return (drill + standoff_part_rules(fits) + standoff_socket_rules(right)
             + standoff_joint_rules(right) + standoff_bore_rules(right)
             + standoff_parking_hole_rules() + standoff_mount_rules(fits)
             + standoff_wire_room_rules(layout.wire_rooms(fits, right))
-            + standoff_nano_strip_rules(nano_strip_places(fits))
-            + standoff_merges(right, fits))
+            + standoff_nano_strip_rules(strip_places))
 
 
 # The checks, in order.
@@ -1362,9 +1438,10 @@ def check_mounting_drills():
     """The drills by their rules (standoff_drill_rules()), the margin
     inside the outline held without the touching tolerance."""
     drills = layout.MOUNTING_DRILL_CENTERS_MM
-    rules = standoff_drill_rules()
+    names = ("drill inside the outline", "drill from the switch holes", "drill from the sockets")
+    rules = rules_named(standoff_rules(), names)
     problems = []
-    tightest = rule_tallies(rules)
+    tightest = {name: Tightest() for name in names}
     for drill in drills:
         for rule in rules:
             if not heights_meet(rule):
@@ -1379,11 +1456,10 @@ def check_mounting_drills():
             if margin < rule.minimum - TOLERANCE_MM:
                 problems.append(f"drill {drill} overlaps {rule.obstacle} by {-margin:.3f}")
     fail_on(problems, "mounting drills off the board or on a switch")
+    inside, from_holes, from_sockets = (tightest[name] for name in names)
     return (
-        f"drills:    {len(drills)} inside the outline, tightest edge "
-        f"{tightest['drill inside the outline']}; clear of the switch holes by "
-        f"{tightest['drill from the switch holes']}, of the sockets by "
-        f"{tightest['drill from the sockets']}"
+        f"drills:    {len(drills)} inside the outline, tightest edge {inside}; clear of the switch "
+        f"holes by {from_holes}, of the sockets by {from_sockets}"
     )
 
 
@@ -1563,7 +1639,7 @@ def check_part_standoffs():
     centers = layout.MOUNTING_DRILL_CENTERS_MM
     problems = []
     tightest = Tightest()
-    for rule in standoff_part_rules():
+    for rule in rules_named(standoff_rules(), ("body from the parts",)):
         if not heights_meet(rule):
             continue
         for center in centers:
@@ -1645,9 +1721,19 @@ def declared_set_problems(right=False):
     ]
 
 
-def uncut_declaration_problems(standoff_centers, right=False):
+def socket_flat_rule(socket_rules, key):
+    """The first of the standoffs' rules from the sockets whose flat is
+    key's socket's, or a CheckFailure where none is."""
+    for rule in socket_rules:
+        if rule.flat is not None and rule.flat.key == key:
+            return rule
+    raise CheckFailure(f"no gathered rule with a flat for {key}'s socket")
+
+
+def uncut_declaration_problems(standoff_centers, socket_rules, right=False):
     """Sockets named for a cut that kbdkid4's rule does not make on the
-    given half, with the standoffs at standoff_centers."""
+    given half, with the standoffs at standoff_centers, their flats by
+    the standoffs' rules from the sockets (flats_cut())."""
     problems = []
     for key in layout.socket_tab_notch_keys(right):
         if not any(not cut.cuts_wall for cut in layout.socket_tab_cuts(key, right)):
@@ -1658,7 +1744,7 @@ def uncut_declaration_problems(standoff_centers, right=False):
     for center, key in layout.socket_standoff_flat_declarations(right):
         if center not in standoff_centers:
             problems.append(f"{key}'s flat is on {center}, where there is no mounting drill")
-        elif not layout.socket_standoff_flats(center, key, right):
+        elif not flats_cut(center, socket_flat_rule(socket_rules, key)):
             problems.append(
                 f"{key}'s socket is not near enough the standoff at {center} for a flat"
             )
@@ -1670,14 +1756,18 @@ def flat_plastic(flat):
     return flat.plane_distance - layout.STANDOFF_BORE_DIAMETER_MM / 2.0
 
 
-def thin_flat_problems(right=False):
-    minimum = layout.STANDOFF_RELIEF_MINIMUM_WALL_MM
-    return [
-        f"the {flat.label} on the standoff at {flat.standoff_center} leaves "
-        f"{flat_plastic(flat):.3f} around the bore, less than {minimum}"
-        for flat in layout.all_socket_standoff_flats(right)
-        if flat_plastic(flat) < minimum - TOLERANCE_MM
-    ]
+def thin_flat_problems(socket_rules, right=False):
+    """The flats layout.py declares on the given half that break their
+    rule's own (thin_flats())."""
+    problems = []
+    for center, key in layout.socket_standoff_flat_declarations(right):
+        rule = socket_flat_rule(socket_rules, key)
+        problems.extend(
+            f"the {flat.label} on the standoff at {flat.standoff_center} leaves "
+            f"{flat_plastic(flat):.3f} around the bore, less than {rule.flat.minimum_wall}"
+            for flat in thin_flats(center, rule)
+        )
+    return problems
 
 
 def thumb_tab_from_joint_block(right=True):
@@ -1803,12 +1893,14 @@ def flat_figures(standoff_centers, right=False):
 def check_socket_tray_rules(right=False):
     """The sockets layout.py gives notches, reliefs and flats on the
     given half are DESIGN.md's, kbdkid4's rule cuts each, no flat leaves
-    the bore too thin, and the cuts come out at DESIGN.md's figures."""
+    the bore too thin, and the cuts come out at DESIGN.md's figures. The
+    flats are the standoffs' rules' from the sockets (standoff_rules())."""
     centers = layout.MOUNTING_DRILL_CENTERS_MM
+    socket_rules = rules_named(standoff_rules(right), ("body from the sockets",))
     fail_on(
         declared_set_problems(right)
-        + uncut_declaration_problems(centers, right)
-        + thin_flat_problems(right),
+        + uncut_declaration_problems(centers, socket_rules, right)
+        + thin_flat_problems(socket_rules, right),
         f"{half_label(right)}the sockets' notches, reliefs or flats are off",
     )
     figures = tab_figures(right) + relief_figures(right) + flat_figures(centers, right)
@@ -1837,22 +1929,29 @@ def check_socket_wall(right=False):
 
 
 def check_socket_standoffs(right=False):
+    """Every standoff by its rules from the sockets (standoff_rules()),
+    band by band of its height with the flats layout.py declares on it
+    there (standoff_bands()), so a socket a flat should stand in for
+    fails until its flat is declared."""
     centers = layout.MOUNTING_DRILL_CENTERS_MM
+    rules = rules_named(standoff_rules(right), ("body from the sockets",))
     minimum = layout.STANDOFF_RELIEF_CLEARANCE_MM
     problems = []
     tightest = Tightest()
     for center in centers:
-        for rule in standoff_socket_rules(center, right):
-            if not heights_meet(rule):
-                continue
-            clearance = rule_clearance(center, rule)
-            standoff = describe_piece(f"standoff at {center}", rule.feature_z_range)
-            where = f"{rule.obstacle} and the {standoff}"
-            if rule.flats:
-                where += f" with {len(rule.flats)} flat{'s' if len(rule.flats) > 1 else ''}"
-            tightest.update(clearance, where)
-            if clearance < rule.minimum - TOLERANCE_MM:
-                problems.append(f"{where}: {clearance:.3f}, less than {rule.minimum}")
+        for z_range, flats in standoff_bands(center, right):
+            for gathered in rules:
+                rule = dataclasses.replace(gathered, feature_z_range=z_range, flats=tuple(flats))
+                if not heights_meet(rule):
+                    continue
+                clearance = rule_clearance(center, rule)
+                standoff = describe_piece(f"standoff at {center}", z_range)
+                where = f"{rule.obstacle} and the {standoff}"
+                if rule.flats:
+                    where += f" with {len(rule.flats)} flat{'s' if len(rule.flats) > 1 else ''}"
+                tightest.update(clearance, where)
+                if clearance < rule.minimum - TOLERANCE_MM:
+                    problems.append(f"{where}: {clearance:.3f}, less than {rule.minimum}")
     fail_on(
         problems, f"{half_label(right)}sockets closer than {minimum} to the standoffs, as flattened"
     )
@@ -2120,8 +2219,8 @@ def check_joint_inside(right=False):
 def joint_socket_problems(label, polygon, z_range, right=False):
     """(problems, tightest) of a piece of the joint's plastic against the
     sockets on the given half: under the PCB it keeps the ledge's
-    clearance from them, as the ledge and the parking boss do. It stays
-    off the standoffs by their rules (standoff_joint_rules())."""
+    clearance from them, as the ledge and the parking boss do.
+    check_joint_clearances() holds it off the standoffs."""
     minimum = layout.LEDGE_RELIEF_CLEARANCE_MM
     problems = []
     from_sockets = Tightest()
@@ -2150,7 +2249,7 @@ def fill_problems(right):
 def check_joint_clearances(right=False):
     """The dowel bosses and their fills clear of the sockets
     (joint_socket_problems()) and of the standoffs by the standoffs'
-    rules (standoff_joint_rules())."""
+    rules from the joint's plastic (standoff_rules())."""
     centers = layout.MOUNTING_DRILL_CENTERS_MM
     problems = fill_problems(right)
     from_sockets = Tightest()
@@ -2159,7 +2258,7 @@ def check_joint_clearances(right=False):
         problems.extend(feature_problems)
         from_sockets.update(sockets.value, sockets.where)
     from_standoffs = Tightest()
-    for rule in standoff_joint_rules(right):
+    for rule in rules_named(standoff_rules(right), ("body from the joint's plastic",)):
         if not heights_meet(rule):
             continue
         for center in centers:
@@ -2189,9 +2288,12 @@ def check_standoff_bores(right=False):
     layout.STANDOFF_RELIEF_MINIMUM_WALL_MM of plastic from the joint's
     slots and holes in plan wherever their heights meet, so a standoff
     merging with the joint block keeps its bore whole when they are cut
-    through it (standoff_bore_rules())."""
+    through it (standoff_rules()). Every rule a merge names as the one
+    that still holds (standoff_merges()) is among the gathered ones."""
     centers = layout.MOUNTING_DRILL_CENTERS_MM
-    rules = standoff_bore_rules(right)
+    gathered = standoff_rules(right)
+    rules = rules_named(gathered, ("bore from the joint's voids",))
+    rules_named(gathered, tuple(sorted({merge.survivor for merge in standoff_merges(right)})))
     problems = []
     tightest = Tightest()
     for center in centers:
@@ -2276,7 +2378,7 @@ def check_parking_hole(right=False):
     slant's ends, its magnet's seat no wider than the hole itself (one
     teardrop serves both). The hole is kept clear in plan of the sockets
     (the thumb's above all) and the standoffs (the one at (114.141,
-    19.765) above all, by standoff_parking_hole_rules()) at any height,
+    19.765) above all, by their rule, standoff_rules()) at any height,
     and of the joint's other voids by check_joint_voids(). Its boss may
     merge with the tray's other plastic, but keeps the ledge's clearance
     from the sockets."""
@@ -2300,7 +2402,7 @@ def check_parking_hole(right=False):
     for name, polygon in socket_footprints(right):
         from_sockets.update(convex_separation(hole, polygon), f"{name}'s socket")
     from_standoffs = Tightest()  # beyond the rule's minimum
-    for rule in standoff_parking_hole_rules():
+    for rule in rules_named(standoff_rules(right), ("body from the parking hole",)):
         if not heights_meet(rule):
             continue
         for center in centers:
@@ -2482,12 +2584,14 @@ def check_mount_sockets(right=False):
 
 def mount_standoff_clearances(standoff_centers, fits=layout.DEFAULT_MOUNT_FITS):
     """(problems, bodies, voids): the mounts against the standoffs at
-    standoff_centers by the standoffs' rules (standoff_mount_rules(); the
-    standoffs are the same on both halves in the left half's frame),
-    with the Tightest of the bodies and of the voids."""
-    rules = standoff_mount_rules(fits)
+    standoff_centers by the standoffs' rules from the mounts
+    (standoff_rules(); the standoffs are the same on both halves in the
+    left half's frame), with the Tightest of the bodies and of the
+    voids."""
+    names = ("body from the mount bodies", "body from the mount voids")
+    rules = rules_named(standoff_rules(False, fits), names)
     problems = []
-    tightest = {"body from the mount bodies": Tightest(), "body from the mount voids": Tightest()}
+    tightest = {name: Tightest() for name in names}
     for rule in rules:
         if not heights_meet(rule):
             continue
@@ -2497,8 +2601,8 @@ def mount_standoff_clearances(standoff_centers, fits=layout.DEFAULT_MOUNT_FITS):
             tightest[rule.name].update(clearance, where)
             if clearance < rule.minimum - TOLERANCE_MM:
                 problems.append(f"{where}: {clearance:.3f}, less than {rule.minimum}")
-    return (problems, tightest["body from the mount bodies"],
-            tightest["body from the mount voids"])
+    bodies, voids = (tightest[name] for name in names)
+    return problems, bodies, voids
 
 
 def check_mount_standoffs():
@@ -3251,10 +3355,12 @@ def wire_room_problems(standoff_centers, right, fits=layout.DEFAULT_MOUNT_FITS):
     obstacles and the standoffs at standoff_centers, the printed plastic
     as printed, and of the nice!nano's pad rooms against its own strips
     and tails: those overlaps as {(room's piece, strip's label): how
-    far}, any DESIGN.md does not name a problem."""
+    far}, any DESIGN.md does not name a problem. The standoffs' rules are
+    the gathered ones (standoff_rules())."""
     obstacles, parts = wire_room_obstacles(right, fits)
     strips = nano_strip_pieces(fits)
     named = named_room_overlaps(right)
+    standoff = rules_named(standoff_rules(right, fits), ("body as printed from the wire rooms",))
     problems = []
     overlaps = {}
     tightest = Tightest()
@@ -3263,8 +3369,8 @@ def wire_room_problems(standoff_centers, right, fits=layout.DEFAULT_MOUNT_FITS):
         candidates.extend((label, polygon, z_range, 0.0) for label, part, polygon, z_range in parts
                           if part != room.part)
         problems.extend(clearance_problems(room, candidates, tightest))
-        problems.extend(standoff_problems(standoff_centers, standoff_wire_room_rules([room]),
-                                          tightest))
+        room_rules = rules_against(standoff, describe_envelope(room), box_polygon(room))
+        problems.extend(standoff_problems(standoff_centers, room_rules, tightest))
         own = [(label, polygon, z_range) for label, part, polygon, z_range in parts
                if part == room.part and label in strips]
         overlaps.update(room_into_strips(room, own, tightest))
@@ -3408,14 +3514,17 @@ def nano_strip_clearances(standoff_centers, right, fits=layout.DEFAULT_MOUNT_FIT
                           block_shares=WORST_SPLITS):
     """(problems, tightest) of the strips and the rooms over them against
     the half's tray as printed, the standoffs at standoff_centers
-    included, at each of the board's places (nano_strip_places())."""
+    included by their gathered rules (standoff_rules()), at each of the
+    board's places (nano_strip_places())."""
     obstacles = printed_tray_obstacles(right, fits)
+    standoff = rules_named(standoff_rules(right, fits),
+                           ("body as printed from the nice!nano's strips",))
     problems = []
     tightest = Tightest()
     for moved in nano_strip_places(fits, block_shares):
         problems.extend(clearance_problems(moved, obstacles, tightest))
-        problems.extend(standoff_problems(standoff_centers, standoff_nano_strip_rules([moved]),
-                                          tightest))
+        moved_rules = rules_against(standoff, describe_envelope(moved), box_polygon(moved))
+        problems.extend(standoff_problems(standoff_centers, moved_rules, tightest))
     return problems, tightest
 
 
@@ -3881,56 +3990,74 @@ def frame_head_z_range():
     return (DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM, DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM)
 
 
+def frame_boss_rule(name, feature, obstacle, kind, shape, obstacle_z_range=None, relation=CLEAR,
+                    minimum=0.0):
+    """A rule of a boss of the frame or of its screw head (feature
+    "boss" or "head")."""
+    if feature == "head":
+        radius = layout.FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0
+        feature_z_range = frame_head_z_range()
+    else:
+        radius = layout.STANDOFF_DIAMETER_MM / 2.0
+        feature_z_range = frame_boss_z_range()
+    return PlacementRule(name=name, feature=feature, radius=radius,
+                         feature_z_range=feature_z_range, obstacle=obstacle, kind=kind,
+                         shape=shape, obstacle_z_range=obstacle_z_range, relation=relation,
+                         minimum=minimum)
+
+
 def frame_boss_clearance_rules(standoff_centers, right):
     """(PlacementRule) of a boss of the half's frame against what is
     around it, by layout.py's rules: the boss clear of the frame's own
     features at any height (frame_own_obstacles()), the boss and its
     screw head layout.FRAME_TRAY_CLEARANCE_MM from the tray where their
     heights meet (frame_tray_obstacles(), with the standoffs at
-    standoff_centers), the boss layout.FRAME_BOSS_EDGE_MARGIN_MM inside
-    the outline pulled in by the print's swelling, and
-    layout.FRAME_BOSS_FROM_FRAME_MM from the other bosses (APART)."""
-    radius = layout.STANDOFF_DIAMETER_MM / 2.0
-    head_radius = layout.FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0
-    boss_z = frame_boss_z_range()
-    head_z = frame_head_z_range()
+    standoff_centers), and the boss layout.FRAME_BOSS_EDGE_MARGIN_MM
+    inside the outline pulled in by the print's swelling."""
     tray_minimum = layout.FRAME_TRAY_CLEARANCE_MM
-    rules = [PlacementRule("boss from the frame", "boss", radius, boss_z, label, kind, shape, None,
-                           CLEAR, minimum)
+    rules = [frame_boss_rule("boss from the frame", "boss", label, kind, shape, minimum=minimum)
              for label, kind, shape, minimum in frame_own_obstacles(right)]
     for label, kind, shape, z_range in frame_tray_obstacles(standoff_centers, right):
-        rules.append(PlacementRule("boss from the tray", "boss", radius, boss_z, label, kind, shape,
-                                   z_range, CLEAR, tray_minimum))
-        rules.append(PlacementRule("head from the tray", "head", head_radius, head_z, label, kind,
-                                   shape, z_range, CLEAR, tray_minimum))
+        rules.append(frame_boss_rule("boss from the tray", "boss", label, kind, shape, z_range,
+                                     minimum=tray_minimum))
+        rules.append(frame_boss_rule("head from the tray", "head", label, kind, shape, z_range,
+                                     minimum=tray_minimum))
     outline = layout.offset_polygon(layout.OUTLINE_VERTICES_MM, -DESIGN_PULL_IN_MM)
-    rules.append(PlacementRule("boss inside the outline", "boss", radius, boss_z,
-                               "the frame's outline", "outline", outline, None, INSIDE,
-                               layout.FRAME_BOSS_EDGE_MARGIN_MM))
-    rules.append(PlacementRule("bosses apart", "boss", radius, boss_z, "the other bosses", "circle",
-                               None, boss_z, APART, layout.FRAME_BOSS_FROM_FRAME_MM))
+    rules.append(frame_boss_rule("boss inside the outline", "boss", "the frame's outline",
+                                 "outline", outline, relation=INSIDE,
+                                 minimum=layout.FRAME_BOSS_EDGE_MARGIN_MM))
     return rules
 
 
-def frame_head_backing_rules(right):
+def frame_head_backing_rules(standoff_centers, right):
     """(PlacementRule) of a boss's screw head on the half's backing, in
-    plan: inside the backing's outline and clear of its cutouts
-    (check_frame_backing())."""
-    head_radius = layout.FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0
-    head_z = frame_head_z_range()
-    rules = [PlacementRule("head on the backing", "head", head_radius, head_z, "the outline",
-                           "outline", layout.frame_backing_outline(), None, INSIDE)]
-    rules.extend(PlacementRule("head from the backing's cutouts", "head", head_radius, head_z,
-                               f"the cutout {label}", kind, shape)
-                 for label, kind, shape in frame_backing_cutouts(right))
+    plan: inside the backing's outline and clear of its cutouts, those
+    around the standoffs at standoff_centers among them
+    (frame_backing_cutouts(), check_frame_backing())."""
+    rules = [frame_boss_rule("head on the backing", "head", "the outline", "outline",
+                             layout.frame_backing_outline(), relation=INSIDE)]
+    rules.extend(frame_boss_rule("head from the backing's cutouts", "head", f"the cutout {label}",
+                                 kind, shape)
+                 for label, kind, shape in frame_backing_cutouts(standoff_centers, right))
     return rules
 
 
 def frame_boss_rules(standoff_centers, right):
-    """Every rule a boss of the half's frame meets, the standoffs at
-    standoff_centers: its clearances (frame_boss_clearance_rules()) and
-    its screw head's on the backing (frame_head_backing_rules())."""
-    return frame_boss_clearance_rules(standoff_centers, right) + frame_head_backing_rules(right)
+    """Every rule a boss of the half's frame meets on its own, the
+    standoffs at standoff_centers: its clearances
+    (frame_boss_clearance_rules()) and its screw head's on the backing
+    (frame_head_backing_rules()). The bosses' rule between each other is
+    frame_boss_pair_rules()'s."""
+    return (frame_boss_clearance_rules(standoff_centers, right)
+            + frame_head_backing_rules(standoff_centers, right))
+
+
+def frame_boss_pair_rules():
+    """(PlacementRule) between every two bosses of a frame:
+    layout.FRAME_BOSS_FROM_FRAME_MM apart (APART, pair_clearance())."""
+    return [frame_boss_rule("bosses apart", "boss", "the other bosses", "circle", None,
+                            frame_boss_z_range(), relation=APART,
+                            minimum=layout.FRAME_BOSS_FROM_FRAME_MM)]
 
 
 def frame_boss_where(center, rule):
@@ -3942,11 +4069,17 @@ def frame_boss_where(center, rule):
 
 
 def frame_boss_figures(boss_centers, standoff_centers, right):
-    """(problems, {rule name: tightest beyond the rule}) of the bosses at
-    boss_centers by their rules (frame_boss_clearance_rules())."""
-    rules = frame_boss_clearance_rules(standoff_centers, right)
+    """(problems, tightest beyond the rules from the frame, from the
+    tray, the heads' from the tray, inside the outline, apart) of the
+    bosses at boss_centers by their gathered rules (frame_boss_rules(),
+    frame_boss_pair_rules())."""
+    names = ("boss from the frame", "boss from the tray", "head from the tray",
+             "boss inside the outline")
+    pair_names = ("bosses apart",)
+    rules = rules_named(frame_boss_rules(standoff_centers, right), names)
+    pair_rules = rules_named(frame_boss_pair_rules(), pair_names)
     problems = []
-    tightest = rule_tallies(rules)
+    tightest = {name: Tightest() for name in names + pair_names}
 
     def tally(rule, value, where):
         tightest[rule.name].update(value - rule.minimum, where)
@@ -3955,33 +4088,31 @@ def frame_boss_figures(boss_centers, standoff_centers, right):
 
     for center in boss_centers:
         for rule in rules:
-            if rule.relation != APART and heights_meet(rule):
+            if heights_meet(rule):
                 tally(rule, rule_clearance(center, rule), frame_boss_where(center, rule))
-    for rule in rules:
-        if rule.relation == APART:
-            for first, second in itertools.combinations(boss_centers, 2):
-                tally(rule, math.dist(first, second) - 2.0 * rule.radius,
-                      f"{first} and the boss at {second}")
-    return problems, tightest
+    for rule in pair_rules:
+        for first, second in itertools.combinations(boss_centers, 2):
+            tally(rule, pair_clearance(first, second, rule), f"{first} and the boss at {second}")
+    return problems, [tightest[name] for name in names + pair_names]
 
 
 def check_frame_bosses(right=False):
     """The frame's bosses by layout.py's rules, their count DESIGN.md's."""
     boss_centers = layout.frame_boss_centers(right)
-    problems, tightest = frame_boss_figures(boss_centers, layout.MOUNTING_DRILL_CENTERS_MM, right)
+    problems, tallies = frame_boss_figures(boss_centers, layout.MOUNTING_DRILL_CENTERS_MM, right)
+    from_frame, from_tray, heads, inside, apart = tallies
     figures = [require_figure("bosses", len(boss_centers), DESIGN_FRAME_BOSS_COUNT[right], 0)]
     fail_on(problems + failed(figures), f"{half_label(right)}the frame's bosses off their rules")
     return (f"frame:     {half_label(right)}{joined(figures)}, beyond their rules by at least "
-            f"{tightest['boss from the frame']} from the frame, {tightest['boss from the tray']} "
-            f"from the tray, {tightest['head from the tray']} with their heads, "
-            f"{tightest['boss inside the outline']} inside the outline, "
-            f"{tightest['bosses apart']} apart")
+            f"{from_frame} from the frame, {from_tray} from the tray, {heads} with their heads, "
+            f"{inside} inside the outline, {apart} apart")
 
 
-def frame_backing_cutouts(right):
-    """(label, kind, shape) of the backing's cutouts."""
+def frame_backing_cutouts(standoff_centers, right):
+    """(label, kind, shape) of the backing's cutouts, those around the
+    standoffs at standoff_centers among them."""
     cutouts = [(label, "circle", (center, radius))
-               for label, center, radius in layout.frame_backing_circle_cutouts()]
+               for label, center, radius in layout.frame_backing_circle_cutouts(standoff_centers)]
     cutouts.extend((label, "polygon", polygon)
                    for label, polygon in layout.frame_backing_polygon_cutouts(right))
     return cutouts
@@ -4011,12 +4142,12 @@ def tray_piece_handled(kind, shape, outline, cutouts):
 def check_frame_backing(right=False):
     """The backing: every pad inside its outline and clear of its
     cutouts, every screw head on it, and every tray piece standing into
-    its heights outside it or inside a cutout, the heads by their rules
-    (frame_head_backing_rules())."""
+    its heights outside it or inside a cutout, the heads by their
+    gathered rules (frame_boss_rules())."""
     boss_centers = layout.frame_boss_centers(right)
     standoff_centers = layout.MOUNTING_DRILL_CENTERS_MM
     outline = layout.frame_backing_outline()
-    cutouts = frame_backing_cutouts(right)
+    cutouts = frame_backing_cutouts(standoff_centers, right)
     pads = layout.frame_pad_boxes(right)
     backing_z = (DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM, DESIGN_FRAME_BACKING_TOP_Z_MM)
     problems = []
@@ -4028,7 +4159,8 @@ def check_frame_backing(right=False):
             clearance = (circle_separation(shape[0], shape[1], pad) if kind == "circle"
                          else convex_separation(pad, shape))
             pad_room.update(clearance, f"{key}'s pad and the cutout {label}")
-    head_rules = frame_head_backing_rules(right)
+    head_rules = rules_named(frame_boss_rules(standoff_centers, right),
+                             ("head on the backing", "head from the backing's cutouts"))
     for center in boss_centers:
         for rule in head_rules:
             if heights_meet(rule):

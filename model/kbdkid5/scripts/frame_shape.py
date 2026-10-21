@@ -275,7 +275,8 @@ def backing_face(right):
     holes."""
     outline = cells.plan_face(half_polygon(layout.frame_backing_outline(), right))
     cutters = [cells.circle_face(half_point(center, right), radius)
-               for _label, center, radius in layout.frame_backing_circle_cutouts()]
+               for _label, center, radius
+               in layout.frame_backing_circle_cutouts(layout.MOUNTING_DRILL_CENTERS_MM)]
     cutters.extend(cells.plan_face(half_polygon(polygon, right))
                    for _label, polygon in layout.frame_backing_polygon_cutouts(right))
     radius = cells.SCREW_CLEARANCE_HOLE_DIAMETER_MM / 2.0

@@ -3288,12 +3288,13 @@ def frame_backing_outline():
     return offset_polygon(ledge_inner_polygon(), -FRAME_TRAY_CLEARANCE_MM)
 
 
-def frame_backing_circle_cutouts():
+def frame_backing_circle_cutouts(standoff_centers):
     """(label, center, radius) of the backing's cutouts around the
-    standoffs, which stand to the frame's underside."""
+    standoffs at standoff_centers (MOUNTING_DRILL_CENTERS_MM for the
+    layout's), which stand to the frame's underside."""
     radius = STANDOFF_DIAMETER_MM / 2.0 + FRAME_TRAY_CLEARANCE_MM
     return [(f"around the standoff at {center}", center, radius)
-            for center in MOUNTING_DRILL_CENTERS_MM]
+            for center in standoff_centers]
 
 
 def frame_backing_tray_bodies(right=False):
