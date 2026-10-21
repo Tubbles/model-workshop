@@ -68,7 +68,7 @@ Cross-checks:
 - The kbdkid4 package model (`library/pkg/e86c9147-c7a4-4cf8-9447-455cd70fafbc/` in the Tubbles/kbdkid4 repository, STEP "nice!nano v2.step", exported 2025-01-29 by Autodesk Translation Framework, origin not recorded) has a 33.2 x 17.8 x 1.4 PCB (probed with FreeCAD this session). The kbdkid4 scripts already record that the model is wrong in thickness (1.4 vs the measured 1.6) and in the receptacle height (`model/kbdkid4/scripts/export_tray.py` lines 198 to 205).
 - kbdkid4's `MCU_USB_END_OFFSET_MM = 18.7` (connector end from the centre of the pin rows, `model/kbdkid4/scripts/tray_shape.py`) agrees with the render: 3.91 + 13.97 + 0.87 = 18.75.
 
-The render and the drawn footprints disagree by about 0.3 in length and 0.2 in width. The user's caliper on a real board, first with the shell (doc/log/2026-10-19.md): "The nano measures, with the usb connector included: 18.30 x 34.17", then the board alone (doc/log/2026-10-20.md): "The nano width is 18.17~18.23 mm", "Board length 33.20". The layout takes the board as 18.20 x 33.20 (Confirmed: calipered), 0.2 wider and 0.1 shorter than the render's. The 34.17 with the shell less the 33.20 board puts the shell 0.97 past the board, against the render's 0.87, which the layout keeps until the shell is measured on its own (Unconfirmed).
+The render and the drawn footprints disagree by about 0.3 in length and 0.2 in width. The user's caliper on a real board, first with the shell (doc/log/2026-10-19.md): "The nano measures, with the usb connector included: 18.30 x 34.17", then the board alone (doc/log/2026-10-20.md): "The nano width is 18.17~18.23 mm", "Board length 33.20". That makes the board 18.20 x 33.20 (Confirmed: calipered), 0.2 wider and 0.1 shorter than the render's. The 34.17 with the shell less the 33.20 board puts the shell 0.97 past the board, against the render's 0.87 (Unconfirmed: the shell is not measured on its own).
 
 ### Thickness and the USB-C receptacle
 
@@ -107,10 +107,10 @@ Whether the shell's four tabs or their solder protrude below the underside was o
 
 ### Where the board can be held
 
-- Far (antenna) end, top side: free of parts from about 27.5 to 33.3 from the USB end (the render's board end, the calipered board ends at 33.2), across the middle between the pads of the last pin of each row: 13.7 on the render's 18.0 board (18.0 minus 2 x (1.37 row inset + 0.77 pad radius)), and 13.79 on the calipered 18.20 board as `model/kbdkid5/scripts/layout.py` takes it (x 3.105 to 16.895, the pads at the larger of the render's insets, 1.44, from each long edge). A snap hook's lip was first planned to grip here (work item 004). The screw clamp's tab replaced it (work item 009) and reaches 1.5 onto the board within that middle. Plastic over a PCB antenna detunes it a little, so what reaches over it stays small (Unconfirmed: general RF practice, not measured).
+- Far (antenna) end, top side: free of parts from about 27.5 to 33.3 from the USB end (the render's board end, the calipered board ends at 33.2), across the middle between the pads of the last pin of each row: 13.7 on the render's 18.0 board (18.0 minus 2 x (1.37 row inset + 0.77 pad radius)), and 13.79 on the calipered 18.20 board with the pads at the larger of the render's insets, 1.44, from each long edge. The nice!nano clamp's tab grips here (model/kbdkid5/DESIGN.md, nice!nano). Plastic over a PCB antenna detunes it a little, so what reaches over it stays small (Unconfirmed: general RF practice, not measured).
 - USB end: the metal shell stands 1.56 above the top face across 8.94. The north wall's USB window can bear down on the shell top and hold that end down; no pads or parts are touched. B+ and B- sit at the two corners of this end, 1.38 from the edge, and will carry soldered wires: no lips at those corners.
 - Long edges: pads every 2.54 along the whole length; the strip outside the pads is only about 0.6 wide (1.37 inset minus 0.77 pad radius), and the gaps between pads about 1.0. With socket strips soldered over the pads (section 8), no lips here; locate the long edges with plain side walls.
-- Underside: flat, with nothing below it. The user on a real board: "the nano is absolutely flat on its underside. There is nothing sticking out downwards" (doc/log/2026-10-19.md). The shallow grooves this note once suggested under the two pin rows and under B+/B- and P1.xx were printed in the first nice!nano bay test strip and removed as unnecessary. With the socket strips soldered, their tails stand 0.81 below it (section 8).
+- Underside: flat, with nothing below it (Thickness and the USB-C receptacle, above). The shallow grooves this note once suggested under the two pin rows and under B+/B- and P1.xx were printed in the first nice!nano bay test strip and removed as unnecessary. With the socket strips soldered, their tails stand 0.81 below it (section 8).
 
 ## 2. Power switch
 
@@ -222,6 +222,8 @@ Electrokit sells JST's straight 2-pin PH header (41004562, "Stiftlist JST-PH 2-p
 
 All are ±0.1 tolerance, nickel plated, 80 °C maximum, blocks magnetised through the 2 thickness. supermagnete measures on 2 cm steel and calls the figure "a theoretical maximum value"; "Even a small gap of half a millimetre can reduce the adhesive force by half" (https://www.supermagnete.de/eng/faq/force). Remanence by grade: N42 1.29 to 1.32 T, N45 1.32 to 1.37 T, N50 1.40 to 1.46 T (https://www.supermagnete.de/eng/physical-magnet-data).
 
+The pin parking's magnet (model/kbdkid5/DESIGN.md, The joint), an S-04-02-N disc 4 x 2 in N45, pulls about 4.1 N to steel (Unconfirmed: recorded in 1168630 without its source).
+
 Air gap: only the S-10-03-N page carries a chart, "Adhesive force in relation to the air gap between magnet and steel plate" (`work/research/downloads/supermagnete/chart_S-10-03-N.png`, from https://img.supermagnete.de/photos/orig/4611.png). Read off it (Derived, ±0.01 kg): 0 mm 1.58 kg, 1 mm 0.54 kg, 2 mm 0.22 kg, 3 mm 0.084 kg, 4 mm 0.044 kg. So 1 mm of air to steel leaves 34 % of the contact value.
 
 Magnet to magnet: neither vendor gives numbers I could read. supermagnete states none; K&J's magnet-to-magnet ("Case 3") charts exist per product but the chart pages refused automated access (HTTP 403, for example https://www.kjmagnetics.com/pull-force-graph.asp?CI=3&pName=D62). K&J's article gives two useful anchors: the D82 disc (12.7 x 3.18, N42) pulls 6.44 lb to steel, and about 10 sheets of paper (about 0.76 mm) reduce that to 3 lb (https://www.kjmagnetics.com/blog/how-much-will-a-magnet-hold).
@@ -295,7 +297,7 @@ Steel dowel pins perpendicular to the joint face carry the bending: when the joi
 
 **Recommendation:**
 
-- Face 12 tall or more: 4 pairs of S-10-03-N (10 x 3, N42) per joint, closing force about 32 N derated (48 N model) at 1.0. Face 10 tall: 5 pairs of S-08-03-N (8 x 3, N45), about 30 N derated. Alternate the polarity along the joint so the halves self-centre.
+- Face 12 tall or more: 4 pairs of S-10-03-N (10 x 3, N42) per joint, closing force about 32 N derated (48 N model) at 1.0. Face 10 tall: 5 pairs of S-08-03-N (8 x 3, N45), about 30 N derated.
 - Two hardened dowel pins, 4 x 24 (or 3 x 20 if the bosses cannot reach 12 deep), fixed in one half, sliding fit in the other.
 - The magnets then only close the joint; the pins carry the bending and shear. If the halves are too hard to pull apart with 4 pairs, drop to 3 pairs; pull-apart comfort is not something I could check.
 
@@ -322,7 +324,7 @@ Kailh CPG135001S30, the Choc v1 hotswap socket. Source: Kailh's product specific
 
 - Confirmed (the drawing): body 1.80 ±0.05 thick, measured to the small bumps on its top face, 3.05 ±0.05 over its two contact bosses (2.90 ±0.05 across, they sit in the PCB's 3.0 holes), 1.85 ±0.1 at the end tabs, 13.15 ±0.15 tab to tab, 6.85 ±0.05 across both lobes, 4.65 per lobe, tabs 1.68 ±0.05 wide. The plastic body is 9.55 ±0.05 long along the tabs' axis (the plan view). The side view's 9.95 ±0.15 is between the tabs' inner ends, not the body. Mating force 3.0 kgf max, unmating 200 gf min.
 - Derived (pixels on the drawing's front view, 1.85 = 167 px): the body's flat top 1.69 above its bottom, the tabs' tops level with the 1.85, their bottoms 0.37 above the body's bottom, so a tab is about 1.5 tall.
-- The kbdkid4 package model's STEP (`library/pkg/23d245ff-14f8-48ad-af68-56ebb3a76786/0c4954f5-24c7-4f36-a4b7-4bbd2ff10646.step` in the Tubbles/kbdkid4 repository, probed with FreeCAD this session) matches the drawing's overall figures (13.15 tab to tab, 6.85 across, the body 9.55 between its end faces) but models the body and tabs as one 1.85 block whose top lies 0.17 under the PCB's underside, with bosses 2.9 across rising 1.15 above it: that gap is where kbdkid4's 2.02 reach comes from. Its section is the same over the body's height (probed at five heights), and its inside corners between the lobes are filled with a 1.5 and a 0.75 radius, as on the drawing's plan view, which `layout.HOTSWAP_SOCKET_FILLS_MM` covers for the tray. `layout.HOTSWAP_SOCKET_OUTLINE_MM` is the body's outline from that section at mid-height, for the socket test strips' pockets: the step between the lobes 4.75 from the body's end, as on the drawing.
+- The kbdkid4 package model's STEP (`library/pkg/23d245ff-14f8-48ad-af68-56ebb3a76786/0c4954f5-24c7-4f36-a4b7-4bbd2ff10646.step` in the Tubbles/kbdkid4 repository, probed with FreeCAD this session) matches the drawing's overall figures (13.15 tab to tab, 6.85 across, the body 9.55 between its end faces) but models the body and tabs as one 1.85 block whose top lies 0.17 under the PCB's underside, with bosses 2.9 across rising 1.15 above it: that gap is where kbdkid4's 2.02 reach comes from. Its section is the same over the body's height (probed at five heights), and its inside corners between the lobes are filled with a 1.5 and a 0.75 radius, as on the drawing's plan view, which `layout.HOTSWAP_SOCKET_FILLS_MM` covers for the tray. `layout.HOTSWAP_SOCKET_OUTLINE_MM` is the body's outline from that section at mid-height, the tabs left out, for the socket test strips' pockets: lobe A 4.75 long from its end to the step between the lobes, as on the drawing, and lobe B 4.80 from there, 0.75 chamfers on lobe A's outer corners and 0.75 rounds on lobe B's, and a 0.2 step on lobe B's end.
 
 ## 8. nice!nano socket strips (2026-10-20)
 
@@ -339,20 +341,20 @@ Kailh Choc v1, kbdkid4's `KHA-PG1350` package. The user's caliper on a real swit
 
 - Confirmed (calipered, 2026-10-20): center post 3.17 and side pegs 1.65 across, "Post is 3.17 and pegs are 1.65 mm diameter" (doc/work/012-switch-hole-test.md). The footprint's holes for them are 3.4 and 1.9 (`layout.CHOC_FOOTPRINT_HOLES_MM`).
 - Confirmed (calipered, 2026-10-17): the contact blades are not equally thick, the pin near a side peg (footprint-local (-3.8, 5.0)) about 0.4, the middle one ((-5.9, 0.0)) about 0.2 (doc/log/2026-10-17.md, `layout.CHOC_PIN_CALIPERED_BLADE_THICKNESSES_MM`).
-- Unconfirmed (kbdkid4's switch model, the `PG1350` STEP): both blades 0.2 thick and 0.8 wide (`layout.CHOC_PIN_BLADE_THICKNESS_MM`, `CHOC_PIN_BLADE_WIDTH_MM`).
+- Unconfirmed (kbdkid4's switch model, the `PG1350` STEP in kbdkid4's `KHA-PG1350` package): both blades 0.2 thick and 0.8 wide (`layout.CHOC_PIN_BLADE_THICKNESS_MM`, `CHOC_PIN_BLADE_WIDTH_MM`), from the housing's underside down to 2.65 below it, then narrowing to 0.2 at the tip, 3.0 below.
 
 ## 10. Screws
 
 - Confirmed (the user, 2026-10-20): the M2 pan head screws on hand have "roughly 1.5 mm high heads" (doc/log/2026-10-20.md), the socket test backing's screws (`socket_test_shape.BACKING_SCREW_HEAD_HEIGHT_MM`).
 - Confirmed (measured, kbdkid4 commit 9c59d24, 2026-07-23): kbdkid4's screw heads are 3.77 across (`SCREW_HEAD_DIAMETER_MM` in `model/kbdkid4/scripts/export_plate.py` and `model/kbdkid5/scripts/plate_shape.py`).
-- Unconfirmed: those heads' height. The nice!nano clamp's M2 screw takes kbdkid4's 3.77 and assumes 2.0 tall, the largest ISO 4762 gives an M2 socket head (doc/log/2026-10-17.md, `layout.NANO_CLAMP_SCREW_HEAD_HEIGHT_MM`).
+- Unconfirmed: those heads' height, which the nice!nano clamp's screw takes at an assumed figure (model/kbdkid5/DESIGN.md, nice!nano, doc/log/2026-10-17.md, `layout.NANO_CLAMP_SCREW_HEAD_HEIGHT_MM`).
 
 ## 11. Measured on kbdkid4's assembled board (2026-10-12)
 
 The first print of kbdkid4's tray with the soldered left half in it. The nice!nano's depth is in section 1 (Top side parts).
 
 - Confirmed (measured, kbdkid4 commit 26bddb5): the USB window around the left nice!nano's receptacle is 10.5 x 4.5, sized by what the user measured around the connector on the first print, with the receptacle's mouth 0.56 behind the tray's outer face (`USB_WINDOW_WIDTH_MM` in `model/kbdkid4/scripts/export_tray.py`, `USB_WINDOW_HEIGHT_MM` in `model/kbdkid4/scripts/tray_shape.py`). Derived: the right half's window, 1.74 lower for its taller sockets (kbdkid4 commit 5dc598e, `model/kbdkid4/scripts/tray_shape.py`).
-- Confirmed (measured, kbdkid4 commit eb6fb7b): the power switch body's outer face 1.13 from the tray's outer face, so 0.07 past the board edge and 0.33 from the wall's inner face, where the package model puts it 0.09 inside the edge (`model/kbdkid4/scripts/export_tray.py`, the power switch comment). By the same measurement it sits 0.73 from its wall pocket's back, 0.89 by the package model (SUGGESTIONS.md, kbdkid4).
+- Confirmed (measured, kbdkid4 commit eb6fb7b): the power switch body's outer face 1.13 from the tray's outer face, so 0.07 past the board edge and 0.33 from the wall's inner face, where the package model puts it 0.09 inside the edge (`model/kbdkid4/scripts/export_tray.py`, the power switch comment). By the same measurement it sits 0.73 from its wall pocket's back, closer than the package model puts it (SUGGESTIONS.md, kbdkid4).
 - Confirmed (measured, kbdkid4 commit 7255b7e): the key diode D123, a SOD-123 (package SOD3717X135), is 1.14 tall on the soldered board (`model/kbdkid4/scripts/export_plate.py`, the covered variant's comment).
 
 ## 12. Through-hole diodes (2026-10-17)

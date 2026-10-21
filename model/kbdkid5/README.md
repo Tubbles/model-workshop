@@ -1,6 +1,6 @@
 # kbdkid5
 
-A wireless split keyboard whose halves also join into one board, the successor of [kbdkid4](https://github.com/Tubbles/kbdkid4). Its design, with every dimension and the parts to buy, is in [DESIGN.md](DESIGN.md). The part choices and their sources are in [doc/components.md](../../doc/components.md), and the plan is in [PLAN.md](../../PLAN.md).
+A wireless split keyboard whose halves also join into one board, the successor of [kbdkid4](https://github.com/Tubbles/kbdkid4). Its design, with every dimension, is in [DESIGN.md](DESIGN.md), and the parts to buy are below. The part choices and their sources are in [doc/components.md](../../doc/components.md), and the plan is in [PLAN.md](../../PLAN.md).
 
 CI runs each export below with the command shown, from this repository's root. A right half part (the word `right`) is the left one mirrored, but for what DESIGN.md (Frame and units) lists. CI also runs the layout check, `python3 model/kbdkid5/scripts/check_layout.py`, which checks the layout and DESIGN.md's figures against it. It is plain Python that runs anywhere. In CI it is a job of its own beside the exports, so a failing check fails the run while the STLs still upload.
 
@@ -69,7 +69,7 @@ CI uploads the socket strips and the switch hole strip from a job of their own a
 
 For a test print, `pin_hole_diameter` overrides the half's pin hole fit as modelled, and the others the figures the mounts rest on: the nice!nano's board length and width (the defaults are the user's caliper, so these suit another board), how much wider than the board its pocket prints, how hard the clamp's tab presses the board (how far below the tab's seat on the board its block's top stands), the bar's clearance over the USB-C shell, and lips reaching that far onto the battery header's front rim (none by default, DESIGN.md says why).
 
-Glue a magnet into each of the joint's slots, against the thin skin at the joint face, with alternating poles along the joint, the right half opposite to the left, so the halves pull together and center themselves. To join the halves, press the dowel pins into the left half's holes, then push the right half on. A parking hole in the thumb key's east wall holds a pin while the halves are used apart. Glue the battery header into its pocket and the reset button to the floor.
+Glue a magnet into each of the joint's slots, against the thin skin at the joint face, with alternating poles along the joint, the right half opposite to the left, so the halves pull together and center themselves. To join the halves, press the dowel pins into the left half's holes, then push the right half on. Glue an S-04-02-N magnet to the bottom of the parking hole in each half's thumb key east wall, where it holds a pin while the halves are used apart. Glue the battery header into its pocket and the reset button to the floor.
 
 To fit the nice!nano, solder its socket strips on first, press the M2 x 3 heat-set insert into the block south of it, lay the board in nose first, its USB-C shell under the bar at the USB window, put the clamp's tab (below) on with its nose over the board's south edge and screw it down with an M2 x 4. To take it out, with the PCB out, undo the screw and lift the tab off, bring a toothpick down the pry slot from over the south rim, through the slot's east part, the 2.8 mm beside the face nearest the screw, so it passes the last solder tail of the board's west row, its point down the recess and under the board's south edge, and lift.
 
@@ -87,3 +87,14 @@ To try it, fit the board as in the tray, with an M2 x 4, or on the test bay an M
         [nano_length=33.2] [nano_width=18.2]
 
 CI uploads both halves, the tab and the test bay as the `kbdkid5-tray-<short commit hash>` artifact: `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`, `kbdkid5_Nano_Clamp_Tab.stl` and `kbdkid5_Nano_Bay_Test.stl`.
+
+## Parts to buy
+
+For both halves:
+
+- The power switches, reset buttons, battery headers and, for the hand-wired frame, the key diodes: [doc/components.md](../../doc/components.md), section 13, lists them with their quantities, Electrokit article numbers and prices.
+- PHR-2 housings and SPH-002T-P0.5S contacts if a battery lead needs re-terminating.
+- 8 supermagnete S-08-03-N disc magnets for the joint, 2 S-04-02-N for the pin parking.
+- 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
+- M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
+- 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.

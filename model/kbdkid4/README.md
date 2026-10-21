@@ -26,7 +26,7 @@ CI exports both halves, plain and covered, as the `kbdkid4-plate-<short commit h
 
 ## 3D printed PCB replica
 
-`model/kbdkid4/scripts/export_pcb.py` exports a printable stand-in for the bare board, for test-fitting the tray, plate, switches and screws before the fabricated boards arrive: the outline extruded to the board thickness with every drill hole, no components. Printed parts come out slightly larger than modelled, so the replica is pulled in by `pull_in` (default 0.2 mm) per side: the outline moves inward and every hole grows outward by that much. The thickness stays as modelled unless overridden with `thickness=`.
+`model/kbdkid4/scripts/export_pcb.py` exports a printable stand-in for the bare board, for test-fitting the tray, plate, switches and screws before the fabricated boards arrive: the outline extruded to the board thickness with every drill hole, no components. `pull_in` (default 0.2 mm) moves the outline in and every hole out by that much, for the print's swelling (doc/print-model.md). The thickness stays as modelled unless overridden with `thickness=`.
 
     docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
         freecadcmd /work/model/kbdkid4/scripts/export_pcb.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step /work/pcb.stl [right] [pull_in=0.2] [thickness=1.6]
