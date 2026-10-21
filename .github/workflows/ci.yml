@@ -264,3 +264,41 @@ jobs:
           name: kbdkid4-case-stl-${{ env.SHORT_SHA }}
           path: case/
           if-no-files-found: error
+
+  solder-spool-axle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the artifacts after the commit
+        run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/freecad-image
+      - name: Export solder spool axle STL
+        run: |
+          mkdir -p spool
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd solder-spool-axle/scripts/export_spool_axle.py --pass spool/Solder_Spool_Axle.stl
+      - name: Upload solder spool axle STL
+        uses: actions/upload-artifact@v4
+        with:
+          name: solder-spool-axle-stl-${{ env.SHORT_SHA }}
+          path: spool/
+          if-no-files-found: error
+
+  camera-arm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the artifacts after the commit
+        run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/freecad-image
+      - name: Export camera arm STL
+        run: |
+          mkdir -p camera
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd camera-arm/scripts/export_camera_arm.py --pass camera
+      - name: Upload camera arm STL
+        uses: actions/upload-artifact@v4
+        with:
+          name: camera-arm-stl-${{ env.SHORT_SHA }}
+          path: camera/
+          if-no-files-found: error
