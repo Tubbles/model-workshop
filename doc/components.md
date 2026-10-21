@@ -10,13 +10,23 @@ How to read the confidence marks:
 
 Downloads (datasheets, renders, pages) are in `work/research/downloads/<name>/`. The magnet model is in `work/research/scripts/` (run with `podman run --rm -v <dir>:/probe:ro localhost/freecad-headless python3 /probe/magnet_force.py`, the image has scipy).
 
+## How parts are chosen
+
+The user, 2026-10-21: "Make sure that you pick parts that are rohs, in stock, and readily available from multiple distributors, especially in the EU (mouser, tme, electrokit). I think this switch is a jlcpcb specific, obsolete, somewhat unknown part, no? Look at what others use for e.g. custom keyboard projects, and in our case, are not smd parts. Tht or chassi mounts should work for the pcb-less kbdkid5", then "Those shops are just examples, but preferred in the EU. Darnell, RS, elfa etc works as well", "Branding is not needed if purchasing from e.g. electrokit" and "Compare price (including shipping and taxes), availability, MOQ, etc and pick a cheap set of components for me that I can order". So a bought part is:
+
+- RoHS compliant, by its datasheet or its seller.
+- In stock, and sold by more than one distributor, EU ones first (Electrokit, TME, Mouser, Farnell, RS). An unbranded part from a shop like Electrokit counts, with the shop's datasheet.
+- Through hole or chassis mount for kbdkid5, whose parts in the tray are wired by hand. No SMD.
+- What keyboard builders use, where there is a choice.
+- Cheap as a whole order, with shipping, VAT and minimum quantities counted (section 13).
+
 ## Summary of recommendations
 
 | Item | Recommendation | Key dimensions |
 |---|---|---|
 | 1. nice!nano v2 | Grip the far (antenna) end and the USB shell, not the long edges. Mill-Max 315-43-112-41-003000 socket strips on pins 1 to 12 of each row (section 8) | 18.20 x 33.20 board (the user's caliper), 1.6 PCB, USB-C shell 8.94 x 3.16, flush with the underside, 0.87 past the board end on the render |
-| 2. Power switch | SOFNG SS-12D00-G3 (or G4), vertical through hole SPDT | body 8.8 x 3.9 x 3.5, lever 1.5 x 1.5 x 3 (G3), 2 travel, 3 pins 3.0 long at 2.5 pitch, 0.5 A 24 VDC |
-| 3. Reset button | C&K PTS636 SL43 LFS, 6 x 3.5 top actuated, 2 through-hole leads, laid on its side, pressed through a pin hole | body 6.0 x 3.5 x 3.3, 4.3 to stem top, leads 3.9 long at 6.4 pitch, 130 gf, 0.25 travel |
+| 2. Power switch | Knitter-switch MFP 120-R, right angle through hole SPDT, its knob through the north wall (section 2). The tray is still built for the SOFNG SS-12D00-G3 it replaces (work item 013) | body 11.0 x 6 x 5.6, knob 3.4 x 3.2 reaching 5 past the body, 3 pins at 3.2 pitch bent down 4.2 past the body, 350 mA 30 VDC |
+| 3. Reset button | TE FSM2JRT, 6 x 6 tactile switch with 2 through-hole leads, pressed through a pin hole (section 3). The tray is still built for the C&K PTS636 SL43 LFS it replaces (work item 013) | 6 x 6 x 4.3, leads 5 apart, 160 gf, 50 mA 24 VDC |
 | 4. Battery connector | JST PH 2.0 mm, B2B-PH-K-S (top entry) laid on its side in a pocket, wires on the posts | 5.9 x 4.5 x 6.0 body, posts 3.4, mated length 8 |
 | 5. Joint | Two hardened steel dowel pins carry the bending; 4 magnet pairs of 10 x 3 discs (12 mm face) or 5 pairs of 8 x 3 (10 mm face) only hold the halves together | pins 4 x 24 (12 embedded per side) or 3 x 20 |
 | 6. PCB connector | JST SH SM12B-SRSS-TB side entry on the PCB underside, JST pre-crimped leads | 14.0 x 4.95 x 2.9 header, 2.95 mated height |
@@ -124,7 +134,27 @@ Notes:
 - The C&K OS102011MA1QN1 is rated 0.1 A, the MSK12C02 50 mA. Both are below the 0.3 A target and at or below the default 100 mA charge current. splitkb ships the MSK12C02 in its wireless kit (https://splitkb.com/collections/keyboard-parts/products/wireless-controller-expansion-bundle), so it works in practice, but it runs outside its rating while charging.
 - The ALPS part meets 0.3 A, but its 0.4 wide gull-wing terminals are fiddly to solder wires to, and its lever stands only about 0.9 proud of the body, too short to reach through a printed wall without an extension.
 
-**Recommendation: SOFNG SS-12D00-G3** (G4 if the wall in front of the switch is thicker than about 1.5). Lay it in a pocket behind the north wall with the lever pointing north through a slot and the three 3.0 long pins pointing south into the tray, where wires solder easily. Slot about 1.5 + 2 travel + clearance long (about 4.0) by about 2.0 wide (my sizing, not from a source). Its 0.5 A rating also covers the 500 mA BOOST charge rate.
+**Recommendation until 2026-10-21: SOFNG SS-12D00-G3**, which the tray's cradle and lever slot are still built for (work item 013). G4 if the wall in front of the switch is thicker than about 1.5. Lay it in a pocket behind the north wall with the lever pointing north through a slot and the three 3.0 long pins pointing south into the tray, where wires solder easily. Slot about 1.5 + 2 travel + clearance long (about 4.0) by about 2.0 wide (my sizing, not from a source). Its 0.5 A rating also covers the 500 mA BOOST charge rate.
+
+### Against the buying rules (2026-10-21)
+
+The SOFNG part turned up only at LCSC, JLCPCB's parts store (C22355741), in no Mouser or TME listing (web search, 2026-10-21). The SS-12D00 type itself is generic: Electrokit sells Kinghelm's KH-SS12D01-G3-5.0 (41035350, 3.50 SEK, at least 4), 8.7 x 3.7 x 3.6 with a 1.5 lever, 2 travel and pins at 2.5 by its drawing (`work/research/downloads/electrokit-41035350/`), but neither the drawing, Electrokit nor LCSC (C5274456) gives a rating or a RoHS statement.
+
+| | MFP 120-R (Knitter-switch) | EG1218 (E-Switch) |
+|---|---|---|
+| Source | Knitter-switch's catalogue page "Miniature Slide Switches", page 100, from Electrokit 41011898 (`work/research/downloads/electrokit-41011898-knitter-mfp120/`) | E-Switch drawing P040040 rev C, from LCSC C273394 |
+| Type | right angle, through hole | vertical, through hole |
+| Body | 11.0 long, 6 deep, 5.6 tall (the drawing, A for the MFP 120) | 11.60 x 4.00 x 5.40 |
+| Actuator | knob 3.4 wide, 3.2 tall, 5 past the body's face. Travel 3.2 (B 6.6 less the knob's 3.4, Derived) | 2.00 x 2.00, 2.00 past the body, 2.5 travel, 250 ±100 gf |
+| Leads | 3, 0.8 x 0.5, at 3.2 pitch, bent down 1.5 behind the body to 4.2 below it | 3, 0.60 x 0.50, 4.70 long, at 2.50 pitch |
+| Rating | 350 mA 30 VDC | 200 mA 30 VDC |
+| RoHS | "RoHS-conform" mark on the catalogue page | not on the drawing, only in distributor listings (Unconfirmed) |
+| Lifecycle | not published by Knitter-switch that we found | Active at LCSC, which is LCSC's view, not E-Switch's |
+| Availability | Electrokit 41011898, 19 SEK, 75 in stock (its page). Distrelec (MFP 120-R, 135-11-212) and RS (7023542), TME's MFP 120 with 0 in stock, all from web search results, the pages not opened | LCSC 1,471 in stock (its page). Mouser, TME, Digi-Key and Farnell from web search results, the pages not opened. Electrokit's similar 41004098 is discontinued |
+
+Keyboard builds: a nice!nano holder for the Dactyl Manuform names Adafruit's SPDT slide switch (product 805) for power (https://github.com/nathanielks/nice-nano-holder), and a hand-wired wireless Skeletyl glues an unnamed SPDT slide switch to its case (https://elescia.wordpress.com/2022/02/27/handwired-wireless-skeletyl/7/). The PCB kits use the MSK12C02 (above), which is SMD.
+
+**Recommendation since 2026-10-21: Knitter-switch MFP 120-R**, from Electrokit with the other parts (section 13). RoHS by its catalogue, sold by several distributors, and its knob reaches 5 past the body, far enough through a printed wall, where the EG1218's lever stands 2.0 proud. No second source shares its footprint, so the tray's pocket fits this part only. Its 350 mA covers the 100 mA default charge current but not the 500 mA BOOST rate, so BOOST stays unbridged. Lay it in a pocket behind the north wall with the knob through a slot and the leads pointing into the tray (work item 013).
 
 ## 3. Reset button
 
@@ -143,7 +173,18 @@ Notes:
 - The TL3315 needs a PCB: its terminals are 0.5 wide gull wings, and with 0.2 travel and 0.55 height there is little to locate in a printed pocket.
 - The PTS645 V is made for a PCB at right angles to the actuator; air-wired, its pegs and bent legs only get in the way, and its 7.5 x 6.2 face is the largest of the three.
 
-**Recommendation: C&K PTS636 SL43 LFS** (130 gf, 4.3). Lay it on its side in a pocket behind the north wall: the 6.0 side along the wall, the 3.5 side vertical, the stem facing north behind a pin hole of about Ø1.5 (sized for a SIM ejector pin like kbdkid4's), the two leads pointing south for the RST and GND wires. Use SK43 (250 gf) instead if it should resist presses through a larger opening. The reset line carries microamps, so the 50 mA rating is irrelevant.
+**Recommendation until 2026-10-21: C&K PTS636 SL43 LFS** (130 gf, 4.3), which the tray's back wall and pin hole are still built for (work item 013). Lay it on its side in a pocket behind the north wall: the 6.0 side along the wall, the 3.5 side vertical, the stem facing north behind a pin hole of about Ø1.5 (sized for a SIM ejector pin like kbdkid4's), the two leads pointing south for the RST and GND wires. Use SK43 (250 gf) instead if it should resist presses through a larger opening. The reset line carries microamps, so the 50 mA rating is irrelevant.
+
+### Against the buying rules (2026-10-21)
+
+The PTS636 SL43 LFS is at Mouser and Digi-Key but turned up at neither TME nor Farnell (web search results, the pages not opened), and Electrokit has no 6 x 3.5 through-hole tactile switch (only an SMD 6 x 3, 41024337). Electrokit's 2-lead 6 x 6 switches are TE's (Alcoswitch FSM):
+
+- FSM2JRT (41024339): 6 x 6 x 4.3, 2 leads 5 apart, 1.6 N, 50 mA 24 VDC, 4.50 SEK, at least 2, 293 in stock. "ACTIVE" and "EU RoHS Directive 2011/65/EU Compliant" on TE's product sheet (`work/research/downloads/electrokit-41024339-te-fsm2jrt/`), which has no drawing.
+- FSM4JRT (41019151): the same switch 5 tall, 4.90 SEK, 895 in stock, and at Mouser, Digi-Key and RS by web search results (the pages not opened). Its 2 leads 5 apart make it the FSM2JRT's second source, if the tray's pocket allows the extra 0.7.
+
+The nice!nano holder above names Adafruit's 6 mm slim tactile switch (product 1489) for reset.
+
+**Recommendation since 2026-10-21: TE FSM2JRT**, from Electrokit with the other parts (section 13), the lower of the two. How it sits behind the pin hole is work item 013's, from its drawing or a caliper.
 
 ## 4. Battery connector
 
@@ -162,6 +203,8 @@ JST PH data (Confirmed, JST PH catalogue https://www.jst-mfg.com/product/pdf/eng
 Space: the PCB rests about 8 above the tray floor with sockets 2.0 below it, leaving about 6. A B2B standing upright with its plug (8 tall) does not fit under the PCB; an S2B lying flat fits (4.8) but its posts point into the floor.
 
 **Recommendation: B2B-PH-K-S laid on its side** in a floor pocket: envelope 5.9 x 4.5 (now the height) x 6.0, plus the 3.4 posts pointing back horizontally, where the battery-side wires solder without any slot in the floor. The plug enters horizontally. Lying on its 5.9 x 6.0 face, header and PHR-2 plug are both 4.5 thick, so the mated pair is 4.5 tall, under the 6 available; on the other face it would be 5.9 tall, with no margin (housing sizes from the table above; the mated height on its side is my arithmetic, Derived). The pocket must hold the header's front shoulders, since the plug pulls out toward the front. SparkFun warns PH plugs "can stick in pretty good" (URL above).
+
+Electrokit sells JST's straight 2-pin PH header (41004562, "Stiftlist JST-PH 2-pol 2.0mm", brand JST, 2.30 SEK, at least 6, 3979 in stock), with JST's PH catalogue as its datasheet (`work/research/downloads/electrokit-41004562-jst-ph/`), so the B2B-PH-K-S above. Its listing names no suffix, so whether it is the RoHS (LF)(SN) version is not stated. It is also at RS as B2B-PH-K-S(LF)(SN) (1667311).
 
 ## 5. Magnets for the joint
 
@@ -316,7 +359,21 @@ The first print of kbdkid4's tray with the soldered left half in it. The nice!na
 
 For the hand-wired frame's diodes (TODO.md).
 
-- Unconfirmed (distributor listings, which ones not recorded): 1N4148 in DO-35, about 1.9 across and 4.3 to 4.6 long.
+- Confirmed (Diotec's 1N4148 datasheet, version 2017-08-25, from Electrokit 40310010, `work/research/downloads/electrokit-40310010-diotec-1n4148/`): the DO-35 body Ø1.9 ±0.1 and 3.9 ±0.4 long, the leads Ø0.5 at most, 62.5 ±3 end to end. "Compliant to RoHS, REACH". Electrokit sells it at 0.25 SEK, at least 50, 2048 in stock. The distributor listings first recorded here gave 4.3 to 4.6 long.
+
+## 13. Order list (2026-10-21)
+
+Everything from Electrokit, prices with 25 % VAT, the least each listing sells, for both halves:
+
+| Part | Electrokit | Each | Least | Buy | SEK |
+|---|---|---|---|---|---|
+| Power switch, Knitter-switch MFP 120-R (section 2) | 41011898 | 19 | 1 | 2 | 38.00 |
+| Reset button, TE FSM2JRT (section 3) | 41024339 | 4.50 | 2 | 2 | 9.00 |
+| Battery header, JST PH 2-pin straight (section 4) | 41004562 | 2.30 | 6 | 6 | 13.80 |
+| Key diodes, Diotec 1N4148 DO-35, 25 keys a half (section 12), only for the hand-wired frame | 40310010 | 0.25 | 50 | 50 | 12.50 |
+| Shipping | | | | | from 35 |
+
+That is 73.30 SEK of parts and about 108 SEK with the cheapest shipping. Electrokit prices its shipping at checkout, from 35 SEK, and pickup at its Malmö store is free (its consumer terms). The other shops lose on shipping alone for an order this small: Mouser ships free only from 615 to 800 SEK (its Swedish pages differ), Elfa Distrelec closed its web shop on 2026-05-18 and sends its customers to RS, and TME had no MFP 120 in stock. Not in this order: the socket strips (section 8, the user's own order), the hotswap sockets, the nice!nano, the battery and the magnets.
 
 ## Not confirmed
 
