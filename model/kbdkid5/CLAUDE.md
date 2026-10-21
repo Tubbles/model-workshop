@@ -18,4 +18,5 @@ Each module's docstring says what it builds or checks and how, and its constants
 ## Conventions
 
 - When DESIGN.md and `layout.py` disagree, find which one has the bug and fix it, never pick one silently.
+- `layout.py`'s tray polygons (`tray_cavity_polygon()`, `ledge_inner_polygon()`) are sharp, but `tray_shape.py` rounds every bend: `add_ledge()` rounds the ledge's inner face 2.13 wherever the outline steps in, which takes the ledge's corner away there (DESIGN.md, Tray). A FreeCAD probe or a mount near an outline corner must not count on plastic the sharp model has there: `export_tray.py`'s probe of the nice!nano north block's east end, past the column 2/3 step, found no ledge there and failed CI run 39637825633 (fixed in 3160768).
 - `layout.py` imports normally without FreeCAD (put `model/kbdkid5/scripts/` on `sys.path`), as `check_layout.py` does. The FreeCAD modules (`freecad_common.py`, `tray_shape.py`, `plate_shape.py`, `pcb_shape.py`, `socket_test_shape.py`, `frame_shape.py` and the export scripts) need FreeCAD, so they run in CI only (root CLAUDE.md, Workflow).

@@ -27,7 +27,7 @@ The user, 2026-10-21: "Make sure that you pick parts that are rohs, in stock, an
 | 1. nice!nano v2 | Grip the far (antenna) end and the USB shell, not the long edges. Mill-Max 315-43-112-41-003000 socket strips on pins 1 to 12 of each row (section 8) | 18.20 x 33.20 board (the user's caliper), 1.6 PCB, USB-C shell 8.94 x 3.16, flush with the underside, 0.87 past the board end on the render |
 | 2. Power switch | Knitter-switch MFP 120-R, right angle through hole SPDT, its knob through the north wall (section 2) | body 11.0 x 6 x 5.6, knob 3.4 x 3.2 reaching 5 past the body, 3 leads at 3.2 pitch leaving the back at mid height, bent down to 4.2 below the body, 350 mA 30 VDC |
 | 3. Reset button | TE FSM2JRT, 6 x 6 tactile switch with 2 through-hole leads, pressed through a pin hole (section 3) | 6.19 square, the cover 3.60 and the 3.5 actuator 4.3 over the base, 2 leads 5.00 apart, 160 gf, 50 mA 24 VDC |
-| 4. Battery connector | JST PH 2.0 mm, B2B-PH-K-S (top entry) laid on its side in a pocket, wires on the posts | 5.9 x 4.5 x 6.0 body, posts 3.4, mated length 8 |
+| 4. Battery connector | None in the tray since 2026-10-21: the user handles the battery and how it connects (section 4). Researched before: JST PH 2.0 mm, B2B-PH-K-S (top entry) laid on its side in a pocket, wires on the posts | 5.9 x 4.5 x 6.0 body, posts 3.4, mated length 8 |
 | 5. Joint | Two hardened steel dowel pins carry the bending; 4 magnet pairs of 10 x 3 discs (12 mm face) or 5 pairs of 8 x 3 (10 mm face) only hold the halves together | pins 4 x 24 (12 embedded per side) or 3 x 20 |
 | 6. PCB connector | JST SH SM12B-SRSS-TB side entry on the PCB underside, JST pre-crimped leads | 14.0 x 4.95 x 2.9 header, 2.95 mated height |
 
@@ -205,6 +205,8 @@ te.com answers curl with 403 for its customer drawings, so the drawing is the FS
 - Unconfirmed: the base's underside. The tape view, not to scale, shows a channel about 1.0 deep across it between the leads, about a third of the body's width.
 
 ## 4. Battery connector
+
+The tray no longer has a place for the battery or this connector. The user, 2026-10-21: "just forget there is a battery at all, and I'll handle it myself. Remove the battery jst socket and all accommodations for it as well" (model/kbdkid5/DESIGN.md, Battery). The research below stays for the user's own choice. Its space figures are from before the 1.5 raise (DESIGN.md, Heights).
 
 Common choice: JST PH, 2.0 mm pitch, 2 pins. SparkFun's 110 mAh cell "Comes terminated with a standard 2-pin JST-PH connector" (https://www.sparkfun.com/lithium-ion-battery-110mah.html), and splitkb's wireless kit uses S2B-PH-K-S(LF)(SN) headers with PHR-2 housings and SPH-002T-P0.5S contacts (https://splitkb.com/collections/keyboard-parts/products/wireless-controller-expansion-bundle). Other connectors exist (Keebio ships 301230 cells with Molex Pico-EZmate, https://keeb.io/products/lithium-ion-battery-90mah), but PH is the one most batteries come with. Polarity varies between battery makers: "Some batteries come with positive on the first pin and some come with negative on the first pin" (https://nicekeyboards.com/docs/nice-nano/getting-started). Check every battery before plugging it in.
 
@@ -389,7 +391,7 @@ Everything from Electrokit, prices with 25 % VAT, the least each listing sells, 
 |---|---|---|---|---|---|
 | Power switch, Knitter-switch MFP 120-R (section 2) | 41011898 | 19 | 1 | 2 | 38.00 |
 | Reset button, TE FSM2JRT (section 3) | 41024339 | 4.50 | 2 | 2 | 9.00 |
-| Battery header, JST PH 2-pin straight (section 4) | 41004562 | 2.30 | 6 | 6 | 13.80 |
+| Battery header, JST PH 2-pin straight (section 4), no longer used by the tray | 41004562 | 2.30 | 6 | 6 | 13.80 |
 | Key diodes, Diotec 1N4148 DO-35, 25 keys a half (section 12), only for the hand-wired frame | 40310010 | 0.25 | 50 | 50 | 12.50 |
 | Thumb slide joystick, to try as a pointer (section 14) | 41003908 | 99 | 1 | 1 | 99.00 |
 | Shipping | | | | | from 35 |
