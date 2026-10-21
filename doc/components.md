@@ -82,7 +82,7 @@ Whether the shell's four tabs or their solder protrude below the underside was o
 ### Top side parts
 
 - Upper bound from the manufacturer: total thickness 3.2 minus the 1.6 board leaves 1.6 above the top side, and the USB shell already uses about 1.56 of it. So no part on the top side is taller than about 1.6 (Derived from https://nicekeyboards.com/docs/nice-nano/).
-- Owner's kbdkid4 measurement: the nano sits flush on 2.56 mm sockets with the component side toward the keyboard PCB (`kbdkid4/scripts/tray_shape.py` lines 50 to 60), which bounds the top-side parts at 2.56, weaker than the bound above but consistent.
+- Owner's kbdkid4 measurement: the nano sits flush on 2.56 mm sockets with the component side toward the keyboard PCB (`kbdkid4/scripts/tray_shape.py` lines 50 to 60), which bounds the top-side parts at 2.56, weaker than the bound above but consistent. Measured on kbdkid4's soldered left half (the user, 2026-10-12, kbdkid4 commit bb2d1d9). The right half's nano goes on 4.3 mm sockets, the user's figure for a half not yet soldered then (kbdkid4 commit 5dc598e, `RIGHT_NANO_SOCKET_HEIGHT_MM`).
 - Identified packages (heights from primary sources): regulator XC6220B331MR in SOT-25, 1.1 ±0.1, 1.3 max (Torex datasheet via https://datasheet.lcsc.com/datasheet/pdf/a2ba3a0a4d164b74a2b24c8a2a4beaa9.pdf, page 24); charger BQ24075 in RGT0016C, "VQFN - 1 mm max height", 3.00 x 3.00 (TI, https://www.ti.com/lit/ds/symlink/bq24075.pdf). The nRF52840 aQFN73 is 7 x 7 and about 0.85 tall (Unconfirmed: distributor listings only, one lists 0.77; Nordic's product specification was not opened). The LEDs, inductors, crystals (32 MHz XRCGB32M000F1H50R0 and 32.768 kHz FC-12M per the schematic) were not looked up. The SOT-25 regulator, at 1.3 max, is the tallest part I could confirm.
 - Antenna: the schematic shows only an `ANTENNA` net after a matching network (R10, C18, L2, C19, C20), no antenna component, and the render shows no parts near the far end. That points to a PCB trace antenna at the far end (Unconfirmed: inferred from the schematic and render).
 - Approximate positions from the render (Derived, ±0.5): the LEDs sit either side of the board 7 to 9 from the USB end; the SOT-25 regulator 9 to 12 from the USB end, toward the B- long edge; the 3 x 3 charger 8.5 to 12 from the USB end, toward the B+ edge; the 7 x 7 nRF52840 about 16.6 to 23.8 from the USB end, centred; small passives reach about 27 from the USB end. From about 27.5 to the far end (33.3) the top side carries only the last two pins of each row and silkscreen; the extra pads sit just before, at 26.8.
@@ -289,6 +289,28 @@ The user: "I want to solder 2 x 12 pin low profile socket strips on top of the n
 - Confirmed (catalog page 65): the plan view draws the insulator the number of pins times .100" long and .100" wide, a pin every .100". Fig. 4 shows the insulator .071" tall with its top .095" over the board, so it stands .024" (0.61) clear of the board on the pins' sleeves, and the tail .095" long below the board's top, 0.813 below a 1.6 board's underside.
 - Not on either: the sleeves' diameter. `kbdkid5/scripts/layout.py` takes them as wide as the pads, 1.53 (Unconfirmed).
 - Mating: the strips take round leads only, so the wires go in as solid 24 AWG (0.51) or 26 AWG (0.41) wire, pushed straight in and bent over (the user: "Yeah solid wire it is", doc/log/2026-10-20.md). Square header pins (0.64) are outside the range.
+
+## 9. Choc v1 switch, calipered (2026-10-17 and 2026-10-20)
+
+Kailh Choc v1, kbdkid4's `KHA-PG1350` package. The user's caliper on a real switch:
+
+- Confirmed (calipered, 2026-10-20): center post 3.17 and side pegs 1.65 across, "Post is 3.17 and pegs are 1.65 mm diameter" (doc/work/012-switch-hole-test.md). The footprint's holes for them are 3.4 and 1.9 (`layout.CHOC_FOOTPRINT_HOLES_MM`).
+- Confirmed (calipered, 2026-10-17): the contact blades are not equally thick, the pin near a side peg (footprint-local (-3.8, 5.0)) about 0.4, the middle one ((-5.9, 0.0)) about 0.2 (doc/log/2026-10-17.md, `layout.CHOC_PIN_CALIPERED_BLADE_THICKNESSES_MM`).
+- Unconfirmed (kbdkid4's switch model, the `PG1350` STEP): both blades 0.2 thick and 0.8 wide (`layout.CHOC_PIN_BLADE_THICKNESS_MM`, `CHOC_PIN_BLADE_WIDTH_MM`).
+
+## 10. Screws
+
+- Confirmed (the user, 2026-10-20): the M2 pan head screws on hand have "roughly 1.5 mm high heads" (doc/log/2026-10-20.md), the socket test backing's screws (`socket_test_shape.BACKING_SCREW_HEAD_HEIGHT_MM`).
+- Confirmed (measured, kbdkid4 commit 9c59d24, 2026-07-23): kbdkid4's screw heads are 3.77 across (`SCREW_HEAD_DIAMETER_MM` in `kbdkid4/scripts/export_plate.py` and `kbdkid5/scripts/plate_shape.py`).
+- Unconfirmed: those heads' height. The nice!nano clamp's M2 screw takes kbdkid4's 3.77 and assumes 2.0 tall, the largest ISO 4762 gives an M2 socket head (doc/log/2026-10-17.md, `layout.NANO_CLAMP_SCREW_HEAD_HEIGHT_MM`).
+
+## 11. Measured on kbdkid4's assembled board (2026-10-12)
+
+The first print of kbdkid4's tray with the soldered left half in it. The nice!nano's depth is in section 1 (Top side parts).
+
+- Confirmed (measured, kbdkid4 commit 26bddb5): the USB window around the left nice!nano's receptacle is 10.5 x 4.5, sized by what the user measured around the connector on the first print, with the receptacle's mouth 0.56 behind the tray's outer face (`USB_WINDOW_WIDTH_MM` in `kbdkid4/scripts/export_tray.py`, `USB_WINDOW_HEIGHT_MM` in `kbdkid4/scripts/tray_shape.py`). Derived: the right half's window, 1.74 lower for its taller sockets (kbdkid4 commit 5dc598e, `kbdkid4/scripts/tray_shape.py`).
+- Confirmed (measured, kbdkid4 commit eb6fb7b): the power switch body's outer face 1.13 from the tray's outer face, so 0.07 past the board edge and 0.33 from the wall's inner face, where the package model puts it 0.09 inside the edge (`kbdkid4/scripts/export_tray.py`, the power switch comment). By the same measurement it sits 0.73 from its wall pocket's back, 0.89 by the package model (SUGGESTIONS.md, kbdkid4).
+- Confirmed (measured, kbdkid4 commit 7255b7e): the key diode D123, a SOD-123 (package SOD3717X135), is 1.14 tall on the soldered board (`kbdkid4/scripts/export_plate.py`, the covered variant's comment).
 
 ## Not confirmed
 
