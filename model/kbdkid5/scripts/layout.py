@@ -594,11 +594,14 @@ STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
 # PLATE_PIN_HOLE_DIAMETER_MM across about the point
 # PLATE_PIN_HOLE_SOUTH_MM south of the key's center, reaching 0.25 past
 # the square (DESIGN.md, Plate and mocks). The model is their source:
-# export_plate.py measures the built plate's cutouts against them and
-# stops where they differ. plate_shape.py moves the model onto the keys
-# by the one translation that fits all of them, which leaves each
-# cutout within 0.0005 of its key's center (the model's column staggers
-# differ from the layout's by 0.001 of rounding).
+# export_plate.py measures every cutout of the built plate against
+# them, each square's four edges and its center against its key's, the
+# step between the layers and the notch's arcs, and stops where one
+# differs by more than its CUTOUT_FIGURE_TOLERANCE_MM. plate_shape.py
+# moves the model onto the keys by the one translation that fits all of
+# them, which leaves each cutout up to 0.00052 off its key's center
+# (the model's column staggers differ from the layout's by 0.001 of
+# rounding).
 PLATE_TOP_LAYER_MM = 1.2
 PLATE_TOP_LAYER_CUTOUT_MM = 14.1
 PLATE_LOWER_LAYER_CUTOUT_MM = 14.4
