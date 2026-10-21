@@ -4,7 +4,7 @@ Guidance for Claude Code working on kbdkid5, in `model/kbdkid5/`. The workshop's
 
 ## What this is
 
-kbdkid5, the successor of kbdkid4 (`~/dev/kbdkid4`, https://github.com/Tubbles/kbdkid4): a wireless split keyboard whose 3D-printed parts (tray, switch plate, PCB mock, fused mock) are built by FreeCAD scripts in `model/kbdkid5/scripts/`, running headless in a container. [DESIGN.md](DESIGN.md) holds the design and every dimension, [doc/components.md](../../doc/components.md) the part research with sources, [PLAN.md](../../PLAN.md) the phases, `doc/work/` the work items with their status, `doc/log/` dated decision logs.
+kbdkid5, the successor of kbdkid4 (https://github.com/Tubbles/kbdkid4): a wireless split keyboard whose 3D-printed parts (tray, switch plate, PCB mock, fused mock) are built by FreeCAD scripts in `model/kbdkid5/scripts/`, running headless in a container. [DESIGN.md](DESIGN.md) holds the design and every dimension, [doc/components.md](../../doc/components.md) the part research with sources, [PLAN.md](../../PLAN.md) the phases, `doc/work/` the work items with their status, `doc/log/` dated decision logs.
 
 There is no PCB design yet (the user does it later in LibrePCB). Until then `model/kbdkid5/scripts/layout.py` is the ground truth for the geometry: keys, outline, mounting drills, the parts in the tray and the joint. It is plain Python with no FreeCAD import, so `model/kbdkid5/scripts/check_layout.py` can check it anywhere. The export scripts read it. When DESIGN.md and `layout.py` disagree, that is a bug in one of them: fix it, don't pick one silently.
 
@@ -44,4 +44,4 @@ There is no PCB design yet (the user does it later in LibrePCB). Until then `mod
 
 ## Conventions
 
-- `layout.py` imports normally without FreeCAD (put `model/kbdkid5/scripts/` on `sys.path`), as `check_layout.py` does. The FreeCAD modules (`freecad_common.py`, `tray_shape.py`, `plate_shape.py`, `pcb_shape.py`, `socket_test_shape.py` and the export scripts) run only in CI, so a question about the built geometry becomes a figure the export script prints.
+- `layout.py` imports normally without FreeCAD (put `model/kbdkid5/scripts/` on `sys.path`), as `check_layout.py` does. The FreeCAD modules (`freecad_common.py`, `tray_shape.py`, `plate_shape.py`, `pcb_shape.py`, `socket_test_shape.py` and the export scripts) need FreeCAD, so they run in CI only (root CLAUDE.md, Workflow).

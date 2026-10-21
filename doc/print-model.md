@@ -4,7 +4,7 @@ How the user's printer prints, as measured on test prints, for anyone who design
 
 ## Printer and material
 
-- Printer: the user's stock Creality Ender 3 V2 (model/camera-arm/CLAUDE.md and the docstring of `model/camera-arm/scripts/export_camera_arm.py`). kbdkid4 053755b mentions the printer's Klipper host Pi standing on its base rail.
+- Printer: the user's stock Creality Ender 3 V2 (model/camera-arm/README.md and the docstring of `model/camera-arm/scripts/export_camera_arm.py`). kbdkid4 053755b mentions the printer's Klipper host Pi standing on its base rail.
 - Material: PETG. The user, 2026-10-17: "I am using petg which is a little softer and grips the blades neatly" (doc/log/2026-10-17.md). The 2 % strain limit that the snap hook, the clamp tab and the scrapped socket fingers were checked against is a PLA figure (doc/log/2026-10-17.md, doc/log/2026-10-18.md).
 - Layer height: 0.2. kbdkid4 7255b7e leaves "three 0.2 mm layers" over the diode pit, kbdkid4 75cdde7 found "the single 0.2 mm layer" over the lead recesses showing through, and the first backing's pads stepped 0.05 "under a 0.2 layer" (doc/log/2026-10-18.md).
 - Nozzle: not recorded. A comment in `model/kbdkid4/scripts/export_tray.py` calls the power switch pocket's 0.4 skin "one nozzle width" (`POWER_SWITCH_POCKET_SKIN_MM`).
@@ -14,7 +14,7 @@ How the user's printer prints, as measured on test prints, for anyone who design
 
 From `model/kbdkid5/scripts/layout.py` (Printed fits) unless noted:
 
-- `PRINT_SWELLING_PER_SIDE_MM` = 0.2: a vertical face moves 0.2 out of the plastic, so a hole or slot prints 0.2 per side smaller than modelled. kbdkid4 set the same 0.2 as the PCB replica's `pull_in` default, "the expected print swelling per side" (model/kbdkid4/CLAUDE.md, kbdkid4 ced2070, 2026-09-26). No measurement of it is recorded before the bay pocket confirmed it across (Measurements, below).
+- `PRINT_SWELLING_PER_SIDE_MM` = 0.2: a vertical face moves 0.2 out of the plastic, so a hole or slot prints 0.2 per side smaller than modelled. kbdkid4 set the same 0.2 as the PCB replica's `pull_in` default, "the expected print swelling per side" (kbdkid4 ced2070, 2026-09-26). No measurement of it is recorded before the bay pocket confirmed it across (Measurements, below).
 - `printed_fit(nominal, fit)`: a fit is modelled as the nominal size plus the swelling on both sides plus the fit's clearance, `SNUG_FIT_MM` 0.0 ("holds a part pressed in by hand") or `SLIP_FIT_MM` 0.1 ("lets a part slide in, or leaves room for glue"). Introduced after the 003 review found the first joint fits ignored the swelling (doc/log/2026-10-17.md, #fit #joint).
 - `PRINT_SWELLING_AT_45_DEGREES_MM` = 0.283: a 45 degree face swells 0.2 along its normal, 0.283 along x, y or z (doc/log/2026-10-17.md, #hook #fit). Derived, not measured.
 - `PRINT_RISE_OF_UP_FACING_BOTTOMS_MM` = 0.2: the floor of a notch, slot, recess or blind bore that a part must fit over is counted 0.2 higher as printed, and the plastic left under it is counted where modelled, the thinner reading (doc/log/2026-10-17.md, #print #fit). Not measured: it "stays until one is measured" (doc/log/2026-10-19.md).

@@ -4,7 +4,9 @@ FreeCAD scripts that build 3D-printable models, run headless in a container. The
 
 ## Getting the STLs
 
-Every push runs the CI workflow, which exports every part in the FreeCAD image built from `docker/freecad.Dockerfile`. A push that changes only markdown files and `LICENSE.txt` builds nothing, so the newest artifacts are those of the last commit that changed anything else. Open the run on the repository's Actions tab and download its artifacts. Each is named after its project, its kind and the commit it was built from, `<project>-<kind>-<short commit hash>` (for example `kbdkid5-tray-<short commit hash>`), or `<project>-<short commit hash>` for the projects with one artifact (`solder-spool-axle`, `camera-arm`). For a pull request the hash is its head commit's. The project READMEs list the files in each artifact and show the command CI runs for each export.
+Every push runs the CI workflow, which exports every part in the FreeCAD image built from `docker/freecad.Dockerfile`. A push that changes only markdown files and `LICENSE.txt` builds nothing, so the newest artifacts are those of the last commit that changed anything else. Open the run on the repository's Actions tab and download its artifacts. Each is named after its project, its kind and the commit it was built from, `<project>-<kind>-<short commit hash>` (for example `kbdkid5-tray-<short commit hash>`), or `<project>-<short commit hash>` for the projects with one artifact (`solder-spool-axle`, `camera-arm`). For a pull request the hash is its head commit's. The project READMEs list the files in each artifact and show the command CI runs for each export. To run one by hand, build the image first, from the repository root:
+
+    docker build -t freecad-headless -f docker/freecad.Dockerfile docker
 
 ## How the printer prints, and the parts
 
