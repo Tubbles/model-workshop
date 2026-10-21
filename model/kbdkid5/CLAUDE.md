@@ -12,9 +12,10 @@ Each module's docstring says what it builds or checks and how, and its constants
 - `pcb_shape.py`: the PCB mock, and the fused mock's fusing and measuring. `export_pcb.py` and `export_mock.py` export them, `export_slit_test.py` the slit test strips.
 - `plate_shape.py`: the switch plate. `export_plate.py` exports it.
 - `socket_test_shape.py`: the hand-wired frame's test strips and the switch hole strip. `export_socket_test.py` exports them.
+- `frame_shape.py`: the hand-wired frame and its backing, from `socket_test_shape.py`'s cells and `pcb_shape.py`'s body. `export_frame.py` exports them.
 - `tray_shape.py`: the tray, the nice!nano clamp's tab and the power switch's retainer. `export_tray.py`, `export_clamp_tab.py` and `export_power_switch_retainer.py` export them, and `export_nano_bay_test.py` cuts the test bay out of the left tray.
 
 ## Conventions
 
 - When DESIGN.md and `layout.py` disagree, find which one has the bug and fix it, never pick one silently.
-- `layout.py` imports normally without FreeCAD (put `model/kbdkid5/scripts/` on `sys.path`), as `check_layout.py` does. The FreeCAD modules (`freecad_common.py`, `tray_shape.py`, `plate_shape.py`, `pcb_shape.py`, `socket_test_shape.py` and the export scripts) need FreeCAD, so they run in CI only (root CLAUDE.md, Workflow).
+- `layout.py` imports normally without FreeCAD (put `model/kbdkid5/scripts/` on `sys.path`), as `check_layout.py` does. The FreeCAD modules (`freecad_common.py`, `tray_shape.py`, `plate_shape.py`, `pcb_shape.py`, `socket_test_shape.py`, `frame_shape.py` and the export scripts) need FreeCAD, so they run in CI only (root CLAUDE.md, Workflow).

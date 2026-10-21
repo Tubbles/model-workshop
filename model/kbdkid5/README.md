@@ -58,6 +58,28 @@ To try the switch hole strip, push a switch into each cell from the face that wa
 
 CI uploads the socket strips and the switch hole strip from a job of their own as the `kbdkid5-socket-<short commit hash>` artifact: `kbdkid5_Socket_Test_Pocket.stl`, `kbdkid5_Socket_Test_Holes.stl`, `kbdkid5_Socket_Test_Backing.stl` and `kbdkid5_Switch_Hole_Test.stl`, ready a few minutes after a push.
 
+## 3D printed hand-wired frame
+
+`model/kbdkid5/scripts/export_frame.py` exports a half's hand-wired frame or its backing. The frame takes the PCB's place in the tray: the switches sit in it, each hotswap socket in a pocket on its underside, and its bosses take M2 heat-set inserts. The backing screws up under the sockets with a pad under each, so a socket stays put while a switch is pressed into it. This first iteration has no diode cradles and no wire grooves: the wires run in the room between the frame and the backing. DESIGN.md (Hand-wired frame) has the design.
+
+    docker run --rm -v "$PWD":/work -w /work freecad-headless \
+        freecadcmd model/kbdkid5/scripts/export_frame.py --pass part.stl frame|backing [right] \
+        [insert_length=<mm>]
+
+CI uploads both halves of both parts as the `kbdkid5-frame-<short commit hash>` artifact: `kbdkid5_Frame_Left.stl`, `kbdkid5_Frame_Right.stl`, `kbdkid5_Frame_Backing_Left.stl` and `kbdkid5_Frame_Backing_Right.stl`.
+
+Print the frame as written, its top face on the bed, the walls and bosses standing up, and the backing as written, bottom down with its pads on top. Neither needs supports.
+
+To put a half together, press an M2 x 3 heat-set insert into every boss. Solder a wire to each socket tab, then push each socket into its pocket from the open side, the tab and its wire sliding up the slot in the wall. Screw the backing on with M2 x 4 pan heads, its pads under the sockets. Lay the frame in the tray on the ledge and the standoffs and screw it down at the five drills, the plate on top, as with the PCB. The wires reach the nice!nano's socket strips through the backing's cutouts over them.
+
+What to check and report:
+
+- Each socket in its pocket before the backing goes on: good is a light push, flat against the frame, and it stays in when the frame is turned over and tapped. Loose means it falls out or rattles, too tight means it needs a tool or will not sit flat.
+- The backing: it sits flat on every boss without rocking and without pushing any socket out of its pocket.
+- A switch pressed into each socket: the socket must not move or tilt, and the switch sits flat on the frame without wobbling sideways. Report every socket that gives, especially the thumb's (no boss near it), S120's, S130's and the bottom row's, and on the right half S102's and S150's (no boss north of them).
+- In the tray: the frame drops in by hand and sits flat on all five standoffs, the walls touch nothing, and nothing under the backing rubs. The thumb switch's center post and pegs and S150's peg by the joint may hit the tray's parking boss and upper dowel boss (doc/work/014-hand-wired-frame.md): report whether those switches seat fully.
+- Report each of these as good, loose or tight, with the key names.
+
 ## 3D printed tray
 
 `model/kbdkid5/scripts/export_tray.py` exports a half's tray: walls, floor and the ledge the PCB rests on, standoffs bored for M2 heat-set inserts at the mounting drills, the cuts that clear the switches' hotswap sockets, the joint along the slanted edge, and the mounts for the parts that are not on the PCB (DESIGN.md: Tray, Parts in the tray, The joint). The tray is written floor on the bed.
@@ -106,4 +128,5 @@ For both halves:
 - 8 supermagnete S-08-03-N disc magnets for the joint, 2 S-04-02-N for the pin parking.
 - 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
 - M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
+- For the hand-wired frame, 55 M2 x 3 heat-set inserts and 55 M2 x 4 pan head screws (28 for the left half's backing, 27 for the right's).
 - 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.
