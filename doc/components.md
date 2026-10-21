@@ -312,6 +312,12 @@ The first print of kbdkid4's tray with the soldered left half in it. The nice!na
 - Confirmed (measured, kbdkid4 commit eb6fb7b): the power switch body's outer face 1.13 from the tray's outer face, so 0.07 past the board edge and 0.33 from the wall's inner face, where the package model puts it 0.09 inside the edge (`model/kbdkid4/scripts/export_tray.py`, the power switch comment). By the same measurement it sits 0.73 from its wall pocket's back, 0.89 by the package model (SUGGESTIONS.md, kbdkid4).
 - Confirmed (measured, kbdkid4 commit 7255b7e): the key diode D123, a SOD-123 (package SOD3717X135), is 1.14 tall on the soldered board (`model/kbdkid4/scripts/export_plate.py`, the covered variant's comment).
 
+## 12. Through-hole diodes (2026-10-17)
+
+For the hand-wired frame's diodes (TODO.md).
+
+- Unconfirmed (distributor listings, which ones not recorded): 1N4148 in DO-35, about 1.9 across and 4.3 to 4.6 long.
+
 ## Not confirmed
 
 - nice!nano pad positions: measured on the manufacturer's render, ±0.1, not on a drawing or a board. The board is calipered (18.20 x 33.20), but the pads' insets were measured from the long edges of the render's 18.0 board and have not been measured on a real one. The shell's reach past the board is the render's 0.87, where the user's two calipers give 0.97. Footprints say 33.02 x 17.78, the kbdkid4 model 33.2 x 17.8.

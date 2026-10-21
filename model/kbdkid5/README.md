@@ -14,7 +14,7 @@ CI runs each export below with the command shown, from this repository's root, i
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_pcb.py --pass pcb.stl [right] [pull_in=0.2]
 
-CI first checks the layout with `python3 model/kbdkid5/scripts/check_layout.py` (outline, keys, drills, the parts in the tray, the sockets against the tray on both halves, the joint), then uploads both halves as the `kbdkid5-pcb-<short commit hash>` artifact: `kbdkid5_Pcb_Left.stl` and `kbdkid5_Pcb_Right.stl` (the word `right`). The right one has the outline and the drills mirrored across the outline's center line, but not the switch footprints, since a switch cannot be mirrored: each sits as on the left half, at the mirrored key center.
+CI first checks the layout with `python3 model/kbdkid5/scripts/check_layout.py` (outline, keys, drills, the parts in the tray, the sockets against the tray on both halves, the joint), plain Python that runs anywhere, then uploads both halves as the `kbdkid5-pcb-<short commit hash>` artifact: `kbdkid5_Pcb_Left.stl` and `kbdkid5_Pcb_Right.stl` (the word `right`). The right one has the outline and the drills mirrored across the outline's center line, but not the switch footprints, since a switch cannot be mirrored: each sits as on the left half, at the mirrored key center.
 
 ## 3D printed switch plate
 

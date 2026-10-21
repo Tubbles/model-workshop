@@ -4,7 +4,7 @@ Guidance for Claude Code working on kbdkid4's printed parts, in `model/kbdkid4/`
 
 ## What this is
 
-The 3D-printed parts of kbdkid4 (`~/dev/kbdkid4`, https://github.com/Tubbles/kbdkid4), a split wireless keyboard designed in LibrePCB: its tray, switch plate, PCB replica and carrying case, built by FreeCAD scripts in `model/kbdkid4/scripts/` from the board's files. The kbdkid4 repository holds the board design and never reads anything from here.
+The 3D-printed parts of kbdkid4 (`~/dev/kbdkid4`, https://github.com/Tubbles/kbdkid4), a split wireless keyboard designed in LibrePCB: its tray, switch plate, PCB replica and carrying case, built by FreeCAD scripts in `model/kbdkid4/scripts/` from the board's files. The kbdkid4 repository holds the board design and no model code, and never reads anything from here. The user (2026-10-21): "I want that agent to reference this repo for measurements etc, instead of the other way around, so kbdkid4 becomes a pure librepcb repo again."
 
 ## Board files
 

@@ -1,6 +1,6 @@
 # Print model
 
-How the user's printer prints, as measured on test prints, for anyone who designs a fit. All figures are in mm. Each one carries its source: a decision log (`doc/log/`), a work item (`doc/work/`), a file in this repository, or a commit. Commits without a prefix are in this repository's history (kbdkid5's until 8ebfb81). Commits marked `kbdkid4` are in Tubbles/kbdkid4. A new measurement goes here, with its date and source.
+How the user's printer prints, as measured on test prints, for anyone who designs a fit. All figures are in mm. Each one carries its source: a decision log (`doc/log/`), a work item (`doc/work/`), a file in this repository, or a commit. Commits marked `kbdkid4` are in Tubbles/kbdkid4, the others in this repository (README.md, History).
 
 ## Printer and material
 
@@ -40,7 +40,7 @@ From `model/kbdkid5/scripts/layout.py` (Printed fits) unless noted:
 | Thin wall sliver (the west peg's hole drilled through a pocket wall) | 0.1 to 0.2 left | | "The walls came out good" | A sliver this thin prints | doc/log/2026-10-18.md |
 | One 0.2 layer over a recess (kbdkid4's plate lead recesses) | 0.2 skin | | "showed through" | Two layers, 0.4 | kbdkid4 75cdde7, 2026-10-13 |
 | One 0.2 layer over a 6.25 x 2.56 pit (kbdkid4's covered plate) | 0.2 skin | | "printed translucent" | Three layers, 0.6. kbdkid5's covered plate keeps three (`model/kbdkid5/scripts/plate_shape.py`) | kbdkid4 7255b7e, 2026-10-12 |
-| Plate hole pattern against the fabricated board (kbdkid4) | no shift | | The first printed plates sat right in the tray, their holes about 1 off toward the nice!nano side by the thumb key, the reset button and the rightmost screw. With a 0.5 shift they came out offset about as far the other way | `pattern_shift` 0.25 along +x. Cause not found: the design files, drill files and STLs were checked, both parts printed unscaled, and SUGGESTIONS.md (kbdkid4) lists the measurements to take | kbdkid4 9864702 (2026-10-09), kbdkid4 278a6a7 (2026-10-10), SUGGESTIONS.md |
+| Plate hole pattern against the fabricated board (kbdkid4) | no shift | | The first printed plates sat right in the tray, their holes about 1 off toward the nice!nano side by the thumb key, the reset button and the rightmost screw. With a 0.5 shift they came out offset about as far the other way | `pattern_shift` 0.25 along +x. Cause not found (Unmeasured or inferred, below) | kbdkid4 9864702 (2026-10-09), kbdkid4 278a6a7 (2026-10-10) |
 | Plate width in the tray (kbdkid4) | | | "a snug fit across the tray's width" | `side_shave` 0.1 off the west and east edges | kbdkid4 186266d, 2026-10-10 |
 | Populated board in the printed tray (kbdkid4) | Clearances at nominal: 0.03 (nice!nano to the north ledge), 0.17 (west socket tabs to the wall), 0.38 (bottom row sockets to the south ledge) | | "The soldered board would not seat" | Ledge reliefs beside any body within 0.5 of the ledge (`relief_clearance`), wall pockets keeping the socket tabs 0.5 from the wall, standoff flats at 1.0 | kbdkid4 e677e0b and babfc60 (2026-10-11), kbdkid4 5a43865 (2026-10-12) |
 
@@ -52,7 +52,7 @@ The PCB replica's and the PCB mock's `pull_in` (0.2, outline moved in and every 
 - The rise of up-facing bottoms (0.2) and the face on the bed: see the model above.
 - How the bay end faces' 0.26 splits between the two faces, and why short end faces swell less than long ones: not known (`model/kbdkid5/scripts/layout.py`, the comment on `NANO_POCKET_END_FACES_SWELLING_MM`). The scripts take every figure that depends on the split at its worst (doc/log/2026-10-20.md).
 - How much larger than the model the pockets print: only that they fit looser than modelled (doc/log/2026-10-17.md, doc/log/2026-10-18.md).
-- The cause of kbdkid4's plate hole drift (SUGGESTIONS.md, kbdkid4).
+- The cause of kbdkid4's plate hole drift (Measurements, above). Checked 2026-10-09 (kbdkid4 9864702): kbdkid4's `boards/board_1.1/board.lp` has every switch pitch at exactly 19.05, kbdkid4's committed Excellon files put the 3.4 switch drills and the 2.4 mounting drills at the same positions, the kbdkid3 plate model's cutouts match the switch grid to 0.0005, the exported plate STL has every cutout, screw hole and the reset hole at its design x within 0.08, and the tray STL's standoff bores sit at the mounting drills to 0.001. Both parts were printed unscaled. A drift of 1 over 125 is 0.8 %, the size of a print scale or shrinkage error, but a plate shrunk that much should sit loose in the tray, which it does not. A linear 1 drift would have left the 0.5 shift's plate with both ends 0.5 off in opposite directions, not offset the other way (kbdkid4 278a6a7). SUGGESTIONS.md (kbdkid4) lists the measurements that would find the cause.
 - Elephant foot: not measured. The designs chamfer bed edges against it, 0.4 at 45 degrees on the joint face (model/kbdkid5/DESIGN.md, The joint) and on slots that must stay open (doc/log/2026-10-17.md, #hook #print).
 
 ## Test prints
