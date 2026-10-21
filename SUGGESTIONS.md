@@ -2,6 +2,11 @@
 
 Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 
+## Workshop
+
+- One shared FreeCAD scaffolding module. `model/kbdkid4/scripts/board_step.py` and `model/kbdkid5/scripts/freecad_common.py` both carry the freecadcmd workarounds (`run_and_exit`, `key=value` arguments, STL export with the closed mesh check), the second a port of the first, and `model/solder-spool-axle/` and `model/camera-arm/` reach into kbdkid4's directory for it through their `sys.path` line. A module beside `docker/` would let every project import one copy. Not done in the move (2026-10-21), whose promise was byte-identical STLs with only path changes, and the two copies' STL export settings would have to be compared first.
+- The kbdkid4 artifacts name only this repository's commit. Which kbdkid4 CI run and commit gave the STEP and the board files is printed in the job log by `.github/actions/kbdkid4-board`, but not in the download, so two downloads with the same name can hold different parts after a board change in kbdkid4. Writing the kbdkid4 commit into the artifact name or into a small text file inside it would make a download say which board it was built from. Not done because the user asked only for the STEP to come from kbdkid4's CI.
+
 ## kbdkid5
 
 - A fit test strip: a few short bosses, each with a horizontal flat-topped teardrop hole of a different diameter as modelled (say 4.3 to 4.7 in 0.05 steps), printed in the tray's orientation, to settle the snug (left) and slip (right) pin fits before printing two whole trays. The magnet slots could go on it too. `tray_shape.cut_teardrop_hole()` already makes the hole.
