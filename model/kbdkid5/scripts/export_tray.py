@@ -9,9 +9,11 @@ joint face's bottom chamfer. This script mirrors it for the right half,
 measures it and prints what it found against DESIGN.md's figures, which
 it transcribes itself (the DESIGN_* constants below), never against the
 constants the tray is built from: the outside's size, the walls, the
-floor, the ledge and the joint block, the standoffs and their bores,
-the joint face's angle, place and bottom chamfer, the pin holes (depth,
-diameter, the plastic behind and over them, the flat top, the lead-in),
+floor, the ledge and the joint block, the standoffs and their bores
+(the one merged with the joint block, its bore's plastic toward the
+magnet slot cut through it), the joint face's angle, place and bottom
+chamfer, the pin holes (depth, diameter, the plastic behind and over
+them, the flat top, the lead-in),
 the magnet slots, the parking hole, the sockets' clearance from the
 tray as built, and the mounts: the USB shell's channel and the USB
 window, the nice!nano's north block with the bar over the shell, the
@@ -81,9 +83,14 @@ DESIGN_MOUNTING_DRILLS_MM = (
     (18.574, 18.732),
     (18.574, 56.832),
     (56.091, 23.460),
-    (94.774, 60.404),
+    (75.724, 62.785),
     (114.141, 19.765),
+    (113.824, 59.214),
 )
+# The sixth standoff merges with the joint block, the magnet slot at
+# 67.511 along the slant cut through it, and its bore keeps this much
+# plastic toward the slot.
+DESIGN_MERGED_STANDOFF_BORE_WALL_MM = 0.83
 # DESIGN.md's slant runs through the thumb's corner and its north end
 # on to the south edge. Its south end (x 138.265) and the mirror line
 # midway between it and the west edge at x 0 (69.133) are computed from
@@ -578,9 +585,36 @@ def nearest_found(found, target, what):
     return near[0]
 
 
+def design_slant_coordinates(point):
+    """(along, outward) of a left-half point in DESIGN.md's slant frame."""
+    south, direction, normal = design_slant_frame(False)
+    offset = (point[0] - south[0], point[1] - south[1])
+    return (offset[0] * direction[0] + offset[1] * direction[1],
+            offset[0] * normal[0] + offset[1] * normal[1])
+
+
+def merged_bore_walls(tray, right):
+    """The plastic between each bore of a standoff that reaches the joint
+    block and the slot cut through it, along the slant's normal from the
+    bore's face."""
+    block_inner_face = DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_JOINT_BLOCK_THICKNESS_MM
+    _south, _direction, normal = design_slant_frame(right)
+    walls = []
+    for drill in DESIGN_MOUNTING_DRILLS_MM:
+        along, outward = design_slant_coordinates(drill)
+        if outward + DESIGN_STANDOFF_DIAMETER_MM / 2.0 <= block_inner_face:
+            continue
+        point = slant_place(right, along, outward + DESIGN_STANDOFF_BORE_MM / 2.0 + 0.05,
+                            LEDGE_PROBE_Z_MM)
+        low, high = run_through(tray, point, vector(normal), True)
+        walls.append(high - low)
+    return walls
+
+
 def measure_standoffs(tray, right, figures):
-    """The standoffs and their bores. The nice!nano clamp's insert bore
-    is the only other bore that size, measured with the clamp."""
+    """The standoffs and their bores, and the plastic a merged one's bore
+    keeps toward the joint's slot. The nice!nano clamp's insert bore is
+    the only other bore that size, measured with the clamp."""
     bores = vertical_cylinders(tray, DESIGN_STANDOFF_BORE_MM / 2.0)
     posts = vertical_cylinders(tray, DESIGN_STANDOFF_DIAMETER_MM / 2.0)
     drills = [half_point(drill, right) for drill in DESIGN_MOUNTING_DRILLS_MM]
@@ -607,6 +641,12 @@ def measure_standoffs(tray, right, figures):
         figures.check("plastic under the inserts", min(floors), DESIGN_FLOOR_MM, 1),
         f"{DESIGN_STANDOFF_DIAMETER_MM} across, {DESIGN_STANDOFF_BORE_MM} bores (by radius)",
     ]
+    walls = merged_bore_walls(tray, right)
+    if len(walls) != 1:
+        figures.problems.append(f"{len(walls)} standoffs reach the joint block, DESIGN.md has one")
+    else:
+        texts.append(figures.check("the merged one's bore from the magnet slot", walls[0],
+                                   DESIGN_MERGED_STANDOFF_BORE_WALL_MM, 2))
     return f"standoffs:  {', '.join(texts)}"
 
 

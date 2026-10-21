@@ -522,20 +522,31 @@ def mirror_for_right_half(point):
 # Mounting (DESIGN.md, "Mounting"): 2.4 mm drills, as kbdkid4's
 # board.lp mounting pads, for M2 screws into heat-set inserts in the
 # tray's standoffs. kbdkid4's (18.574, 56.832) is back where it was,
-# the nice!nano having moved to column 2, and the center standoff moved
-# one key south and one key west, from (76.041, 43.260) toward (56.991,
-# 24.210), out of the battery's way (the user, 2026-10-21: "Then we
-# might need to shift the center standoff down one key and towards the
-# outside one key, in order to accomodate the battery?"), and from
-# there 0.9 west and 0.75 south, where the plate's head hole keeps
-# 0.79 and 0.97 from S133's cutout instead of 0.22 and 0.03.
+# the nice!nano having moved to column 2. The center standoff moved one
+# key south and one key west, from (76.041, 43.260) toward (56.991,
+# 24.210), when a battery was to lie there, and from there 0.9 west and
+# 0.75 south, where the plate's head hole keeps 0.97 from S133's cutout
+# in the plate's 14.1 top layer and 0.79 from S123's in its 14.4 layer,
+# instead of 0.22 and 0.03 from S133's. The user kept it there once the
+# battery went. The north-east standoff moved one key west, from
+# (94.774, 60.404) to the same corner of columns 3 and 4, 2.381 north
+# with the stagger, where its head hole and S140's flat are as they were
+# beside S150, and a sixth stands on the south-east corner of S150's
+# cell (the user, 2026-10-21: "What do you think about moving the
+# north-east standoff one key to the left? And then adding a new
+# standoff south east of the north easternmost key?"). The sixth runs
+# into the joint block, which it merges with, and the magnet slot at
+# 67.511 along the slant is cut through it: only its bore needs the
+# plastic around it (the user: "the standoff doesn't have to be 100 %
+# clear of everything, the inner bore is more important").
 MOUNTING_DRILL_DIAMETER_MM = 2.4
 MOUNTING_DRILL_CENTERS_MM = (
     (18.574, 18.732),
     (18.574, 56.832),
     (56.091, 23.460),
-    (94.774, 60.404),
+    (75.724, 62.785),
     (114.141, 19.765),
+    (113.824, 59.214),
 )
 
 # The tray (DESIGN.md, "Heights": all as kbdkid4). tray_shape.py
@@ -1045,11 +1056,13 @@ RIGHT_SOCKET_LEDGE_RELIEF_KEYS = ("S103", "S113", "S123", "S133", "S143", "S153"
 # the ledge's clearance here, since the board can shift about 0.2 in
 # the cavity before the screws pull it into place and the standoffs
 # have plastic to spare. A flat must leave
-# STANDOFF_RELIEF_MINIMUM_WALL_MM of plastic around the insert bore.
+# STANDOFF_RELIEF_MINIMUM_WALL_MM of plastic around the insert bore, and
+# so must the joint's slots and holes where a standoff merges with the
+# joint block (check_layout.py).
 STANDOFF_RELIEF_CLEARANCE_MM = 1.0
 STANDOFF_RELIEF_MINIMUM_WALL_MM = 0.6
 SOCKET_STANDOFF_FLATS = (  # (standoff center, key)
-    ((94.774, 60.404), "S150"),
+    ((75.724, 62.785), "S140"),
 )
 # No right half socket comes within the clearance of a standoff.
 RIGHT_SOCKET_STANDOFF_FLATS = ()
@@ -1485,15 +1498,6 @@ def slant_line_crossing_y(along, y):
     normal = slant_outward_normal()
     outward = (y - on_slant_y) / normal[1]
     return (on_slant_x + outward * normal[0], y)
-
-
-def slant_line_crossing_x(along, x):
-    """The point with the given x on the line square to the slant at
-    `along`."""
-    on_slant_x, on_slant_y = slant_point(along, 0.0)
-    normal = slant_outward_normal()
-    outward = (x - on_slant_x) / normal[0]
-    return (x, on_slant_y + outward * normal[1])
 
 
 def upper_boss_fill_polygon(right=False):

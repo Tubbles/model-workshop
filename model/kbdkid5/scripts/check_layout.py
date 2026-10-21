@@ -140,7 +140,7 @@ DESIGN_BOTTOM_ROW_FROM_SOUTH_LEDGE_FACE_MM = 0.39
 DESIGN_STANDOFF_FLATS = (
     # (key, standoff, its socket's clearance before the flat, plastic
     # the flat leaves around the bore)
-    ("S150", (94.774, 60.404), 0.487, 0.787),
+    ("S140", (75.724, 62.785), 0.487, 0.787),
 )
 DESIGN_STANDOFF_FLAT_BOTTOM_Z_MM = 6.48
 # The right half's sockets (DESIGN.md, "Tray"): no tab notches, the
@@ -166,6 +166,10 @@ DESIGN_DOWEL_PIN_SLANT_Y_MM = (21.7, 74.5)
 # How far the lower boss's south end and the upper boss's north end lie
 # inside the outline slant's ends.
 DESIGN_DOWEL_BOSSES_INSIDE_SLANT_ENDS_MM = (19.251, 0.006)
+# The plastic around the standoffs' bores where the joint's slots and
+# holes come nearest: the sixth standoff's, merged with the joint block,
+# beside the magnet slot at 67.511 along the slant, on both halves.
+DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM = 0.832
 DESIGN_PARKING_PIN_PROUD_MM = 1.5
 DESIGN_PARKING_BOSS_FROM_SOCKETS_MM = 1.763  # on both halves, the thumb's
 DESIGN_MAGNET_SLOT_ABOVE_BED_MM = 0.5
@@ -1885,18 +1889,19 @@ def check_joint_inside(right=False):
     )
 
 
-def joint_tray_problems(label, polygon, z_range, right=False, sockets_too=True):
+def joint_tray_problems(label, polygon, z_range, right=False):
     """(problems, tightest from the sockets, tightest from the
-    standoffs) of one joint feature on the given half. Plastic standing
-    under the PCB keeps the ledge's clearance from the sockets, as the
-    ledge and the parking boss do. Without sockets_too (a slot, empty
-    space) only the standoffs count."""
+    standoffs) of a piece of the joint's plastic on the given half: under
+    the PCB it keeps the ledge's clearance from the sockets, as the
+    ledge and the parking boss do, and it stays off the standoffs. The
+    joint's slots and holes may cut through a standoff that merges with
+    the joint block, its bore keeping its wall (check_standoff_bores())."""
     minimum = layout.LEDGE_RELIEF_CLEARANCE_MM
     standoff_radius = layout.STANDOFF_DIAMETER_MM / 2.0
     problems = []
     from_sockets = Tightest()
     from_standoffs = Tightest()
-    if sockets_too and ranges_overlap(z_range, socket_z_range()):
+    if ranges_overlap(z_range, socket_z_range()):
         for name, socket in socket_footprints(right):
             clearance = convex_separation(polygon, socket)
             from_sockets.update(clearance, f"{label} and {name}'s socket")
@@ -1930,14 +1935,8 @@ def check_joint_clearances(right=False):
     problems = fill_problems(right)
     from_sockets = Tightest()
     from_standoffs = Tightest()
-    plastic = dowel_bosses(right) + boss_fills(right)
-    features = [(feature, True) for feature in plastic] + [
-        (slot, False) for slot in magnet_slots()
-    ]
-    for (label, polygon, z_range), sockets_too in features:
-        feature_problems, sockets, standoffs = joint_tray_problems(
-            label, polygon, z_range, right, sockets_too
-        )
+    for label, polygon, z_range in dowel_bosses(right) + boss_fills(right):
+        feature_problems, sockets, standoffs = joint_tray_problems(label, polygon, z_range, right)
         problems.extend(feature_problems)
         from_sockets.update(sockets.value, sockets.where)
         from_standoffs.update(standoffs.value, standoffs.where)
@@ -1948,13 +1947,41 @@ def check_joint_clearances(right=False):
         problems.append(text)
     fail_on(
         problems,
-        f"{half_label(right)}joint plastic too close to the sockets, or the joint in the "
-        "standoffs' way",
+        f"{half_label(right)}joint plastic too close to the sockets, or in the standoffs' way",
     )
     return (
         f"joint:     {half_label(right)}{text} ({from_sockets.where}), clear of the "
         f"standoffs by {from_standoffs}"
     )
+
+
+def check_standoff_bores(right=False):
+    """Every standoff's insert bore keeps
+    layout.STANDOFF_RELIEF_MINIMUM_WALL_MM of plastic from the joint's
+    slots and holes in plan wherever their heights meet, so a standoff
+    merging with the joint block keeps its bore whole when they are cut
+    through it."""
+    minimum = layout.STANDOFF_RELIEF_MINIMUM_WALL_MM
+    radius = layout.STANDOFF_BORE_DIAMETER_MM / 2.0
+    problems = []
+    tightest = Tightest()
+    for center in layout.MOUNTING_DRILL_CENTERS_MM:
+        for label, polygon, z_range in joint_voids(right):
+            if not ranges_overlap(z_range, standoff_z_range()):
+                continue
+            wall = circle_separation(center, radius, polygon)
+            where = f"the bore at {center} and the {label}"
+            tightest.update(wall, where)
+            if wall < minimum - TOLERANCE_MM:
+                problems.append(f"{where} leave {wall:.3f} of plastic, less than {minimum}")
+    ok, text = require_figure(
+        "standoff bores from the joint's voids", tightest.value,
+        DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM, 3
+    )
+    if not ok:
+        problems.append(text)
+    fail_on(problems, f"{half_label(right)}a standoff's bore too close to the joint's voids")
+    return f"bores:     {half_label(right)}{text} ({tightest.where})"
 
 
 def check_joint_voids(right=False):
@@ -3775,6 +3802,8 @@ CHECKS = (
     on_right_half(check_joint_clearances),
     check_joint_voids,
     on_right_half(check_joint_voids),
+    check_standoff_bores,
+    on_right_half(check_standoff_bores),
     check_magnet_slot_opening,
     check_parking_hole,
     on_right_half(check_parking_hole),

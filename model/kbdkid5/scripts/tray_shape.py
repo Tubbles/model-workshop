@@ -416,11 +416,35 @@ def add_ledge(tray, corner_radius):
     return result
 
 
+def standoff_area_in_joint_block(center):
+    """The plan area of a standoff's ring inside the joint block, which a
+    standoff near the slant merges with: its circle's segment beyond the
+    block's inner face, 0 for a standoff standing free in the cavity. The
+    bore must stay clear of the block and the segment on the block's
+    straight run, short of the slant's ends."""
+    radius = layout.STANDOFF_DIAMETER_MM / 2.0
+    south_x, south_y = layout.slant_point(0.0, 0.0)
+    offset = (center[0] - south_x, center[1] - south_y)
+    normal = layout.slant_outward_normal()
+    direction = layout.slant_direction()
+    inner_face = layout.JOINT_FACE_OUTWARD_MM - layout.JOINT_BLOCK_THICKNESS_MM
+    into_cavity = inner_face - (offset[0] * normal[0] + offset[1] * normal[1])
+    if into_cavity >= radius:
+        return 0.0
+    along = offset[0] * direction[0] + offset[1] * direction[1]
+    if (into_cavity <= layout.STANDOFF_BORE_DIAMETER_MM / 2.0
+            or not radius < along < layout.slant_length() - radius):
+        raise SystemExit(f"error: the standoff at {center} meets the joint block other than by "
+                         "a segment of its ring")
+    return circular_segment_area(radius, into_cavity)
+
+
 def add_standoffs(tray):
     """Fuse a standoff at each mounting drill, from the floor's
     underside (so the fuse leaves no seam) to the ledge top, bored for a
     heat-set insert down to the floor's top, which backs the insert with
-    the floor's thickness (kbdkid4's)."""
+    the floor's thickness (kbdkid4's). One near the slant merges with the
+    joint block, whose slots and holes are cut through both later."""
     radius = layout.STANDOFF_DIAMETER_MM / 2.0
     bore_radius = layout.STANDOFF_BORE_DIAMETER_MM / 2.0
     bodies = []
@@ -441,8 +465,10 @@ def add_standoffs(tray):
         )
     result = tray.fuse(Part.makeCompound(bodies)).cut(Part.makeCompound(bores))
     require_one_valid_solid(result, "adding the standoffs")
-    # Each stands free in the cavity, so each adds its whole ring.
-    expected = len(bodies) * math.pi * (radius**2 - bore_radius**2) * LEDGE_TOP_Z_MM
+    # Each adds its whole ring but the segment already in the joint block.
+    ring_area = math.pi * (radius**2 - bore_radius**2)
+    expected = LEDGE_TOP_Z_MM * sum(ring_area - standoff_area_in_joint_block(center)
+                                    for center in layout.MOUNTING_DRILL_CENTERS_MM)
     require_volume("the standoffs", result.Volume - tray.Volume, expected, 1e-6)
     return result
 
