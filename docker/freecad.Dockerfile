@@ -4,7 +4,7 @@
 #
 #     docker build -t freecad-headless -f docker/freecad.Dockerfile docker
 #     docker run --rm -v "$PWD":/work -w /work freecad-headless \
-#         freecadcmd kbdkid5/scripts/export_pcb.py --pass <mock.stl> [right]
+#         freecadcmd model/kbdkid5/scripts/export_pcb.py --pass <mock.stl> [right]
 #
 # Debian trixie ships FreeCAD 1.x; freecad-python3 is the GUI-less subset
 # that provides /usr/bin/freecadcmd.

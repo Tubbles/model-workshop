@@ -11,7 +11,7 @@ An arm that holds a Raspberry Pi Camera Module 2 over a stock Ender 3 V2, lookin
 - `Camera_Case_Back.stl`, the back shell, its back face on the bed.
 - `Camera_Case_Front.stl`, the front shell, its front face with the lens window on the bed.
 
-The export runs in CI, from this repository's root, in the image built from `docker/freecad.Dockerfile`:
+CI runs the export from this repository's root, in the image built from `docker/freecad.Dockerfile`:
 
     mkdir -p camera
     docker run --rm -v "$PWD":/work -w /work freecad-headless \

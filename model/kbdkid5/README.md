@@ -4,6 +4,8 @@ A wireless split keyboard with Kailh Choc v1 switches on hotswap sockets and a n
 
 The design, with every dimension, is in [DESIGN.md](DESIGN.md). The part choices and their sources are in [doc/components.md](../../doc/components.md), and the plan is in [PLAN.md](../../PLAN.md). The PCB itself is not designed yet. For now a printed mock stands in for it.
 
+CI runs each export below with the command shown, from this repository's root, in the image built from `docker/freecad.Dockerfile`, and uploads the STLs as artifacts named after the commit.
+
 ## 3D printed PCB mock
 
 `model/kbdkid5/scripts/export_pcb.py` exports a printable stand-in for the PCB until the real one is designed: the outline from `model/kbdkid5/scripts/layout.py` (the geometry of DESIGN.md as data) extruded to 1.6 mm, with every key's Choc hotswap footprint holes and the mounting drills, and no sockets. It test-fits the printed tray and plate. To mount switches, print the fused mock below. Printed parts come out slightly larger than modelled, so the mock is pulled in by `pull_in` (default 0.2 mm) per side: the outline moves inward and every hole grows outward by that much.

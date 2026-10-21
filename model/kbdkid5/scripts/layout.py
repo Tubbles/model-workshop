@@ -226,8 +226,8 @@ def default_slit_length(pull_in):
 # footprint-local coordinates, as convex polygons, corners in order
 # around each, whose union holds the whole socket. The two offset lobes
 # and the two 1.7 mm end tabs are kbdkid4's HOTSWAP_SOCKET_POLYGONS_MM
-# and HOTSWAP_SOCKET_TAB_TIP_MM (scripts/export_tray.py), measured there
-# on LibrePCB's populated STEP export. The lobe nearer the tab tip has
+# and HOTSWAP_SOCKET_TAB_TIP_MM (model/kbdkid4/scripts/export_tray.py),
+# measured there on LibrePCB's populated STEP export. The lobe nearer the tab tip has
 # its corner beside the tab chamfered, just outside the body's 0.8 mm
 # round. The lobes meet in sharp inside corners, which the body fills,
 # as the socket's own STEP in kbdkid4's library
@@ -947,10 +947,10 @@ SWITCH_AND_BUTTON_LEDGE_CUTAWAYS = (
 
 
 # The sockets against the tray (DESIGN.md, "Tray"): kbdkid4's rules
-# (its scripts/export_tray.py), on the outline's sharp edges where
-# kbdkid4 used the straight stretches between the corner rounds. Along
-# an edge is measured from its start vertex, across it outward
-# (outline_edge_frame()). The layout names the sockets each rule
+# (model/kbdkid4/scripts/export_tray.py), on the outline's sharp
+# edges where kbdkid4 used the straight stretches between the corner
+# rounds. Along an edge is measured from its start vertex, across it
+# outward (outline_edge_frame()). The layout names the sockets each rule
 # applies to, for each half, and the functions below work out the cuts
 # by the rule, the right half's in the left half's frame. check_layout.py
 # checks that the sockets then keep the rules' clearances from the
@@ -1953,10 +1953,11 @@ def ledge_cutaways(fits=DEFAULT_MOUNT_FITS):
     return (nano_ledge_cutaway(fits),) + SWITCH_AND_BUTTON_LEDGE_CUTAWAYS
 
 
-# The USB window: kbdkid4's (its scripts/export_tray.py,
+# The USB window: kbdkid4's (model/kbdkid4/scripts/export_tray.py,
 # USB_WINDOW_WIDTH_MM, USB_WINDOW_CORNER_RADIUS_MM and
-# USB_WINDOW_CHAMFER_MM, and its tray_shape.py, USB_WINDOW_HEIGHT_MM,
-# measured there on the soldered left half), centered on the shell. It
+# USB_WINDOW_CHAMFER_MM, and model/kbdkid4/scripts/tray_shape.py,
+# USB_WINDOW_HEIGHT_MM, measured there on the soldered left half),
+# centered on the shell. It
 # opens the wall from the shell's mouth out, as far in as the plug's
 # overmold goes, its chamfer on the wall's outer face only. Between the
 # cavity face and the mouth the wall stands on over and beside the

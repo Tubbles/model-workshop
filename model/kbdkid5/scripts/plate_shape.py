@@ -1,7 +1,7 @@
 """The switch plate, built from the kbdkid3 plate model onto the layout.
 
-kbdkid4's plate pipeline (its scripts/export_plate.py), with
-layout.py as its input instead of kbdkid4's board files. The kbdkid3
+kbdkid4's plate pipeline (model/kbdkid4/scripts/export_plate.py),
+with layout.py as its input instead of kbdkid4's board files. The kbdkid3
 plate model (resources/kbdkid3-plate-left.FCStd) is a parametric
 switch cell replicated by a point array, one cell per key, with a
 mirrored right plate in the same document that is not used. Its cells

@@ -4,7 +4,7 @@ How the user's printer prints, as measured on test prints, for anyone who design
 
 ## Printer and material
 
-- Printer: the user's stock Creality Ender 3 V2 (model/kbdkid4/CLAUDE.md, the camera arm paragraph, and the docstring of `model/camera-arm/scripts/export_camera_arm.py`). kbdkid4 053755b mentions the printer's Klipper host Pi standing on its base rail.
+- Printer: the user's stock Creality Ender 3 V2 (model/camera-arm/CLAUDE.md and the docstring of `model/camera-arm/scripts/export_camera_arm.py`). kbdkid4 053755b mentions the printer's Klipper host Pi standing on its base rail.
 - Material: PETG. The user, 2026-10-17: "I am using petg which is a little softer and grips the blades neatly" (doc/log/2026-10-17.md). The 2 % strain limit that the snap hook, the clamp tab and the scrapped socket fingers were checked against is a PLA figure (doc/log/2026-10-17.md, doc/log/2026-10-18.md).
 - Layer height: 0.2. kbdkid4 7255b7e leaves "three 0.2 mm layers" over the diode pit, kbdkid4 75cdde7 found "the single 0.2 mm layer" over the lead recesses showing through, and the first backing's pads stepped 0.05 "under a 0.2 layer" (doc/log/2026-10-18.md).
 - Nozzle: not recorded. A comment in `model/kbdkid4/scripts/export_tray.py` calls the power switch pocket's 0.4 skin "one nozzle width" (`POWER_SWITCH_POCKET_SKIN_MM`).
