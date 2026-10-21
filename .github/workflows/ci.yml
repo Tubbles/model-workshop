@@ -1,8 +1,18 @@
 name: CI
 
+# A push or pull request that changes only markdown files and the
+# license runs nothing: no script reads them, so every part would come
+# out the same. A script that starts reading one must take it out of
+# these lists.
 on:
   push:
+    paths-ignore:
+      - "**.md"
+      - LICENSE.txt
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - LICENSE.txt
   workflow_dispatch:
 
 permissions:

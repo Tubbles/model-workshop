@@ -4,7 +4,7 @@ FreeCAD scripts that build 3D-printable models, run headless in a container. The
 
 ## Getting the STLs
 
-Every push runs the CI workflow, which exports every part in the FreeCAD image built from `docker/freecad.Dockerfile`. Open the run on the repository's Actions tab and download its artifacts. Each is named after its project, its kind and the commit it was built from, `<project>-<kind>-<short commit hash>` (for example `kbdkid5-tray-<short commit hash>`), or `<project>-<short commit hash>` for the projects with one artifact (`solder-spool-axle`, `camera-arm`). The project READMEs list the files in each artifact.
+Every push runs the CI workflow, which exports every part in the FreeCAD image built from `docker/freecad.Dockerfile`, unless it changes only markdown files and `LICENSE.txt`. Such a push builds nothing, so the newest artifacts are those of the last commit that changed anything else. Open the run on the repository's Actions tab and download its artifacts. Each is named after its project, its kind and the commit it was built from, `<project>-<kind>-<short commit hash>` (for example `kbdkid5-tray-<short commit hash>`), or `<project>-<short commit hash>` for the projects with one artifact (`solder-spool-axle`, `camera-arm`). The project READMEs list the files in each artifact.
 
 The STLs come from those artifacts: CI runs every export, with the commands the project READMEs show. kbdkid5's layout check is plain Python and runs anywhere: `python3 model/kbdkid5/scripts/check_layout.py`.
 
