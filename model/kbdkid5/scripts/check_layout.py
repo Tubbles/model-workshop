@@ -285,9 +285,8 @@ DESIGN_WIRE_ROOM_LEAST_CLEARANCE_PRINTED_MM = 0.147
 # into, per half (False the left one, in the left half's frame), (room,
 # strip): (how far in plan, decimals). The B+ and B- rooms meet the
 # insulators' north ends, the P1.01/P1.02/P1.07 room the B- row's
-# insulator (0.31 if the render's insets moved together), and whether
-# the P1 pads get wired is an open question to the user. Any other
-# overlap fails.
+# insulator (0.31 if the render's insets moved together). The P1 pads
+# are unused for now (the user, 2026-10-21). Any other overlap fails.
 DESIGN_NANO_ROOMS_INTO_STRIPS_MM = {
     False: {("over the B- pad", "west"): (0.1235, 4), ("over the B+ pad", "east"): (0.1235, 4),
             ("over the P1.01/P1.02/P1.07 pads", "west"): (0.44, 2)},
