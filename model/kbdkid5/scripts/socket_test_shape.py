@@ -231,10 +231,9 @@ BOSS_SOUTH_OF_KEY_ROW_MM = -12.5
 INSERT_BORE_FLOOR_MM = 0.6
 BOSS_EDGE_MARGIN_MM = 0.5
 
-# The backing: its thickness (the battery clearance in the real tray
-# allows backing_thickness_limit(), four layers fit under it), the
-# screws' clearance holes (the PCB's mounting drills, printed), and how
-# far each pad lies inside its socket lobe as modelled: 0.95, set for
+# The backing: its thickness (four layers), the screws' clearance
+# holes (the PCB's mounting drills, printed), and how far each pad lies
+# inside its socket lobe as modelled: 0.95, set for
 # the scrapped lip strip (its largest lip's 0.35 reach as printed, the
 # 0.1 its walls stood inside the lobe as printed at -0.20, the pad's 0.2
 # swelling and 0.3 of clearance to that lip) and kept so the third
@@ -412,26 +411,6 @@ def pad_top_depth(index):
 def pad_height(index):
     """Cell index's pads above the backing's top."""
     return boss_end_depth() - pad_top_depth(index)
-
-
-def backing_thickness_limit(socket_bottom_z=None):
-    """The thickest backing the battery allows in the real tray: from
-    the socket's bottom with the frame in the PCB's place, less the
-    pads' room (from the socket's bottom to the backing's top), the
-    backing's own rise as printed (its top face rises
-    PRINT_RISE_OF_TOP_FACES_MM, so its bottom lies that much lower), the
-    screw heads under it and the clearance to the battery."""
-    if socket_bottom_z is None:
-        socket_bottom_z = layout.PCB_UNDERSIDE_Z_MM - socket_height()
-    pads_room = boss_end_depth() - socket_height()
-    return (
-        socket_bottom_z
-        - pads_room
-        - layout.PRINT_RISE_OF_TOP_FACES_MM
-        - BACKING_SCREW_HEAD_HEIGHT_MM
-        - layout.MINIMUM_BATTERY_TO_SOCKET_CLEARANCE_MM
-        - layout.BATTERY_TOP_Z_MM
-    )
 
 
 def backing_underside_z_as_printed(socket_bottom_z=None):

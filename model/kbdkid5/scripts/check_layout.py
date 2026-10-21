@@ -112,19 +112,11 @@ DESIGN_HEIGHTS_Z_MM = (  # (what, z)
     ("tray rim", 13.4),
 )
 DESIGN_TRAY_HEIGHT_MM = 14.6
-DESIGN_MINIMUM_PCB_UNDERSIDE_Z_MM = 6.63
 DESIGN_NANO_SIZE_MM = (18.20, 33.20)  # along x, along y
 DESIGN_NANO_FROM_STEP_LEDGE_FACE_MM = 0.3
 DESIGN_NANO_EAST_OF_COLUMN_2_MM = 0.475
 DESIGN_NANO_USB_MOUTH_BEHIND_OUTER_FACE_MM = 0.5
 DESIGN_POWER_SWITCH_KNOB_PROUD_MM = {False: 3.2, True: 2.8}  # as modelled, as printed
-DESIGN_BATTERY_SIZE_MM = (34.37, 51.53)  # across, along
-DESIGN_BATTERY_CENTER_MM = (93.1, 35.6)
-DESIGN_BATTERY_LENGTH_ANGLE_DEGREES = 21.5
-DESIGN_BATTERY_FROM_STANDOFFS_MM = 2.36
-DESIGN_BATTERY_FROM_LEDGE_MM = 2.42
-DESIGN_BATTERY_BELOW_SOCKETS_MM = 3.37
-DESIGN_BATTERY_COLUMNS = {3, 4, 5}
 DESIGN_PCB_CONNECTOR_CLEAR_ZONE_FROM_LEDGE_MM = 0.39
 DESIGN_TAB_NOTCH_KEYS = {"S100", "S101", "S102", "S103"}
 DESIGN_TAB_TIP_PAST_WEST_EDGE_MM = 0.231
@@ -183,7 +175,7 @@ DESIGN_DEFAULT_SLIT_MM = (0.6, 1.6)  # across the blade, along it
 DESIGN_SLIT_CLEARANCE_MM = (0.2, 0.4)  # per side as modelled: across the blade, along it
 # The parts' mounts (work item 004).
 DESIGN_MOUNT_FROM_OTHER_PARTS_MM = 0.5  # every mount body from every part but its own
-DESIGN_MOUNTS_LEAST_FROM_OTHER_PARTS_MM = 3.7  # the nice!nano's clamp block, from the battery
+DESIGN_MOUNTS_LEAST_FROM_OTHER_PARTS_MM = 4.0  # the nice!nano's east wall, from the reset button
 DESIGN_MOUNT_VOIDS_FROM_STANDOFFS_MM = 0.5
 DESIGN_MOUNT_VOIDS_LEAST_FROM_STANDOFFS_MM = 15.467  # the pry slot, from the center one
 DESIGN_NANO_FREE_MIDDLE_X_MM = (40.729, 54.519)
@@ -298,7 +290,7 @@ DESIGN_RESET_PIN_HOLE_AXIS_MM = (66.199, 3.095)  # x, z
 DESIGN_MOUNTS_FROM_PCB_ZONE_PRINTED_MM = 0.0  # the nice!nano's west wall
 DESIGN_WIRE_ROOM_BEHIND_LEADS_MM = 3.0
 DESIGN_WIRE_ROOM_OVER_PADS_MM = 3.0
-DESIGN_WIRE_ROOM_LEAST_CLEARANCE_PRINTED_MM = 0.147
+DESIGN_WIRE_ROOM_LEAST_CLEARANCE_PRINTED_MM = 0.2
 # The nice!nano's pad rooms its own socket strips' insulators reach
 # into, per half (False the left one, in the left half's frame), (room,
 # strip): (how far in plan, decimals). The B+ and B- rooms meet the
@@ -587,7 +579,7 @@ def polygon_centroid(polygon):
 
 
 def box_polygon(envelope):
-    """An Envelope's or a MountBox's plan, its corners if it is turned."""
+    """An Envelope's or a MountBox's plan."""
     return layout.plan_corners(envelope)
 
 
@@ -1183,21 +1175,7 @@ def check_heights():
     ]
     tray_height = layout.TRAY_RIM_Z_MM - layout.FLOOR_UNDERSIDE_Z_MM
     figures.append(require_figure("tray height", tray_height, DESIGN_TRAY_HEIGHT_MM, 1))
-    figures.append(
-        require_figure(
-            "lowest PCB underside",
-            layout.MINIMUM_PCB_UNDERSIDE_Z_MM,
-            DESIGN_MINIMUM_PCB_UNDERSIDE_Z_MM,
-            2,
-        )
-    )
-    problems = failed(figures)
-    if layout.PCB_UNDERSIDE_Z_MM < layout.MINIMUM_PCB_UNDERSIDE_Z_MM:
-        problems.append(
-            f"the PCB underside at {layout.PCB_UNDERSIDE_Z_MM} is below the "
-            f"{layout.MINIMUM_PCB_UNDERSIDE_Z_MM:.2f} the battery needs under the sockets"
-        )
-    fail_on(problems, "the heights differ from DESIGN.md's table")
+    fail_on(failed(figures), "the heights differ from DESIGN.md's table")
     return f"heights:   PCB underside {layout.PCB_UNDERSIDE_Z_MM}, " + joined(figures)
 
 
@@ -1268,25 +1246,8 @@ def knob_proud_as_printed():
     return tip - (layout.outer_face_y(north_edge_y) + swelling)
 
 
-def battery_figures():
-    """The pouch's size, from its turned corners, and its place."""
-    width, length = plan_side_lengths(layout.BATTERY)
-    corners = box_polygon(layout.BATTERY)
-    along = vector_between(corners[0], corners[3])
-    center = polygon_centroid(corners)
-    return [
-        require_figure("battery width", width, DESIGN_BATTERY_SIZE_MM[0], 2),
-        require_figure("battery length", length, DESIGN_BATTERY_SIZE_MM[1], 2),
-        require_figure("its center x", center[0], DESIGN_BATTERY_CENTER_MM[0], 1),
-        require_figure("y", center[1], DESIGN_BATTERY_CENTER_MM[1], 1),
-        require_figure("its length north of east, degrees",
-                       math.degrees(math.atan2(along[1], along[0])),
-                       DESIGN_BATTERY_LENGTH_ANGLE_DEGREES, 1),
-    ]
-
-
 def check_part_figures():
-    figures = nano_figures() + power_switch_figures() + battery_figures()
+    figures = nano_figures() + power_switch_figures()
     fail_on(failed(figures), "parts placed off DESIGN.md's figures")
     return "figures:   " + joined(figures)
 
@@ -1361,12 +1322,6 @@ def check_part_ledge():
     fail_on(problems, f"parts in the ledge (DESIGN.md cuts it away only over the {cut_away_for})")
     figures = [
         require_figure(
-            "battery from the ledge",
-            ledge_clearance(layout.BATTERY, pieces),
-            DESIGN_BATTERY_FROM_LEDGE_MM,
-            2,
-        ),
-        require_figure(
             "PCB connector clear zone from the ledge",
             ledge_clearance(layout.PCB_CONNECTOR_CLEAR_ZONE, pieces),
             DESIGN_PCB_CONNECTOR_CLEAR_ZONE_FROM_LEDGE_MM,
@@ -1393,15 +1348,7 @@ def check_part_standoffs():
             if clearance < -TOLERANCE_MM:
                 problems.append(f"{where} overlap by {-clearance:.3f}")
     fail_on(problems, "parts on the standoffs")
-    battery = min(
-        circle_separation(center, radius, box_polygon(layout.BATTERY))
-        for center in layout.MOUNTING_DRILL_CENTERS_MM
-    )
-    ok, text = require_figure(
-        "battery from the standoffs", battery, DESIGN_BATTERY_FROM_STANDOFFS_MM, 2
-    )
-    fail_on([] if ok else [text], "the battery's standoff clearance is off DESIGN.md's figure")
-    return f"standoffs: parts clear by {tightest}; {text}"
+    return f"standoffs: parts clear by {tightest}"
 
 
 def check_parts_apart():
@@ -1440,35 +1387,6 @@ def check_part_sockets(right=False):
     return (
         f"sockets:   {half_label(right)}parts reaching their height clear in plan by {tightest}; "
         f"every other part stays {layout.SOCKET_BOTTOM_Z_MM - highest_other:.3f} below them"
-    )
-
-
-def check_battery(right=False):
-    battery = box_polygon(layout.BATTERY)
-    covering_keys = sorted(
-        {
-            name
-            for name, polygon in socket_footprints(right)
-            if convex_separation(battery, polygon) < -TOLERANCE_MM
-        }
-    )
-    clearance = layout.SOCKET_BOTTOM_Z_MM - layout.BATTERY.z_range[1]
-    ok, clearance_text = require_figure(
-        "below them", clearance, DESIGN_BATTERY_BELOW_SOCKETS_MM, 2
-    )
-    problems = [] if ok else [clearance_text]
-    if not covering_keys:
-        problems.append("no socket lies over the battery")
-    columns = {int(name[2]) for name in covering_keys if name != layout.THUMB_KEY_NAME}
-    if columns != DESIGN_BATTERY_COLUMNS:
-        problems.append(
-            f"it lies under the sockets of columns {sorted(columns)}, DESIGN.md says columns "
-            f"{sorted(DESIGN_BATTERY_COLUMNS)}"
-        )
-    fail_on(problems, "the battery does not sit under the sockets as DESIGN.md states")
-    return (
-        f"battery:   {half_label(right)}under the sockets of {', '.join(covering_keys)}, "
-        f"{clearance_text}"
     )
 
 
@@ -3842,8 +3760,6 @@ CHECKS = (
     check_parts_apart,
     check_part_sockets,
     on_right_half(check_part_sockets),
-    check_battery,
-    on_right_half(check_battery),
     check_socket_tray_rules,
     on_right_half(check_socket_tray_rules),
     check_socket_ledge,

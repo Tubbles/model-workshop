@@ -555,24 +555,13 @@ STANDOFF_BORE_DIAMETER_MM = 3.2
 # 2026-10-20: "Raise the frame assembly and the rim and the rim ledge
 # accordingly. The whole thing becomes 1.5 mm taller, to accommodate
 # the need for 1.5 mm higher ceiling in the tray cave. I don't want
-# holes in the tray floor"). The screw heads under the backing then
-# keep 0.773 from the battery (the user, the same day: "The M2 pan head
-# screws I have today have roughly 1.5 mm high heads btw", by
-# socket_test_shape.py's backing_screw_heads_bottom_z()). The parts on
-# the floor stay where they are. The battery under the sockets sets the
-# lowest the PCB could go, MINIMUM_PCB_UNDERSIDE_Z_MM: the battery, the
-# 0.5 clearance and a socket.
-BATTERY_THICKNESS_MM = 4.11
-MINIMUM_BATTERY_TO_SOCKET_CLEARANCE_MM = 0.5
+# holes in the tray floor"). The parts on the floor stay where they
+# are.
 PCB_THICKNESS_MM = 1.6
 PLATE_THICKNESS_MM = 2.2  # resting on the PCB
 RIM_ABOVE_PLATE_MM = 0.1  # as on kbdkid4
 PCB_UNDERSIDE_Z_MM = 9.5  # also the standoff and ledge tops
-MINIMUM_PCB_UNDERSIDE_Z_MM = (
-    BATTERY_THICKNESS_MM + MINIMUM_BATTERY_TO_SOCKET_CLEARANCE_MM + HOTSWAP_SOCKET_REACH_MM
-)  # 6.63
 FLOOR_UNDERSIDE_Z_MM = -TRAY_FLOOR_MM  # the 1.0 rubber sole goes under it
-BATTERY_TOP_Z_MM = BATTERY_THICKNESS_MM
 SOCKET_BOTTOM_Z_MM = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_REACH_MM  # 7.48
 PCB_TOP_Z_MM = PCB_UNDERSIDE_Z_MM + PCB_THICKNESS_MM  # 11.1
 PLATE_TOP_Z_MM = PCB_TOP_Z_MM + PLATE_THICKNESS_MM  # 13.3
@@ -581,9 +570,8 @@ STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
 
 
 # The parts in the tray (DESIGN.md, "Parts in the tray"), as boxes:
-# the bodies DESIGN.md gives, then the leads and posts from the
-# parts' drawings and the battery header's mated plug, each a piece
-# of its part. The mounts that hold them and the room their wires need
+# the bodies DESIGN.md gives, then the leads from the parts'
+# drawings, each a piece of its part. The mounts that hold them and the room their wires need
 # come last in this module (work item 004).
 # `containment` says where a box must lie: CAVITY inside the cavity
 # wall and clear of the ledge (except where the ledge is cut away for
@@ -591,9 +579,6 @@ STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
 # passes a window in the wall), PROUD nowhere (it stands out past the
 # wall by design, through an opening of its own in the wall and, for
 # the power switch's knob, the ledge in front of it).
-# A box turned in plan (the battery's, turned_envelope()) also carries
-# its corners, counter-clockwise, its x and y ranges then the corners'
-# bounding ranges: plan_corners() gives any box's plan.
 CAVITY = "cavity"
 THROUGH_WALL = "through the wall"
 PROUD = "proud of the wall"
@@ -607,7 +592,6 @@ class Envelope:
     y_range: tuple
     z_range: tuple
     containment: str
-    corners: tuple = None
 
 
 def bounding_ranges(corners):
@@ -616,16 +600,9 @@ def bounding_ranges(corners):
     return (min(xs), max(xs)), (min(ys), max(ys))
 
 
-def turned_envelope(part, piece, corners, z_range, containment):
-    x_range, y_range = bounding_ranges(corners)
-    return Envelope(part, piece, x_range, y_range, z_range, containment, tuple(corners))
-
-
 def plan_corners(box):
     """An Envelope's or a MountBox's corners in plan, counter-clockwise
-    from its southwest corner unless it is turned."""
-    if box.corners is not None:
-        return box.corners
+    from its southwest corner."""
     (low_x, high_x), (low_y, high_y) = box.x_range, box.y_range
     return ((low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y))
 
@@ -938,121 +915,6 @@ def reset_button_lead(side, label):
 RESET_BUTTON_WEST_LEAD = reset_button_lead(-1.0, "west lead")
 RESET_BUTTON_EAST_LEAD = reset_button_lead(1.0, "east lead")
 
-# Battery connector, JST PH B2B-PH-K-S laid on its side (DESIGN.md):
-# the header, 4.5 tall like the mated plug and header. Its two posts,
-# 0.64 square at 2.0 pitch along y around the header's middle, reach
-# 3.4 east of it, along z 1.78 from one of its 4.5 faces (JST's PH
-# catalogue, work/research/downloads/jst-ph/eph2.pdf, page 3: the
-# B2B-PH-K-S side view, measured on its drawing), so their box takes
-# that place from either face. Mated, the PHR-2 plug's housing (5.8
-# along y, 4.5 along z by the catalogue) stands 2.0 out of the
-# header's entry face: mated 8 tall against the header's 6.0. The
-# header's middle sits at y 74.6, far enough south that the wire room
-# behind its posts (wire_rooms()) keeps 0.35 from the ledge where the
-# north edge steps in to column 5's at x 94.774.
-BATTERY_CONNECTOR = Envelope(
-    "battery connector", "header", (85.0, 91.0), (71.65, 77.55), (0.0, 4.5), CAVITY
-)
-BATTERY_CONNECTOR_MIDDLE_Y_MM = sum(BATTERY_CONNECTOR.y_range) / 2.0
-BATTERY_CONNECTOR_POST_PITCH_MM = 2.0
-BATTERY_CONNECTOR_POST_SIZE_MM = 0.64
-BATTERY_CONNECTOR_POST_LENGTH_MM = 3.4
-BATTERY_CONNECTOR_POST_FROM_FACE_MM = 1.78
-BATTERY_PLUG_WIDTH_MM = 5.8
-BATTERY_PLUG_DEPTH_MM = 4.5
-BATTERY_PLUG_OUT_OF_HEADER_MM = 8.0 - 6.0
-
-
-def battery_connector_posts_z_range():
-    height = BATTERY_CONNECTOR.z_range[1]
-    half = BATTERY_CONNECTOR_POST_SIZE_MM / 2.0
-    return (
-        BATTERY_CONNECTOR_POST_FROM_FACE_MM - half,
-        height - BATTERY_CONNECTOR_POST_FROM_FACE_MM + half,
-    )
-
-
-BATTERY_CONNECTOR_POSTS_REACH_Y_MM = (
-    BATTERY_CONNECTOR_POST_PITCH_MM + BATTERY_CONNECTOR_POST_SIZE_MM
-) / 2.0
-BATTERY_CONNECTOR_POSTS = Envelope(
-    "battery connector",
-    "posts",
-    (
-        BATTERY_CONNECTOR.x_range[1],
-        BATTERY_CONNECTOR.x_range[1] + BATTERY_CONNECTOR_POST_LENGTH_MM,
-    ),
-    (
-        BATTERY_CONNECTOR_MIDDLE_Y_MM - BATTERY_CONNECTOR_POSTS_REACH_Y_MM,
-        BATTERY_CONNECTOR_MIDDLE_Y_MM + BATTERY_CONNECTOR_POSTS_REACH_Y_MM,
-    ),
-    battery_connector_posts_z_range(),
-    CAVITY,
-)
-BATTERY_PLUG = Envelope(
-    "battery connector",
-    "mated plug",
-    (
-        BATTERY_CONNECTOR.x_range[0] - BATTERY_PLUG_OUT_OF_HEADER_MM,
-        BATTERY_CONNECTOR.x_range[0],
-    ),
-    (
-        BATTERY_CONNECTOR_MIDDLE_Y_MM - BATTERY_PLUG_WIDTH_MM / 2.0,
-        BATTERY_CONNECTOR_MIDDLE_Y_MM + BATTERY_PLUG_WIDTH_MM / 2.0,
-    ),
-    (0.0, BATTERY_PLUG_DEPTH_MM),
-    CAVITY,
-)
-
-# Battery (DESIGN.md): the 34.37 x 51.53 x 4.11 pouch, turned in plan
-# under columns 3 to 5 (the user, 2026-10-21: "its placement is
-# completely free, it doesn't need to align to anything arbitrary,
-# whatever position and rotation is needed for the whole assembly to
-# work"): its center at BATTERY_CENTER_MM, its length
-# BATTERY_LENGTH_ANGLE_DEGREES north of east, nearly square to the
-# slant. A search over the tray put it there, where it keeps the most
-# room from the standoffs, the ledge and the joint (2.36 at the least),
-# its three ribs and its lead's rooms fitting. Unturned, at 90 degrees,
-# its width would lie along x. The pouch's own frame (battery_point())
-# runs across its width and along its length from its center, the
-# width's direction 90 degrees clockwise of the length's, so that a
-# corner's signs are (east, north) of the unturned pouch.
-BATTERY_WIDTH_MM = 34.37
-BATTERY_LENGTH_MM = 51.53
-BATTERY_CENTER_MM = (93.1, 35.6)
-BATTERY_LENGTH_ANGLE_DEGREES = 21.5
-
-
-def battery_axes():
-    """(across, along): the unit vectors of the pouch's width and
-    length."""
-    angle = math.radians(BATTERY_LENGTH_ANGLE_DEGREES)
-    along = (math.cos(angle), math.sin(angle))
-    return (along[1], -along[0]), along
-
-
-def battery_point(across, along):
-    """A point given in the pouch's frame."""
-    (across_x, across_y), (along_x, along_y) = battery_axes()
-    x, y = BATTERY_CENTER_MM
-    return (x + across * across_x + along * along_x, y + across * across_y + along * along_y)
-
-
-def battery_box_corners(across_range, along_range):
-    """A box given in the pouch's frame, as its corners counter-clockwise."""
-    (low_across, high_across), (low_along, high_along) = across_range, along_range
-    return tuple(battery_point(across, along) for across, along in (
-        (low_across, low_along), (high_across, low_along), (high_across, high_along),
-        (low_across, high_along)))
-
-
-BATTERY = turned_envelope(
-    "battery", "pouch",
-    battery_box_corners((-BATTERY_WIDTH_MM / 2.0, BATTERY_WIDTH_MM / 2.0),
-                        (-BATTERY_LENGTH_MM / 2.0, BATTERY_LENGTH_MM / 2.0)),
-    (0.0, BATTERY_TOP_Z_MM), CAVITY,
-)
-
 # The PCB connector's clear zone (DESIGN.md): no tray feature above
 # z 0 there, up to the PCB's underside.
 PCB_CONNECTOR_CLEAR_ZONE = Envelope(
@@ -1075,10 +937,6 @@ PART_ENVELOPES = (
     RESET_BUTTON_ACTUATOR,
     RESET_BUTTON_WEST_LEAD,
     RESET_BUTTON_EAST_LEAD,
-    BATTERY_CONNECTOR,
-    BATTERY_CONNECTOR_POSTS,
-    BATTERY_PLUG,
-    BATTERY,
     PCB_CONNECTOR_CLEAR_ZONE,
 )
 
@@ -1918,9 +1776,8 @@ def nano_pocket_west_x():
 
 # The parts' mounts (DESIGN.md, "Parts in the tray", and work item 004).
 # Everything the tray adds to hold a part, and every void it cuts for
-# one, is a box in the left half's frame (MountBox), axis-aligned but
-# for the battery's ribs, which turn with the pouch, so check_layout.py
-# checks the mounts the way it checks the parts. Two shapes are not
+# one, is an axis-aligned box in the left half's frame (MountBox), so
+# check_layout.py checks the mounts the way it checks the parts. Two shapes are not
 # boxes and lie inside theirs: the USB window with its rounded corners
 # and outer chamfer, and the reset pin hole, a flat-topped teardrop.
 # The nice!nano's clamp block is bored for its insert like a standoff,
@@ -1945,21 +1802,13 @@ def nano_pocket_west_x():
 @dataclass(frozen=True)
 class MountBox:
     """A box the tray adds (a mount body) or cuts (a mount void): in plan
-    x_range by y_range, over z_range. `part` is the part it serves. A
-    turned one (the battery's ribs) carries its corners, as a turned
-    Envelope does."""
+    x_range by y_range, over z_range. `part` is the part it serves."""
 
     label: str
     part: str
     x_range: tuple
     y_range: tuple
     z_range: tuple
-    corners: tuple = None
-
-
-def turned_mount_box(label, part, corners, z_range):
-    x_range, y_range = bounding_ranges(corners)
-    return MountBox(label, part, x_range, y_range, z_range, tuple(corners))
 
 
 def centered_range(middle, width):
@@ -2004,8 +1853,7 @@ NANO_EXTRA_PADS_FROM_B_MINUS_ROW_MM = (2.54, 5.08, 7.62)
 # print: the nano's length and width, the pocket's fit across the board
 # (the nice!nano test bay's export can step it over several bays, work
 # item 010), the clamp's press on the board and the bar's clearance
-# over the shell (work items 006 and 009), and the battery header's
-# front lips (none by default, DESIGN.md says why). The pocket's fit
+# over the shell (work items 006 and 009). The pocket's fit
 # is a slip fit at the least: the board lies 0.3 from the pocket's west
 # face, 0.1 from it as printed, so at the slip fit the east wall's inner
 # face as printed meets the board's east edge, where a snug pocket's
@@ -2017,7 +1865,6 @@ NANO_EXTRA_PADS_FROM_B_MINUS_ROW_MM = (2.54, 5.08, 7.62)
 NANO_POCKET_FIT_MM = SLIP_FIT_MM
 NANO_CLAMP_PRESS_MM = 0.1  # as printed
 NANO_BAR_CLEARANCE_MM = 0.1
-BATTERY_HEADER_SHOULDER_MM = 0.0
 
 
 @dataclass(frozen=True)
@@ -2027,7 +1874,6 @@ class MountFits:
     nano_pocket_fit: float = NANO_POCKET_FIT_MM
     clamp_press: float = NANO_CLAMP_PRESS_MM
     bar_clearance: float = NANO_BAR_CLEARANCE_MM
-    battery_shoulder: float = BATTERY_HEADER_SHOULDER_MM
 
 
 DEFAULT_MOUNT_FITS = MountFits()
@@ -3160,139 +3006,6 @@ def reset_back_wall_boxes():
     )
 
 
-# The battery header's pocket: two side walls holding the header's 5.9
-# snug, a back wall behind its base, slotted from the top for the posts,
-# and the floor, open toward the plug. JST's figures leave the header's
-# front rim under the mated plug's housing (DESIGN.md), so the front
-# lips that would hold that rim against the plug's pull are left out
-# unless battery_shoulder asks for them: then they reach that far onto
-# the rim as printed, BATTERY_HEADER_LIP_MM thick along x.
-BATTERY_POCKET_WALL_MM = 1.2
-BATTERY_POCKET_TOP_Z_MM = BATTERY_CONNECTOR.z_range[1]
-BATTERY_HEADER_LIP_MM = 1.0
-
-
-def battery_pocket_y_range():
-    header = BATTERY_CONNECTOR.y_range
-    return centered_range(
-        BATTERY_CONNECTOR_MIDDLE_Y_MM, printed_fit(header[1] - header[0], SNUG_FIT_MM)
-    )
-
-
-def battery_pocket_x_range():
-    """From the lips' faces, half the fit's gap in front of the header's
-    entry face, to the back wall's face."""
-    header = BATTERY_CONNECTOR.x_range
-    west = header[0] - half_fit_gap(header[1] - header[0], SNUG_FIT_MM)
-    return (west, west + printed_fit(header[1] - header[0], SNUG_FIT_MM))
-
-
-def battery_post_slot_y_range():
-    posts = BATTERY_CONNECTOR_POSTS.y_range
-    return centered_range(
-        BATTERY_CONNECTOR_MIDDLE_Y_MM, printed_fit(posts[1] - posts[0], SLIP_FIT_MM)
-    )
-
-
-def battery_post_slot_bottom_z():
-    return BATTERY_CONNECTOR_POSTS.z_range[0] - half_fit_gap(0.0, SLIP_FIT_MM)
-
-
-def battery_pocket_boxes(fits=DEFAULT_MOUNT_FITS):
-    low_y, high_y = battery_pocket_y_range()
-    west, east = battery_pocket_x_range()
-    wall = BATTERY_POCKET_WALL_MM
-    z_range = (0.0, BATTERY_POCKET_TOP_Z_MM)
-    slot_low, slot_high = battery_post_slot_y_range()
-    back = (east, east + wall)
-    boxes = [
-        MountBox("pocket's south wall", "battery connector", (west, east), (low_y - wall, low_y),
-                 z_range),
-        MountBox("pocket's north wall", "battery connector", (west, east),
-                 (high_y, high_y + wall), z_range),
-        MountBox("back wall south of the post slot", "battery connector", back,
-                 (low_y - wall, slot_low), z_range),
-        MountBox("back wall north of the post slot", "battery connector", back,
-                 (slot_high, high_y + wall), z_range),
-        MountBox("back wall under the post slot", "battery connector", back,
-                 (slot_low, slot_high), (0.0, battery_post_slot_bottom_z())),
-    ]
-    if fits.battery_shoulder > 0.0:
-        header = BATTERY_CONNECTOR.y_range
-        opening = printed_fit(header[1] - header[0] - 2.0 * fits.battery_shoulder, SNUG_FIT_MM)
-        lips_x = (west - BATTERY_HEADER_LIP_MM, west)
-        middle = BATTERY_CONNECTOR_MIDDLE_Y_MM
-        boxes.append(MountBox("south front lip", "battery connector", lips_x,
-                              (low_y - wall, middle - opening / 2.0), z_range))
-        boxes.append(MountBox("north front lip", "battery connector", lips_x,
-                              (middle + opening / 2.0, high_y + wall), z_range))
-    return tuple(boxes)
-
-
-# The battery's corner ribs: an L at three corners, the pouch a fit with
-# 0.5 per side as modelled (0.3 as printed, since pouches vary), and
-# none at the corner its lead leaves (DESIGN.md), the one nearest the
-# header's plug. The ribs turn with the pouch, given in its frame
-# (battery_point()), their corners as (across, along) signs, and are
-# named for the compass point their corner lies toward from the
-# pouch's center.
-BATTERY_RIB_FIT_MM = 0.6
-BATTERY_RIB_HEIGHT_MM = 1.0
-BATTERY_RIB_THICKNESS_MM = 0.8
-BATTERY_RIB_ARM_MM = 6.0
-BATTERY_LEAD_CORNER = (-1, 1)  # (across, along): the northeast corner
-COMPASS_POINTS = ("east", "northeast", "north", "northwest", "west", "southwest", "south",
-                  "southeast")
-
-
-def battery_rib_pocket():
-    """(across range, along range) in the pouch's frame that the ribs'
-    inner faces bound."""
-    return tuple(centered_range(0.0, printed_fit(size, BATTERY_RIB_FIT_MM))
-                 for size in (BATTERY_WIDTH_MM, BATTERY_LENGTH_MM))
-
-
-def battery_corner_name(across, along):
-    """The compass point a corner of the pouch lies toward from its
-    center."""
-    x, y = battery_point(across * BATTERY_WIDTH_MM / 2.0, along * BATTERY_LENGTH_MM / 2.0)
-    angle = math.degrees(math.atan2(y - BATTERY_CENTER_MM[1], x - BATTERY_CENTER_MM[0]))
-    return COMPASS_POINTS[round(angle / 45.0) % 8]
-
-
-def battery_rib_boxes():
-    (low_across, high_across), (low_along, high_along) = battery_rib_pocket()
-    thickness = BATTERY_RIB_THICKNESS_MM
-    z_range = (0.0, BATTERY_RIB_HEIGHT_MM)
-    boxes = []
-    for across in (-1, 1):
-        for along in (-1, 1):
-            if (across, along) == BATTERY_LEAD_CORNER:
-                continue
-            corner_across = high_across if across > 0 else low_across
-            corner_along = high_along if along > 0 else low_along
-            outer_across = corner_across + across * thickness
-            outer_along = corner_along + along * thickness
-            name = battery_corner_name(across, along)
-            boxes.append(turned_mount_box(
-                f"battery's {name} rib across its width",
-                "battery",
-                battery_box_corners(
-                    tuple(sorted((outer_across, corner_across - across * BATTERY_RIB_ARM_MM))),
-                    tuple(sorted((corner_along, outer_along)))),
-                z_range,
-            ))
-            boxes.append(turned_mount_box(
-                f"battery's {name} rib along its length",
-                "battery",
-                battery_box_corners(
-                    tuple(sorted((corner_across, outer_across))),
-                    tuple(sorted((outer_along, corner_along - along * BATTERY_RIB_ARM_MM)))),
-                z_range,
-            ))
-    return tuple(boxes)
-
-
 def nano_bodies(fits=DEFAULT_MOUNT_FITS):
     return (nano_north_block_boxes(fits) + nano_clamp_boxes(fits) + nano_east_wall_boxes(fits)
             + nano_west_wall_boxes(fits) + nano_raised_wall_boxes(fits) + nano_seat_boxes(fits))
@@ -3305,8 +3018,6 @@ def mount_bodies(fits=DEFAULT_MOUNT_FITS):
         power_switch_cradle_boxes()
         + reset_back_wall_boxes()
         + reset_socket_boxes()
-        + battery_pocket_boxes(fits)
-        + battery_rib_boxes()
         + nano_bodies(fits)
     )
 
@@ -3336,10 +3047,8 @@ def mount_voids(fits=DEFAULT_MOUNT_FITS):
 # above the nice!nano's B+, B- and P1 pads, WIRE_ROOM_BESIDE_PADS_MM
 # beyond them, since its wires are soldered on its top side. Its pins 1
 # to 12 take the socket strips instead, with the room over each strip
-# (nano_strip_rooms()). The battery's lead leaves its northeast corner
-# (BATTERY_LEAD_CORNER), along either edge, its two rooms turned with
-# the pouch. The power switch's and the reset button's leads are
-# cut to taste (README.md), so each of the two gets its room behind its
+# (nano_strip_rooms()). The power switch's and the reset button's leads
+# are cut to taste (README.md), so each of the two gets its room behind its
 # leads at their full length and at the shortest cut README.md allows.
 WIRE_ROOM_BEHIND_LEADS_MM = 3.0
 WIRE_ROOM_BESIDE_LEADS_MM = 1.0
@@ -3361,26 +3070,10 @@ def room_behind_leads(part, label, x_range, tip_y, lead_top_z):
 
 
 def lead_wire_rooms():
-    behind = WIRE_ROOM_BEHIND_LEADS_MM
-    beside = WIRE_ROOM_BESIDE_LEADS_MM
-    above = WIRE_ROOM_ABOVE_LEADS_MM
     switch_leads = POWER_SWITCH_LEADS
     switch_back = POWER_SWITCH_BODY.y_range[0]
     west_lead, east_lead = RESET_BUTTON_WEST_LEAD, RESET_BUTTON_EAST_LEAD
     button_leads = (west_lead.x_range[0], east_lead.x_range[1])
-    posts = BATTERY_CONNECTOR_POSTS
-    plug = BATTERY_PLUG
-    across_sign, along_sign = BATTERY_LEAD_CORNER
-    corner_across = across_sign * BATTERY_WIDTH_MM / 2.0
-    corner_along = along_sign * BATTERY_LENGTH_MM / 2.0
-    past_end = battery_box_corners(
-        tuple(sorted((corner_across - across_sign * BATTERY_RIB_ARM_MM,
-                      corner_across + across_sign * beside))),
-        tuple(sorted((corner_along, corner_along + along_sign * behind))))
-    past_side = battery_box_corners(
-        tuple(sorted((corner_across, corner_across + across_sign * behind))),
-        tuple(sorted((corner_along - along_sign * BATTERY_RIB_ARM_MM,
-                      corner_along + along_sign * beside))))
     return (
         room_behind_leads("power switch", "behind the leads", switch_leads.x_range,
                           switch_leads.y_range[0], switch_leads.z_range[1]),
@@ -3392,15 +3085,6 @@ def lead_wire_rooms():
         room_behind_leads("reset button", "behind the leads cut to the shortest", button_leads,
                           RESET_BUTTON_BACK_Y_MM - RESET_BUTTON_SHORTEST_LEAD_MM,
                           west_lead.z_range[1]),
-        wire_room("battery connector", "behind the posts",
-                  (posts.x_range[1], posts.x_range[1] + behind), grown_range(posts.y_range, beside),
-                  (0.0, posts.z_range[1] + above)),
-        wire_room("battery connector", "behind the plug", (plug.x_range[0] - behind,
-                  plug.x_range[0]), plug.y_range, plug.z_range),
-        turned_envelope("battery", "wire room past its end at its lead's corner", past_end,
-                        BATTERY.z_range, CAVITY),
-        turned_envelope("battery", "wire room past its side at its lead's corner", past_side,
-                        BATTERY.z_range, CAVITY),
     )
 
 

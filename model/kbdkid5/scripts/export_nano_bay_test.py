@@ -15,8 +15,8 @@ and east walls with the strips' pockets and their raised pieces, the
 seat the board lies on, the pry slot and the pry recess the seat
 leaves free. Its west face (BAY_WEST_X_MM) cuts the floor and columns
 0 and 1's north wall and ledge west of the step, its east face
-(BAY_EAST_X_MM) the floor and column 3's north wall and ledge west of
-the battery's west rib, its south face (BAY_SOUTH_Y_MM) the floor
+(BAY_EAST_X_MM) the floor and column 3's north wall and ledge, its
+south face (BAY_SOUTH_Y_MM) the floor
 south of the clamp's block, so the bay keeps floor beyond the walls
 and the block to hold.
 The box crosses nothing else: every other feature of the tray lies

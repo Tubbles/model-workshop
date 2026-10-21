@@ -20,9 +20,9 @@ tray_shape.py's, seated on the block, overlapping nothing of the
 tray), the pocket and the west and east walls with their raised
 pieces, the seat with its channels and the socket strips' pockets, the pry slot
 and recess, the knob slot and the cradle, the reset pin hole and the
-back wall, the battery header's pocket and the battery's ribs, and that
-the PCB connector's zone, layout.py's wire rooms and the nice!nano's
-socket strips with the rooms over them hold no plastic as printed.
+back wall, and that the PCB connector's zone, layout.py's wire rooms
+and the nice!nano's socket strips with the rooms over them hold no
+plastic as printed.
 build_tray() itself checks that no void reaches the floor's underside,
 and this script prints the underside it found closed. Then it builds the
 other half too and joins them as DESIGN.md describes, each half turned
@@ -230,23 +230,6 @@ DESIGN_RESET_SIDE_WALL_MM = 1.2
 DESIGN_RESET_FRONT_STOP_MM = 2.0  # along x
 DESIGN_RESET_FRONT_STOP_DEPTH_MM = 0.9  # from the wall's inner face
 DESIGN_RESET_FRONT_STOP_TOP_Z_MM = 0.945
-DESIGN_BATTERY_HEADER_X_MM = (85.0, 91.0)
-DESIGN_BATTERY_HEADER_MIDDLE_Y_MM = 74.6
-DESIGN_BATTERY_POCKET_MM = (6.4, 6.3)  # inside, along x, along y
-DESIGN_BATTERY_POCKET_WALL_MM = 1.2
-DESIGN_BATTERY_POCKET_TOP_Z_MM = 4.5
-DESIGN_BATTERY_POST_SLOT_MM = 3.14
-DESIGN_BATTERY_POST_SLOT_BOTTOM_Z_MM = 1.21
-# The battery, turned: its width and length, its center, its length's
-# angle north of east. Its frame runs across its width, 90 degrees
-# clockwise of its length, and along its length, from its center.
-DESIGN_BATTERY_SIZE_MM = (34.37, 51.53)  # across, along
-DESIGN_BATTERY_CENTER_MM = (93.1, 35.6)
-DESIGN_BATTERY_LENGTH_ANGLE_DEGREES = 21.5
-DESIGN_BATTERY_RIB_CLEARANCE_MM = 0.5
-DESIGN_BATTERY_RIB_MM = (0.8, 6.0, 1.0)  # thick, arm from the pocket's corner, tall
-DESIGN_BATTERY_LEAD_CORNER = (-1, 1)  # (across, along): the northeast corner, no rib
-DESIGN_BATTERY_RIB_CORNERS = ((-1, -1), (1, -1), (1, 1))  # (across, along): the west, southwest, east
 DESIGN_PCB_CONNECTOR_ZONE_MM = ((20.0, 37.0), (65.5, 74.5))
 
 # The walls are measured at these points of DESIGN.md's outline, (where,
@@ -273,7 +256,6 @@ USAGE = f"""\
 usage: freecadcmd model/kbdkid5/scripts/export_tray.py --pass <tray.stl> [right]
            [pin_hole_diameter=<mm>] [nano_length=<mm>] [nano_width=<mm>]
            [nano_pocket_fit=<mm>] [clamp_press=<mm>] [bar_clearance=<mm>]
-           [battery_shoulder=<mm>]
 
   right              export the right half: cut for its own sockets, its pin
                      holes the slip fit, mirrored across the layout's right-half
@@ -293,9 +275,7 @@ printed)
                      block's top that much under the tab's seat on the board
                      (default {layout.NANO_CLAMP_PRESS_MM})
   bar_clearance      the north block's bar's clearance over the USB-C shell as
-                     printed (default {layout.NANO_BAR_CLEARANCE_MM})
-  battery_shoulder   how far front lips reach onto the battery header's rim
-                     (default {layout.BATTERY_HEADER_SHOULDER_MM}, none)\
+                     printed (default {layout.NANO_BAR_CLEARANCE_MM})\
 """
 
 # The key=value words, each a number: the pin holes' diameter and the
@@ -307,7 +287,6 @@ OPTION_KEYS = (
     "nano_pocket_fit",
     "clamp_press",
     "bar_clearance",
-    "battery_shoulder",
 )
 
 
@@ -995,7 +974,6 @@ class MountDesign:
             if arguments.bar_clearance is None
             else arguments.bar_clearance
         )
-        self.battery_shoulder = arguments.battery_shoulder or 0.0
 
 
 def half_place(right, point):
@@ -1522,163 +1500,6 @@ def measure_reset_button(tray, right, figures):
             f"socket:     {', '.join(socket_texts)}"]
 
 
-def measure_battery_pocket(tray, right, design, figures):
-    """The pocket, its mouth where the side walls end, or with a test
-    print's front lips, which run on from the side walls, at the lips'
-    faces."""
-    middle_y = DESIGN_BATTERY_HEADER_MIDDLE_Y_MM
-    header_x = DESIGN_BATTERY_HEADER_X_MM
-    in_pocket = (span_middle(header_x), middle_y, 2.0)
-    across = run_span(tray, right, in_pocket, "y", False)
-    beside_post_slot = (in_pocket[0], across[0] + 0.1, 2.0)
-    back = run_span(tray, right, beside_post_slot, "x", False)[1]
-    walls = [
-        run_span(tray, right, (in_pocket[0], across[0] - 0.1, 2.0), "y", True),
-        run_span(tray, right, (in_pocket[0], across[1] + 0.1, 2.0), "y", True),
-    ]
-    side = run_span(tray, right, (in_pocket[0], across[0] - 0.1, 2.0), "x", True)
-    if design.battery_shoulder > 0.0:
-        mouth_x = run_span(tray, right, beside_post_slot, "x", False)[0]
-    else:
-        mouth_x = side[0]
-    top = run_span(tray, right, (in_pocket[0], across[0] - 0.1, 2.0), "z", True)[1]
-    back_wall = run_span(tray, right, (back + 0.1, beside_post_slot[1], 2.0), "x", True)
-    in_post_slot = (back + 0.1, middle_y, DESIGN_BATTERY_POCKET_TOP_Z_MM - 0.1)
-    post_slot = run_span(tray, right, in_post_slot, "y", False)
-    slot_bottom = run_span(tray, right, in_post_slot, "z", False)[0]
-    pocket_width, pocket_across = DESIGN_BATTERY_POCKET_MM
-    mouth = run_span(tray, right, (mouth_x - 0.5, middle_y, 2.0), "y", False)
-    texts = [
-        figures.check("inside along x", back - mouth_x, pocket_width, 1),
-        figures.check("across", span_length(across), pocket_across, 1),
-        figures.check("middle y", span_middle(across), middle_y, 2),
-        figures.check("mouth before the header", header_x[0] - mouth_x,
-                      round((pocket_width - (header_x[1] - header_x[0])) / 2.0, 2), 2),
-        figures.check("side walls", min(span_length(wall) for wall in walls),
-                      DESIGN_BATTERY_POCKET_WALL_MM, 1),
-        figures.check("back wall", span_length(back_wall), DESIGN_BATTERY_POCKET_WALL_MM, 1),
-        figures.check("top z", top, DESIGN_BATTERY_POCKET_TOP_Z_MM, 1),
-        figures.check("post slot", span_length(post_slot), DESIGN_BATTERY_POST_SLOT_MM, 2),
-        figures.check("down to z", slot_bottom, DESIGN_BATTERY_POST_SLOT_BOTTOM_Z_MM, 2),
-    ]
-    if design.battery_shoulder > 0.0:
-        texts.append(figures.report("front lips' opening", span_length(mouth), 1))
-    elif span_length(mouth) < pocket_across:
-        figures.problems.append(f"the battery pocket's mouth is {span_length(mouth):.3f} across, "
-                                "DESIGN.md leaves it open")
-    else:
-        texts.append("open toward the plug")
-    return f"pocket:     {', '.join(texts)}"
-
-
-def battery_axes():
-    """(across, along): the unit vectors of the pouch's width and length
-    in the left half's frame."""
-    angle = math.radians(DESIGN_BATTERY_LENGTH_ANGLE_DEGREES)
-    along = (math.cos(angle), math.sin(angle))
-    return (along[1], -along[0]), along
-
-
-def battery_place(across, along, z):
-    """A point given in the pouch's frame, as the left half's (x, y, z)."""
-    (across_x, across_y), (along_x, along_y) = battery_axes()
-    x, y = DESIGN_BATTERY_CENTER_MM
-    return (x + across * across_x + along * along_x, y + across * across_y + along * along_y, z)
-
-
-def battery_run(tray, right, point, axis, material):
-    """(low, high) in the pouch's frame along "across", "along" or "z" of
-    the material (or the empty) run through the point given in that
-    frame, measured on the given half."""
-    across_axis, along_axis = battery_axes()
-    plan = {"across": across_axis, "along": along_axis}.get(axis)
-    direction = UP if plan is None else vector(half_vector(plan, right))
-    low, high = run_through(tray, half_place(right, battery_place(*point)), direction, material)
-    origin = point[("across", "along", "z").index(axis)]
-    return origin + low, origin + high
-
-
-def battery_rib_pocket():
-    """(across range, along range) of the ribs' inner faces."""
-    clearance = DESIGN_BATTERY_RIB_CLEARANCE_MM
-    return tuple((-size / 2.0 - clearance, size / 2.0 + clearance)
-                 for size in DESIGN_BATTERY_SIZE_MM)
-
-
-def battery_rib_arm(tray, right, corner, outward, axis):
-    """(thickness, arm from the pocket's corner, top z) of the rib arm
-    running along axis ("across" or "along") from the pocket's corner,
-    (across, along) outward."""
-    (corner_across, corner_along), (across_sign, along_sign) = corner, outward
-    thickness, arm, _height = DESIGN_BATTERY_RIB_MM
-    if axis == "across":
-        point = (corner_across - across_sign * arm / 2.0,
-                 corner_along + along_sign * thickness / 2.0, 0.5)
-        sideways, along_index, sign = "along", 0, across_sign
-    else:
-        point = (corner_across + across_sign * thickness / 2.0,
-                 corner_along - along_sign * arm / 2.0, 0.5)
-        sideways, along_index, sign = "across", 1, along_sign
-    width = span_length(battery_run(tray, right, point, sideways, True))
-    run = battery_run(tray, right, point, axis, True)
-    free_end = run[0] if sign > 0 else run[1]
-    top = battery_run(tray, right, point, "z", True)[1]
-    return width, abs(free_end - corner[along_index]), top
-
-
-def measure_battery_ribs(tray, right, figures):
-    """The ribs at the pouch's corners but its lead's, turned with it:
-    each arm's thickness, reach and height, the pocket they bound across
-    and along it, its middle on the pouch's, and no rib at the lead's
-    corner."""
-    (low_across, high_across), (low_along, high_along) = battery_rib_pocket()
-    thickness, arm, height = DESIGN_BATTERY_RIB_MM
-    widths, arms, tops = [], [], []
-    for corner_signs in DESIGN_BATTERY_RIB_CORNERS:
-        across_sign, along_sign = corner_signs
-        corner = (high_across if across_sign > 0 else low_across,
-                  high_along if along_sign > 0 else low_along)
-        for axis in ("across", "along"):
-            width, reach, top = battery_rib_arm(tray, right, corner, corner_signs, axis)
-            widths.append(width)
-            arms.append(reach)
-            tops.append(top)
-    lead_across, lead_along = DESIGN_BATTERY_LEAD_CORNER
-    # Measured along the sides away from the lead's corner, where both
-    # ends have a rib.
-    near_along = low_along if lead_along > 0 else high_along
-    near_across = low_across if lead_across > 0 else high_across
-    inside_across = battery_run(tray, right, (0.0, near_along + lead_along * arm / 2.0, 0.5),
-                                "across", False)
-    inside_along = battery_run(tray, right, (near_across + lead_across * arm / 2.0, 0.0, 0.5),
-                               "along", False)
-    corner = (high_across if lead_across > 0 else low_across,
-              high_along if lead_along > 0 else low_along)
-    for point in ((corner[0] - lead_across * arm / 2.0, corner[1] + lead_along * thickness / 2.0,
-                   0.5),
-                  (corner[0] + lead_across * thickness / 2.0, corner[1] - lead_along * arm / 2.0,
-                   0.5)):
-        if tray.isInside(half_place(right, battery_place(*point)), SAME_PLACE_MM, True):
-            figures.problems.append(
-                "a battery rib stands at its lead's corner, which DESIGN.md leaves free"
-            )
-    measured_middle = (span_middle(inside_across), span_middle(inside_along))
-    texts = [
-        figures.check("inside across", span_length(inside_across),
-                      round(high_across - low_across, 2), 1),
-        figures.check("along", span_length(inside_along), round(high_along - low_along, 2), 1),
-        figures.check("off the battery's middle", worst_offset(measured_middle, (0.0, 0.0)), 0.0,
-                      2),
-        figures.check("thick", max(widths, key=lambda width: abs(width - thickness)), thickness, 1),
-        figures.check("arms", max(arms, key=lambda reach: abs(reach - arm)), arm, 1),
-        figures.check("tall", max(tops, key=lambda top: abs(top - height)), height, 1),
-        "no rib at the lead's corner",
-    ]
-    return (f"battery:    turned {DESIGN_BATTERY_LENGTH_ANGLE_DEGREES} degrees about "
-            f"{DESIGN_BATTERY_CENTER_MM}, {len(widths)} rib arms at "
-            f"{len(DESIGN_BATTERY_RIB_CORNERS)} corners, {', '.join(texts)}")
-
-
 def half_box(right, x_range, y_range, z_range):
     """A box given in the left half's frame, on the given half."""
     corners = [half_point((x, y), right) for x in x_range for y in y_range]
@@ -1693,8 +1514,8 @@ def half_box(right, x_range, y_range, z_range):
 
 
 def half_prism(right, envelope):
-    """An envelope's plan grown by the print's swelling, turned if it is,
-    as a prism over its z range on the given half."""
+    """An envelope's plan grown by the print's swelling, as a prism
+    over its z range on the given half."""
     plan = layout.offset_polygon(layout.plan_corners(envelope), DESIGN_PRINT_SWELLING_PER_SIDE_MM)
     points = [vector(half_point(point, right), envelope.z_range[0]) for point in plan]
     face = Part.Face(Part.makePolygon(points + [points[0]]))
@@ -1743,8 +1564,6 @@ def measure_mounts(tray, right, design, fits, figures):
     ]
     lines.extend(measure_power_switch(tray, right, figures))
     lines.extend(measure_reset_button(tray, right, figures))
-    lines.append(measure_battery_pocket(tray, right, design, figures))
-    lines.append(measure_battery_ribs(tray, right, figures))
     lines.append(measure_kept_clear(tray, right, fits, figures))
     return lines
 
@@ -1956,10 +1775,9 @@ def print_build(build):
     print(f"pins:       holes {build.pin_hole_diameter} across "
           f"({'slip' if build.right else 'snug'} fit), {build.pin_hole_depth} deep, {lead_in}")
     fits = build.fits
-    lips = f"{fits.battery_shoulder} onto the rim" if fits.battery_shoulder > 0.0 else "none"
     print(f"mounts:     fitted to a nice!nano {fits.nano_width} x {fits.nano_length} in a pocket "
           f"{fits.nano_pocket_fit} wider as printed, the clamp pressing it {fits.clamp_press}, the "
-          f"bar {fits.bar_clearance} over its shell, the battery header's front lips {lips}")
+          f"bar {fits.bar_clearance} over its shell")
     for label, added in build.mounts:
         print(f"added:      {label}, {added:.3f} mm3")
     print(f"floor:      closed, its underside {build.bed_area:.3f} mm2, the void-free footprint's: "

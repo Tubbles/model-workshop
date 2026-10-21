@@ -29,9 +29,8 @@ never reaches the wall, and a cut that finds nothing left to remove (a
 tab's relief inside its notch) is skipped. Then the parts' mounts
 (work item 004), layout.py's boxes in its order: the power switch's
 cradle with its retainer's socket, the reset button's back wall, side
-walls and front stop, the battery header's pocket and
-the battery's corner ribs, turned with the pouch, then the nice!nano's north block with the
-sill under its opening, its screw clamp's block and foot (work items
+walls and front stop, then the nice!nano's north block with the sill
+under its opening, its screw clamp's block and foot (work items
 009 and 010), its west and east walls, cut back over the board's top
 for the socket strips, with their raised pieces up to the PCB's
 underside, and the seat the board lies on, which leaves the pry
@@ -921,7 +920,7 @@ def check_floor_closed(tray, corner_radius):
 
 
 def box_prism(box, extra_below=0.0, extra_above=0.0):
-    """A MountBox as a solid, turned if it is, its z range run on by the
+    """A MountBox as a solid, its z range run on by the
     given extras."""
     return plan_prism(layout.plan_corners(box), box.z_range[0] - extra_below,
                       box.z_range[1] + extra_above)
