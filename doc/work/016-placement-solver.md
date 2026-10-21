@@ -12,7 +12,16 @@ Scope:
 - A generic tool for every model in the workshop, not kbdkid5's alone, data oriented: the movable parts, their degrees of freedom and limits, the fixed obstacles, the clearance each pair needs (or a merge allowed, with the rule that still holds, such as plastic around a bore) and the objective (nearest to a preferred pose, most clearance, fewest moves) given as data, and a report of the solved poses, each constraint's margin and which constraints bind.
 - All three dimensions, not a plan view with heights bolted on: the user, 2026-10-21: "Make sure it handles all 3 dimensions as well, for e.g. backing screws". Parts and obstacles are solids, or plan shapes with z ranges where that is exact, and a pose can move along z too. The hand-wired frame's backing screws are the example: their heads hang under the backing, over the nice!nano's socket strips, where only height decides whether they fit.
 - A project keeps one source of its rules: kbdkid5's obstacles and clearances come from what `check_layout.py` already checks, not from a second copy.
-- Libraries are open: the user, 2026-10-21: "I can install anything you need". The research names what to install and why, and the user installs it (in the repository's container or a project venv, by the repository's tooling rule). Runs locally, like `check_layout.py`.
+- Libraries are open: the user, 2026-10-21: "I can install anything you need". The research names what to install and why, and the user installs it (in the image, below). Runs locally, like `check_layout.py`.
 - A picture of the solution and the feasible region, like tmp/standoff_overlay.py's overlay, so the user can see why a spot is or is not free.
 
-Open: where the tool lives in the workshop, and which solver families the research recommends.
+Decided: the research is `work/research/placement-solver.md` (untracked), and the user answered its open questions, 2026-10-21:
+
+- Generic: "Solver is generic, should be applyable to kbdkid as well as camera arm or any other future model". Its core never imports a project: a project's script hands it data.
+- It lives in `tools/placement/` at the repository root, as the research proposes (section 6), since it serves every project under `model/` and is not one.
+- It runs in an image, `docker/placement.Dockerfile`, through podman, by the root CLAUDE.md's tooling rule, rather than in the uv venv the research proposed. README.md has the commands.
+- The picture is drawn with matplotlib.
+- Refactors are encouraged and need no asking: "Yes absolutely, no need to even ask permission for that? Refactors are encouraged". `check_layout.py`'s standoff and frame boss rules become records, `standoff_rules()` and `frame_boss_rules()`, that its checks and the solver's kbdkid5 script both read (section 5), in a commit of their own before the tool.
+- The plate's head holes against the switch cutouts become a `check_layout.py` rule at 0.5, `plate_shape.py`'s `SUPPORTED_HOLE_THRESHOLD` (the user had no preference), so the solver sees it. DESIGN.md (Mounting) has what each moved standoff's hole keeps today. A later round.
+
+Open: the tool itself. The research's section 4 has the solver families it recommends, section 7 the runs that validate them.

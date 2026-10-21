@@ -8,6 +8,17 @@ Every push runs the CI workflow, which exports every part in the FreeCAD image b
 
     docker build -t freecad-headless -f docker/freecad.Dockerfile docker
 
+## The placement solver's image
+
+The placement solver (work item 016, to come in `tools/placement/`) and the scripts that use it run locally, in an image of their own built from `docker/placement.Dockerfile`, which holds the solver's pinned Python libraries. Build it once from the repository root, and check that the libraries import:
+
+    podman build -t placement -f docker/placement.Dockerfile docker
+    podman run --rm placement python3 -c "import matplotlib, numpy, PIL, scipy, shapely; print(numpy.__version__, scipy.__version__, shapely.__version__, matplotlib.__version__, PIL.__version__)"
+
+The second command prints `2.5.3 1.18.1 2.2.0 3.11.2 12.3.0`. A script runs with the repository mounted at `/work`, from the repository root, for example kbdkid5's layout check:
+
+    podman run --rm -v "$PWD":/work -w /work placement python3 model/kbdkid5/scripts/check_layout.py
+
 ## How the printer prints, and the parts
 
 - [doc/print-model.md](doc/print-model.md): how prints come out against the model (swelling, hole sizes, slits, layers), every test print and what it settled.
