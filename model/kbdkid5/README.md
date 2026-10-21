@@ -15,11 +15,11 @@ CI uploads both halves as the `kbdkid5-pcb-<short commit hash>` artifact: `kbdki
 
 ## 3D printed switch plate
 
-`model/kbdkid5/scripts/export_plate.py` exports the switch plate: kbdkid3's plate cells on the layout's keys, the switch-free corner by the slant covered, holes over the screw heads at the mounting drills, and kbdkid4's print corrections, `pattern_shift` along x with the outline held and `side_shave` off the west, east and slanted edges. The word `covered` makes the plate for a half without the hard-to-reach key S123: its cutout is filled in and a pit in the underside clears its diode. DESIGN.md (Plate and mocks) has the figures. The plate is written upside down, its top face on the bed.
+`model/kbdkid5/scripts/export_plate.py` exports the switch plate: kbdkid3's plate cells on the layout's keys, the switch-free corner by the slant covered, holes over the screw heads at the mounting drills, and kbdkid4's `side_shave` off the west, east and slanted edges. `pattern_shift` moves the hole pattern along x with the outline held, 0 by default. The word `covered` makes the plate for a half without the hard-to-reach key S123: its cutout is filled in and a pit in the underside clears its diode. DESIGN.md (Plate and mocks) has the figures. The plate is written upside down, its top face on the bed.
 
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_plate.py --pass plate.stl [right] [covered] \
-        [pattern_shift=0.25] [side_shave=0.1] [hole_diameter=4.17]
+        [pattern_shift=0] [side_shave=0.1] [hole_diameter=4.17]
 
 CI uploads both halves, plain and covered, as the `kbdkid5-plate-<short commit hash>` artifact: `kbdkid5_Plate_Left.stl`, `kbdkid5_Plate_Right.stl`, `kbdkid5_Plate_Left_Covered.stl` and `kbdkid5_Plate_Right_Covered.stl`.
 

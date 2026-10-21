@@ -32,10 +32,12 @@ where it is: kbdkid4's printed plates sat right in the tray but their
 holes drifted off the board's features toward the nice!nano side, and
 a plate printed with a 0.5 shift came out about as far off the other
 way, so 0.25 is kbdkid4's current try (the drift's cause is still
-open there). Then side_shave comes off the plate's west and east
-extremes and its slanted edge, since kbdkid4's printed plate was a
-snug fit across the tray's width: its east edge, like the slanted
-edge here, started 0.05 short of the cavity wall.
+open there). Here it is 0 by default, since this plate sits on a
+printed frame or mock, not a fabricated board. Then side_shave
+comes off the plate's west and east extremes and its slanted edge,
+since kbdkid4's printed plate was a snug fit across the tray's
+width: its east edge, like the slanted edge here, started 0.05
+short of the cavity wall.
 
 Last, the plate's touching solids (the kbdkid3 cells, the corner slab,
 any cover and the strips the pattern shift fills) are fused into one,
@@ -110,11 +112,11 @@ DIODE_PIT_DEPTH_MM = 1.6
 # kbdkid4's print corrections: the pattern shift relative to the
 # outline, along +x (east), the way kbdkid4's holes drifted (toward
 # its nano there, cause unknown), mirrored to -x on the right half
-# along with everything else, and what comes off the west and east
-# extremes, so the plate comes out 2 x DEFAULT_SIDE_SHAVE_MM
-# narrower, and off the slanted edge, along its normal. The north and
-# south edges stay as they are.
-DEFAULT_PATTERN_SHIFT_MM = 0.25
+# along with everything else, 0 here (DESIGN.md, Plate and mocks),
+# and what comes off the west and east extremes, so the plate comes
+# out 2 x DEFAULT_SIDE_SHAVE_MM narrower, and off the slanted edge,
+# along its normal. The north and south edges stay as they are.
+DEFAULT_PATTERN_SHIFT_MM = 0.0
 DEFAULT_SIDE_SHAVE_MM = 0.1
 
 # Below this much surrounding plate material a head hole is a
