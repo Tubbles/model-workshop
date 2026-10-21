@@ -1,5 +1,11 @@
 # Plan
 
+## Workshop
+
+The user, 2026-10-21: "From this new model workshop repo I can then develop further things like integrations to my automatic slicer".
+
+## kbdkid5
+
 The goal: a smaller wireless split keyboard than kbdkid4 that also joins into one Alice-like board, firm enough for the lap. See [DESIGN.md](kbdkid5/DESIGN.md).
 
 1. **Printed mock (now).** Tray, PCB mock and plate for both halves from `kbdkid5/scripts/layout.py`, to get a feel for size, height and the joined angle, and the fused mock (PCB mock and plate in one print) to mount switches in. Work items in [doc/work/](doc/work/).

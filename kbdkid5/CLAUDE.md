@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code working in this repository.
+Guidance for Claude Code working on kbdkid5, in `kbdkid5/`. The workshop's layout, workflow and conventions are in the root [CLAUDE.md](../CLAUDE.md).
 
 ## What this is
 
@@ -32,23 +32,16 @@ There is no PCB design yet (the user does it later in LibrePCB). Until then `kbd
 
 ## CI
 
-`.github/workflows/ci.yml` has one job per artifact, all in parallel so a test print's STL is ready a few minutes after the push instead of behind the other exports: `kbdkid5-layout` runs `check_layout.py`; `kbdkid5-socket-test` exports the three socket test strips (`pocket`, `holes`, `backing`) into `socket/` (`kbdkid5_Socket_Test_Pocket.stl`, `kbdkid5_Socket_Test_Holes.stl`, `kbdkid5_Socket_Test_Backing.stl`) and uploads them as the `socket-stl` artifact; `kbdkid5-mock` exports `kbdkid5_Pcb_Left.stl` and `kbdkid5_Pcb_Right.stl` (the word `right`) into `pcb/` as the `pcb-stl` artifact, then the slit test strip plain and `wide` and the fused mock for both halves into `mock/` (`kbdkid5_Slit_Test.stl`, `kbdkid5_Slit_Test_Wide.stl`, `kbdkid5_Mock_Left.stl`, `kbdkid5_Mock_Right.stl`) as the `mock-stl` artifact; `kbdkid5-plate` exports the plate for both halves, plain and `covered`, into `plate/` (`kbdkid5_Plate_Left.stl`, `kbdkid5_Plate_Right.stl`, `kbdkid5_Plate_Left_Covered.stl`, `kbdkid5_Plate_Right_Covered.stl`) as the `plate-stl` artifact; `kbdkid5-tray` exports the nice!nano test bay, the nice!nano clamp's tab and the tray for both halves into `tray/` (`kbdkid5_Nano_Bay_Test.stl`, `kbdkid5_Nano_Clamp_Tab.stl`, `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`) as the `tray-stl` artifact. Every export job starts with `.github/actions/freecad-image`, a composite action that restores the FreeCAD image from the Actions cache (keyed on `docker/freecad.Dockerfile`) or builds it and saves it there. Each artifact is uploaded as `kbdkid5-<that name>-<short commit hash>` (the head commit for a pull request, whose `github.sha` is a merge commit), so a download names the commit it was built from. The export jobs do not wait for `kbdkid5-layout`, so a failing layout check fails the run while the STLs still upload.
+`.github/workflows/ci.yml` has one job per artifact, all in parallel so a test print's STL is ready a few minutes after the push instead of behind the other exports: `kbdkid5-layout` runs `check_layout.py`; `kbdkid5-socket-test` exports the three socket test strips (`pocket`, `holes`, `backing`) into `socket/` (`kbdkid5_Socket_Test_Pocket.stl`, `kbdkid5_Socket_Test_Holes.stl`, `kbdkid5_Socket_Test_Backing.stl`) and uploads them as the `socket-stl` artifact; `kbdkid5-mock` exports `kbdkid5_Pcb_Left.stl` and `kbdkid5_Pcb_Right.stl` (the word `right`) into `pcb/` as the `pcb-stl` artifact, then the slit test strip plain and `wide` and the fused mock for both halves into `mock/` (`kbdkid5_Slit_Test.stl`, `kbdkid5_Slit_Test_Wide.stl`, `kbdkid5_Mock_Left.stl`, `kbdkid5_Mock_Right.stl`) as the `mock-stl` artifact; `kbdkid5-plate` exports the plate for both halves, plain and `covered`, into `plate/` (`kbdkid5_Plate_Left.stl`, `kbdkid5_Plate_Right.stl`, `kbdkid5_Plate_Left_Covered.stl`, `kbdkid5_Plate_Right_Covered.stl`) as the `plate-stl` artifact; `kbdkid5-tray` exports the nice!nano test bay, the nice!nano clamp's tab and the tray for both halves into `tray/` (`kbdkid5_Nano_Bay_Test.stl`, `kbdkid5_Nano_Clamp_Tab.stl`, `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`) as the `tray-stl` artifact. Each artifact is uploaded as `kbdkid5-<that name>-<short commit hash>`. The export jobs do not wait for `kbdkid5-layout`, so a failing layout check fails the run while the STLs still upload.
 
-## Running the exports
+## Running the checks
 
-The FreeCAD exports run in CI only, never locally (the user, 2026-10-20: "change it so all freedcad export are done in CI, never locally"). To see an export, push and read its job's log. `check_layout.py` is plain Python and runs locally:
+`check_layout.py` is plain Python and runs locally:
 
     python3 kbdkid5/scripts/check_layout.py
 
-The freecadcmd quirks (exit codes swallowed, `__name__` set to the file stem, scripts run twice, dash arguments intercepted even after `--pass`, hence `key=value` words and `os._exit` through `run_and_exit`) are documented in the module docstring of `kbdkid5/scripts/freecad_common.py`. Read it before writing a FreeCAD script here.
+`kbdkid5/scripts/freecad_common.py` holds the STL export and the freecadcmd scaffolding the export scripts use.
 
 ## Conventions
 
-- Commit and push completed changes without asking. Keep commits small and focused.
-- Test prints come first: the printer idling is the loop's bottleneck. Commit and push a test print (strip, mock, test piece) as soon as its change is ready and `check_layout.py` passes, since the user fetches STLs from CI's artifacts and CI runs the export with its own checks. Then review and document while it prints, and put review findings into the next print. Brief the implementer for that code change alone; the docs follow the push in a second commit. Scope a test print's work item to the printable: a shared change that pulls in the trays or plates is its own item. Verify with the export's checks, and put any probe of the geometry into the export script so it prints in the CI log. Never turn STL meshes back into solids (one such probe ran over 13 minutes).
-- `tmp/` is scratch space, `work/` holds untracked notes and downloads (the research's datasheets are in `work/research/downloads/`). Neither is committed.
-- Test any change to an export script by pushing it and reading its CI job's result; freecadcmd hides Python failures unless the script exits through `run_and_exit`.
-- Never export, or compare exports, to prove a part unchanged. The user, 2026-10-20, on that check: "I actually think its completely redundant, so let's remove it".
 - `layout.py` imports normally without FreeCAD (put `kbdkid5/scripts/` on `sys.path`), as `check_layout.py` does. The FreeCAD modules (`freecad_common.py`, `tray_shape.py`, `plate_shape.py`, `pcb_shape.py`, `socket_test_shape.py` and the export scripts) run only in CI, so a question about the built geometry becomes a figure the export script prints.
-- Keep DESIGN.md, README.md, this file, the work items' status and the comments in the scripts current in the same commit as the change. Decisions go in a new dated file in `doc/log/` (write once, tagged with `#topic`).
-- Markdown: one paragraph per line, never reflowed.
