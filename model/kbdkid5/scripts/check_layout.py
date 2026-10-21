@@ -303,6 +303,15 @@ DESIGN_NANO_ROOMS_INTO_STRIPS_MM = {
            ("over the P1.01/P1.02/P1.07 pads", "east"): (0.44, 2)},
 }
 # The nice!nano's pry slot and recess (work item 010).
+DESIGN_FRAME_BOSS_COUNT = {False: 28, True: 27}
+DESIGN_FRAME_BACKING_TOP_Z_MM = 7.233  # on the bosses' ends, 2.267 under the frame
+DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM = 6.383
+DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM = 4.883
+DESIGN_FRAME_TAB_SLOT_WIDTH_MM = 3.18
+DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
+# The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
+# order: the post, the pegs, the blades, the NC pad's.
+DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
 DESIGN_PRY_SLOT_X_MM = (1.6, 6.6)
 DESIGN_PRY_SLOT_Y_MM = (32.716, 42.006)  # through the clamp's block and foot
 DESIGN_PRY_SLOT_FROM_LEDGE_MM = 1.0
@@ -3508,6 +3517,232 @@ def check_pry_slot(right=False):
             "of the recess's end")
 
 
+# The hand-wired frame (work item 014): its bosses and its backing, in
+# the left half's frame on both halves. The tray's pieces are taken
+# where their z ranges reach the bosses (from the backing's top up to
+# the frame's underside), the screw heads under the backing (as printed)
+# or the backing itself.
+
+
+def frame_key_center(key, right):
+    center = layout.KEY_CENTERS_MM[key]
+    return layout.mirror_for_right_half(center) if right else center
+
+
+def frame_left_point(point, right):
+    return layout.mirror_for_right_half(point) if right else point
+
+
+def frame_local_box(key, right, x_range, y_range):
+    """A footprint-local box on the half, in the left half's frame."""
+    center = frame_key_center(key, right)
+    points = [frame_left_point(layout.footprint_point(center, corner), right)
+              for corner in layout.box_corners(x_range, y_range)]
+    return layout.counter_clockwise(points)
+
+
+def frame_tab_pieces(key, right):
+    """(slots, wire rooms) of a socket's two tabs: the slot from the
+    body's end to DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM past the tip,
+    DESIGN_FRAME_TAB_SLOT_WIDTH_MM wide, and the room past the tip by
+    layout.py's wire room rule."""
+    low, high = layout.HOTSWAP_SOCKET_BODY_ENDS_MM
+    slots, rooms = [], []
+    for polygon in layout.HOTSWAP_SOCKET_TABS_MM:
+        xs = [x for x, _ in polygon]
+        ys = [y for _, y in polygon]
+        face, tip = (high, max(ys)) if min(ys) >= high else (low, min(ys))
+        outward = 1.0 if tip > face else -1.0
+        middle = (min(xs) + max(xs)) / 2.0
+        width = max(xs) - min(xs)
+        slot_end = tip + outward * DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM
+        slots.append(frame_local_box(key, right, layout.centered_range(middle, DESIGN_FRAME_TAB_SLOT_WIDTH_MM),
+                                     tuple(sorted((face, slot_end)))))
+        room_end = tip + outward * layout.WIRE_ROOM_BEHIND_LEADS_MM
+        rooms.append(frame_local_box(
+            key, right, layout.centered_range(middle, width + 2.0 * layout.WIRE_ROOM_BESIDE_LEADS_MM),
+            tuple(sorted((tip, room_end)))))
+    return slots, rooms
+
+
+def frame_own_obstacles(right):
+    """(label, kind, shape, minimum) of the frame's features a boss keeps
+    from: the walls (their outer face, not convex), the tab slots and
+    wire rooms and the footprint holes as the frame has them."""
+    obstacles = []
+    for key in layout.KEY_CENTERS_MM:
+        obstacles.append((f"{key}'s walls", "outline", layout.frame_wall_outer_polygon(key, right),
+                          layout.FRAME_BOSS_FROM_FRAME_MM))
+        slots, rooms = frame_tab_pieces(key, right)
+        obstacles.extend((f"{key}'s tab slot", "polygon", slot, layout.FRAME_BOSS_FROM_FRAME_MM)
+                         for slot in slots)
+        obstacles.extend((f"{key}'s tab wire room", "polygon", room,
+                          layout.FRAME_BOSS_FROM_WIRE_ROOMS_MM) for room in rooms)
+        holes = layout.footprint_holes(frame_key_center(key, right))
+        obstacles.extend(
+            (f"{key}'s {diameter} hole", "circle",
+             (frame_left_point(center, right), diameter / 2.0), layout.FRAME_BOSS_FROM_FRAME_MM)
+            for (center, _), diameter in zip(holes, DESIGN_FRAME_HOLE_DIAMETERS_MM)
+        )
+    return obstacles
+
+
+def frame_tray_obstacles(right):
+    """(label, kind, shape, z range) of the tray as the frame meets it:
+    the ledge as cut, the cavity wall, the joint's bosses and fills, the
+    parking boss, the standoffs (whole, without the sockets' flats), the
+    mounts, the parts (but the PCB connector's zone, which the frame
+    does not have) and the wire rooms."""
+    obstacles = [(label, "polygon", polygon, z_range) for label, polygon, z_range in
+                 ledge_pieces(right) + wall_pieces(right) + dowel_bosses(right) + boss_fills(right)]
+    obstacles.append(("parking boss", "polygon", layout.parking_boss_polygon(),
+                      layout.parking_boss_z_range()))
+    obstacles.extend((f"standoff at {center}", "circle", (center, layout.STANDOFF_DIAMETER_MM / 2.0),
+                      standoff_z_range()) for center in layout.MOUNTING_DRILL_CENTERS_MM)
+    boxes = list(layout.mount_bodies()) + list(layout.nano_clamp_part_boxes())
+    obstacles.extend((describe_mount(box), "polygon", box_polygon(box), box.z_range) for box in boxes)
+    envelopes = [envelope for envelope in layout.part_envelopes() if envelope.part != "PCB connector"]
+    envelopes.extend(layout.wire_rooms(right=right))
+    obstacles.extend((describe_envelope(envelope), "polygon", box_polygon(envelope), envelope.z_range)
+                     for envelope in envelopes)
+    return obstacles
+
+
+def circle_clearance(center, radius, kind, shape):
+    """A circle's clearance from an obstacle, negative when they
+    overlap."""
+    if kind == "circle":
+        other_center, other_radius = shape
+        return math.dist(center, other_center) - radius - other_radius
+    if kind == "outline":
+        return -signed_point_distance(center, shape) - radius
+    return circle_separation(center, radius, shape)
+
+
+def frame_boss_figures(right):
+    """(problems, tightest from the frame, from the tray, heads' from
+    the tray, apart, inside the outline) of the half's bosses."""
+    radius = layout.STANDOFF_DIAMETER_MM / 2.0
+    head_radius = layout.FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0
+    boss_z = (DESIGN_FRAME_BACKING_TOP_Z_MM, layout.PCB_UNDERSIDE_Z_MM)
+    head_z = (DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM, DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM)
+    outline = layout.offset_polygon(layout.OUTLINE_VERTICES_MM, -DESIGN_PULL_IN_MM)
+    own = frame_own_obstacles(right)
+    tray = frame_tray_obstacles(right)
+    centers = layout.frame_boss_centers(right)
+    problems = []
+    tightest = {name: Tightest() for name in ("frame", "tray", "heads", "apart", "outline")}
+
+    def rule(name, value, minimum, where):
+        tightest[name].update(value - minimum, where)
+        if value < minimum - TOLERANCE_MM:
+            problems.append(f"the boss at {where}: {value:.3f}, less than {minimum}")
+
+    for center in centers:
+        for label, kind, shape, minimum in own:
+            rule("frame", circle_clearance(center, radius, kind, shape), minimum,
+                 f"{center} and {label}")
+        for label, kind, shape, z_range in tray:
+            if ranges_overlap(z_range, boss_z):
+                rule("tray", circle_clearance(center, radius, kind, shape),
+                     layout.FRAME_TRAY_CLEARANCE_MM, f"{center} and the {describe_piece(label, z_range)}")
+            if ranges_overlap(z_range, head_z):
+                rule("heads", circle_clearance(center, head_radius, kind, shape),
+                     layout.FRAME_TRAY_CLEARANCE_MM,
+                     f"{center}'s head and the {describe_piece(label, z_range)}")
+        rule("outline", signed_point_distance(center, outline) - radius,
+             layout.FRAME_BOSS_EDGE_MARGIN_MM, f"{center} and the frame's outline")
+    for first, second in itertools.combinations(centers, 2):
+        rule("apart", math.dist(first, second) - 2.0 * radius, layout.FRAME_BOSS_FROM_FRAME_MM,
+             f"{first} and the boss at {second}")
+    return problems, tightest
+
+
+def check_frame_bosses(right=False):
+    """The frame's bosses by layout.py's rules, their count DESIGN.md's."""
+    problems, tightest = frame_boss_figures(right)
+    figures = [require_figure("bosses", len(layout.frame_boss_centers(right)),
+                              DESIGN_FRAME_BOSS_COUNT[right], 0)]
+    fail_on(problems + failed(figures), f"{half_label(right)}the frame's bosses off their rules")
+    return (f"frame:     {half_label(right)}{joined(figures)}, beyond their rules by at least "
+            f"{tightest['frame']} from the frame, {tightest['tray']} from the tray, "
+            f"{tightest['heads']} with their heads, {tightest['outline']} inside the outline, "
+            f"{tightest['apart']} apart")
+
+
+def frame_backing_cutouts(right):
+    """(label, kind, shape) of the backing's cutouts."""
+    cutouts = [(label, "circle", (center, radius))
+               for label, center, radius in layout.frame_backing_circle_cutouts()]
+    cutouts.extend((label, "polygon", polygon)
+                   for label, polygon in layout.frame_backing_polygon_cutouts(right))
+    return cutouts
+
+
+def tray_piece_handled(kind, shape, outline, cutouts):
+    """How far a tray piece standing into the backing's heights keeps
+    from the backing: outside its outline, or inside one of its
+    cutouts, whichever leaves more."""
+    if kind == "circle":
+        center, radius = shape
+        best = -signed_point_distance(center, outline) - radius
+        for _label, cutout_kind, cutout in cutouts:
+            if cutout_kind == "circle":
+                best = max(best, cutout[1] - math.dist(center, cutout[0]) - radius)
+        return best
+    outside = [-signed_point_distance(corner, outline) for corner in shape]
+    best = -math.inf
+    if min(outside) > 0.0 and not any(point_in_polygon(vertex, shape) for vertex in outline):
+        best = boundary_distance(shape, outline)
+    for _label, cutout_kind, cutout in cutouts:
+        if cutout_kind == "polygon":
+            best = max(best, containment_margin(shape, cutout))
+    return best
+
+
+def check_frame_backing(right=False):
+    """The backing: every pad inside its outline and clear of its
+    cutouts, every screw head on it, and every tray piece standing into
+    its heights outside it or inside a cutout."""
+    outline = layout.frame_backing_outline()
+    cutouts = frame_backing_cutouts(right)
+    pads = layout.frame_pad_boxes(right)
+    head_radius = layout.FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0
+    backing_z = (DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM, DESIGN_FRAME_BACKING_TOP_Z_MM)
+    problems = []
+    pad_room, head_room, tray_room = Tightest(), Tightest(), Tightest()
+    for key, x_range, y_range in pads:
+        pad = layout.box_corners(x_range, y_range)
+        pad_room.update(containment_margin(pad, outline), f"{key}'s pad and the outline")
+        for label, kind, shape in cutouts:
+            clearance = (circle_separation(shape[0], shape[1], pad) if kind == "circle"
+                         else convex_separation(pad, shape))
+            pad_room.update(clearance, f"{key}'s pad and the cutout {label}")
+    for center in layout.frame_boss_centers(right):
+        head_room.update(signed_point_distance(center, outline) - head_radius,
+                         f"the head at {center} and the outline")
+        for label, kind, shape in cutouts:
+            head_room.update(circle_clearance(center, head_radius, kind, shape),
+                             f"the head at {center} and the cutout {label}")
+    for label, kind, shape, z_range in frame_tray_obstacles(right):
+        if ranges_overlap(z_range, backing_z):
+            tray_room.update(tray_piece_handled(kind, shape, outline, cutouts),
+                             f"the {describe_piece(label, z_range)}")
+    if len(pads) != 2 * len(layout.KEY_CENTERS_MM):
+        problems.append(f"{len(pads)} pads for {len(layout.KEY_CENTERS_MM)} sockets")
+    if pad_room.value < layout.FRAME_TRAY_CLEARANCE_MM - TOLERANCE_MM:
+        problems.append(f"a pad keeps {pad_room}")
+    if head_room.value < -TOLERANCE_MM:
+        problems.append(f"a screw head is off the backing by {head_room}")
+    if tray_room.value < layout.FRAME_TRAY_CLEARANCE_MM - TOLERANCE_MM:
+        problems.append(f"the tray reaches the backing: {tray_room}")
+    fail_on(problems, f"{half_label(right)}the frame's backing")
+    strips = len(layout.frame_strip_cutouts(right))
+    return (f"backing:   {half_label(right)}{len(pads)} pads inside it and clear of its cutouts by "
+            f"{pad_room}, the screw heads on it by {head_room}, the tray clear of it by "
+            f"{tray_room}, {strips} cutouts over the nice!nano's strips")
+
+
 def on_right_half(check):
     """The check run on the right half, as a check of its own."""
 
@@ -3572,6 +3807,10 @@ CHECKS = (
     on_right_half(check_pry_slot),
     check_wire_rooms,
     on_right_half(check_wire_rooms),
+    check_frame_bosses,
+    on_right_half(check_frame_bosses),
+    check_frame_backing,
+    on_right_half(check_frame_backing),
 )
 
 

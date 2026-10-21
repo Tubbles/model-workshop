@@ -3220,15 +3220,12 @@ def wire_rooms(fits=DEFAULT_MOUNT_FITS, right=False):
 # The hand-wired frame (work item 014, DESIGN.md, "Hand-wired frame"):
 # a printed frame of the PCB's thickness in the PCB's place on each
 # half, with every key's socket in a pocket on its underside and one
-# backing per half screwed up under the sockets. This first iteration
-# has no diode cradles and no wire grooves (the user, 2026-10-21: "Ok
-# let's just skip the diode and wire fittings, first iteration is just
-# the frame board and backing standoffs"): the wires run in the room
-# between the frame's underside and the backing, as on the socket test
-# strips. socket_test_shape.py's cells, walls, tab slots, bosses and
-# pads build it (frame_shape.py). The figures here are the plan
-# geometry check_layout.py checks; everything is in the left half's
-# frame, the right half's sockets mirrored back as in the tray's checks.
+# backing per half screwed up under the sockets, this first iteration
+# without diode cradles or wire grooves. socket_test_shape.py's cells,
+# walls, tab slots, bosses and pads build it (frame_shape.py). The
+# figures here are the plan geometry check_layout.py checks; everything
+# is in the left half's frame, the right half's sockets mirrored back as
+# in the tray's checks.
 #
 # The backing's pads: a rectangle under each of the socket's two lobes,
 # the cover's lobe (HOTSWAP_SOCKET_LOBES_MM) cut back to the body's ends
@@ -3278,28 +3275,15 @@ def backing_pad_polygons(key_center):
 FRAME_POCKET_FIT_MM = -0.15
 FRAME_TRAY_CLEARANCE_MM = 0.5
 
-# The bosses, the strips' (socket_test_shape.py: the standoffs' 5.8 with
-# a 3.2 bore for an M2 heat-set insert, ending 2.267 below the frame's
-# underside), placed per half by these rules, as modelled: 0.5 from the
-# pocket walls, the tab slots and the footprint holes, 0.2 from the tab
-# wires' rooms (DESIGN.md, "Tabs"), FRAME_TRAY_CLEARANCE_MM from the
-# tray, 0.5 apart, the frame's body reaching 0.5 past them, and their
-# screws' heads under the backing, FRAME_BACKING_SCREW_HEAD_DIAMETER_MM
-# across (ISO 7045's largest M2 pan head; the user's heads are
-# calipered for height only, 1.5), FRAME_TRAY_CLEARANCE_MM from every
-# part and room they reach, which keeps them off the nice!nano's socket
-# strips. A socket presses its pads down with up to 3.0 kgf while a
-# switch goes in, so each key gets a boss north of its socket in its own
-# column, the valid place nearest (-2.8, +4.0) from the key's center
-# (mirrored on the right half), and the bottom row, whose sockets have
-# no room south of them, also the strips' corners (+-9.525, +3.1). A
-# boss within 6.3 of another (0.5 apart) is that one. Where a key's own
-# place is taken (the power switch's retainer north of S120, the reset
-# button north of S130, the parking boss north of the thumb, the upper
-# dowel boss north of S150 on the right half and the nice!nano's clamp
-# screw north of S102 there) its north corners stand in, if they fit.
-# The thumb's socket has none within reach: the parking boss, the
-# standoff at (114.141, 19.765) and S153's pegs leave no room for one.
+# The bosses, the strips' (socket_test_shape.py), at FRAME_BOSS_CENTERS_MM
+# per half, which a search placed by these rules as modelled (DESIGN.md,
+# "Hand-wired frame", says where and why): FRAME_BOSS_FROM_FRAME_MM from
+# the walls, the tab slots, the footprint holes and each other,
+# FRAME_BOSS_FROM_WIRE_ROOMS_MM from the tab wires' rooms,
+# FRAME_TRAY_CLEARANCE_MM from the tray, FRAME_BOSS_EDGE_MARGIN_MM inside
+# the frame's outline, and their screws' heads under the backing,
+# FRAME_BACKING_SCREW_HEAD_DIAMETER_MM across, FRAME_TRAY_CLEARANCE_MM
+# from every part and room they reach. check_layout.py checks them.
 FRAME_BOSS_FROM_WIRE_ROOMS_MM = 0.2
 FRAME_BOSS_FROM_FRAME_MM = 0.5  # the walls, the tab slots, the footprint holes, each other
 FRAME_BOSS_EDGE_MARGIN_MM = 0.5
