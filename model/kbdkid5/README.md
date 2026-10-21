@@ -14,7 +14,7 @@ CI runs each export below with the command shown, from this repository's root, i
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_pcb.py --pass pcb.stl [right] [pull_in=0.2]
 
-CI first checks the layout with `python3 model/kbdkid5/scripts/check_layout.py` (outline, keys, drills, the parts in the tray, the sockets against the tray on both halves, the joint), then uploads both halves as the `kbdkid5-pcb-stl-<short commit hash>` artifact: `kbdkid5_Pcb_Left.stl` and `kbdkid5_Pcb_Right.stl` (the word `right`). The right one has the outline and the drills mirrored across the outline's center line, but not the switch footprints, since a switch cannot be mirrored: each sits as on the left half, at the mirrored key center.
+CI first checks the layout with `python3 model/kbdkid5/scripts/check_layout.py` (outline, keys, drills, the parts in the tray, the sockets against the tray on both halves, the joint), then uploads both halves as the `kbdkid5-pcb-<short commit hash>` artifact: `kbdkid5_Pcb_Left.stl` and `kbdkid5_Pcb_Right.stl` (the word `right`). The right one has the outline and the drills mirrored across the outline's center line, but not the switch footprints, since a switch cannot be mirrored: each sits as on the left half, at the mirrored key center.
 
 ## 3D printed switch plate
 
@@ -24,7 +24,7 @@ CI first checks the layout with `python3 model/kbdkid5/scripts/check_layout.py` 
         freecadcmd model/kbdkid5/scripts/export_plate.py --pass plate.stl [right] [covered] \
         [pattern_shift=0.25] [side_shave=0.1] [hole_diameter=4.17]
 
-CI uploads both halves, plain and covered, as the `kbdkid5-plate-stl-<short commit hash>` artifact: `kbdkid5_Plate_Left.stl`, `kbdkid5_Plate_Right.stl`, `kbdkid5_Plate_Left_Covered.stl` and `kbdkid5_Plate_Right_Covered.stl`. The right ones are mirrored across the outline's center line.
+CI uploads both halves, plain and covered, as the `kbdkid5-plate-<short commit hash>` artifact: `kbdkid5_Plate_Left.stl`, `kbdkid5_Plate_Right.stl`, `kbdkid5_Plate_Left_Covered.stl` and `kbdkid5_Plate_Right_Covered.stl`. The right ones are mirrored across the outline's center line.
 
 ## 3D printed fused mock
 
@@ -53,7 +53,7 @@ To try the hole strip, push a socket in so its two posts enter the holes. The po
 
 To try the switch hole strip, push a switch into each cell from the face that was on the bed and wiggle it sideways. A good cell takes the switch fully in by hand, lets it sit flat and holds it without play sideways. Loose means it wobbles, too tight means it will not go fully in or sit flat. Report the tightest cell the switch goes fully into by hand and sits flat in, which cells still let it wobble, and whether the post or the pegs seem to bind first.
 
-CI uploads both halves of the fused mock and the slit strips as the `kbdkid5-mock-stl-<short commit hash>` artifact: `kbdkid5_Mock_Left.stl`, `kbdkid5_Mock_Right.stl`, `kbdkid5_Slit_Test.stl` and `kbdkid5_Slit_Test_Wide.stl`. The socket strips have their own job and artifact, `kbdkid5-socket-stl-<short commit hash>`: `kbdkid5_Socket_Test_Pocket.stl`, `kbdkid5_Socket_Test_Holes.stl`, `kbdkid5_Socket_Test_Backing.stl` and `kbdkid5_Switch_Hole_Test.stl`, ready a few minutes after a push. The right half's outline and plate are mirrored like the other right parts, but not its switch footprints, since a switch cannot be mirrored: each sits as on the left half, at the mirrored key center.
+CI uploads both halves of the fused mock and the slit strips as the `kbdkid5-mock-<short commit hash>` artifact: `kbdkid5_Mock_Left.stl`, `kbdkid5_Mock_Right.stl`, `kbdkid5_Slit_Test.stl` and `kbdkid5_Slit_Test_Wide.stl`. The socket strips have their own job and artifact, `kbdkid5-socket-<short commit hash>`: `kbdkid5_Socket_Test_Pocket.stl`, `kbdkid5_Socket_Test_Holes.stl`, `kbdkid5_Socket_Test_Backing.stl` and `kbdkid5_Switch_Hole_Test.stl`, ready a few minutes after a push. The right half's outline and plate are mirrored like the other right parts, but not its switch footprints, since a switch cannot be mirrored: each sits as on the left half, at the mirrored key center.
 
 ## 3D printed tray
 
@@ -79,4 +79,4 @@ To try it, solder the socket strips on first, then drop the board in nose first 
         freecadcmd model/kbdkid5/scripts/export_nano_bay_test.py --pass bay.stl \
         [nano_length=33.2] [nano_width=18.2]
 
-CI uploads both halves, the tab and the test bay as the `kbdkid5-tray-stl-<short commit hash>` artifact: `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`, `kbdkid5_Nano_Clamp_Tab.stl` and `kbdkid5_Nano_Bay_Test.stl`.
+CI uploads both halves, the tab and the test bay as the `kbdkid5-tray-<short commit hash>` artifact: `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`, `kbdkid5_Nano_Clamp_Tab.stl` and `kbdkid5_Nano_Bay_Test.stl`.

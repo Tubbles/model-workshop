@@ -17,7 +17,7 @@ CI runs the export from this repository's root, in the image built from `docker/
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/camera-arm/scripts/export_camera_arm.py --pass camera
 
-CI uploads the four as the `camera-arm-stl-<short commit hash>` artifact. The job's log also lists the fits, the clearances to the printer and what part of the bed the camera sees over the Y travel.
+CI uploads the four as the `camera-arm-<short commit hash>` artifact. The job's log also lists the fits, the clearances to the printer and what part of the bed the camera sees over the Y travel.
 
 ## Hardware
 

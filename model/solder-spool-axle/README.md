@@ -8,4 +8,4 @@ CI runs the export from this repository's root, in the image built from `docker/
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/solder-spool-axle/scripts/export_spool_axle.py --pass spool/Solder_Spool_Axle.stl
 
-CI uploads it as the `solder-spool-axle-stl-<short commit hash>` artifact: `Solder_Spool_Axle.stl`.
+CI uploads it as the `solder-spool-axle-<short commit hash>` artifact: `Solder_Spool_Axle.stl`.
