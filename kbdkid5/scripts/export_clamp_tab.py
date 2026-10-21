@@ -18,7 +18,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_clamp_tab.py --pass <tab.stl>
+    freecadcmd kbdkid5/scripts/export_clamp_tab.py --pass <tab.stl>
 """
 
 import os
@@ -47,7 +47,7 @@ PROBE_REACH_MM = 20.0
 AXES = {"x": App.Vector(1, 0, 0), "y": App.Vector(0, 1, 0), "z": UP}
 
 USAGE = """\
-usage: freecadcmd scripts/export_clamp_tab.py --pass <tab.stl>"""
+usage: freecadcmd kbdkid5/scripts/export_clamp_tab.py --pass <tab.stl>"""
 
 
 def run_through(shape, point, axis, material=True):

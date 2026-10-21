@@ -32,7 +32,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_socket_test.py --pass <strip.stl> pocket|backing|holes|switch
+    freecadcmd kbdkid5/scripts/export_socket_test.py --pass <strip.stl> pocket|backing|holes|switch
         [pull_in=0.2] [insert_length=<mm>]
 
 A frame strip is checked for one valid solid of its analytic volume,
@@ -166,7 +166,7 @@ OPEN_PROBE_STEP_MM = 0.01
 WINDOW_MM = 0.5
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_socket_test.py --pass <strip.stl> pocket|backing|holes|switch
+usage: freecadcmd kbdkid5/scripts/export_socket_test.py --pass <strip.stl> pocket|backing|holes|switch
            [pull_in={pcb_shape.DEFAULT_PULL_IN_MM}] [insert_length=<mm>]
 
   pocket         the pocket strip, its pocket's fit stepping across the cells

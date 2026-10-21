@@ -51,7 +51,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_nano_bay_test.py --pass <bay.stl>
+    freecadcmd kbdkid5/scripts/export_nano_bay_test.py --pass <bay.stl>
         [nano_length=<mm>] [nano_width=<mm>]
 
 It prints the box, the clamp's and the bar's figures common to the
@@ -119,7 +119,7 @@ NOTCH_PITCH_MM = 2.0
 NOTCH_MIDDLE_X_MM = 7.0
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_nano_bay_test.py --pass <bay.stl>
+usage: freecadcmd kbdkid5/scripts/export_nano_bay_test.py --pass <bay.stl>
            [nano_length=<mm>] [nano_width=<mm>]
 
   nano_length  the nice!nano's board length the bays are fitted to

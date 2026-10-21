@@ -2,4 +2,4 @@
 
 Status: implemented
 
-`scripts/layout.py` holds DESIGN.md's geometry as data. `scripts/check_layout.py` checks it without FreeCAD. `scripts/export_pcb.py` exports the printed PCB mock for both halves. CI runs the check and the export.
+`kbdkid5/scripts/layout.py` holds DESIGN.md's geometry as data. `kbdkid5/scripts/check_layout.py` checks it without FreeCAD. `kbdkid5/scripts/export_pcb.py` exports the printed PCB mock for both halves. CI runs the check and the export.

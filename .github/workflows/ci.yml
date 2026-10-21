@@ -10,21 +10,22 @@ permissions:
 
 # One job per artifact, all in parallel, so a test print's STL is ready
 # a few minutes after the push instead of waiting behind the other
-# exports. Every job restores or builds the FreeCAD image through
+# exports. Each job's name starts with its project's directory. Every
+# export job restores or builds the FreeCAD image through
 # .github/actions/freecad-image.
 env:
   # A pull request's github.sha is a merge commit, not the PR's head.
   HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
-  layout:
+  kbdkid5-layout:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Check the layout
-        run: python3 scripts/check_layout.py
+        run: python3 kbdkid5/scripts/check_layout.py
 
-  socket-test:
+  kbdkid5-socket-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,16 +36,16 @@ jobs:
         run: |
           mkdir -p socket
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_socket_test.py --pass socket/kbdkid5_Socket_Test_Pocket.stl \
+            freecadcmd kbdkid5/scripts/export_socket_test.py --pass socket/kbdkid5_Socket_Test_Pocket.stl \
             pocket
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_socket_test.py --pass socket/kbdkid5_Socket_Test_Holes.stl \
+            freecadcmd kbdkid5/scripts/export_socket_test.py --pass socket/kbdkid5_Socket_Test_Holes.stl \
             holes
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_socket_test.py --pass socket/kbdkid5_Socket_Test_Backing.stl \
+            freecadcmd kbdkid5/scripts/export_socket_test.py --pass socket/kbdkid5_Socket_Test_Backing.stl \
             backing
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_socket_test.py --pass socket/kbdkid5_Switch_Hole_Test.stl \
+            freecadcmd kbdkid5/scripts/export_socket_test.py --pass socket/kbdkid5_Switch_Hole_Test.stl \
             switch
       - name: Upload socket test STL
         uses: actions/upload-artifact@v4
@@ -53,7 +54,7 @@ jobs:
           path: socket/
           if-no-files-found: error
 
-  mock:
+  kbdkid5-mock:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,9 +65,9 @@ jobs:
         run: |
           mkdir -p pcb
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_pcb.py --pass pcb/kbdkid5_Pcb_Left.stl
+            freecadcmd kbdkid5/scripts/export_pcb.py --pass pcb/kbdkid5_Pcb_Left.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_pcb.py --pass pcb/kbdkid5_Pcb_Right.stl right
+            freecadcmd kbdkid5/scripts/export_pcb.py --pass pcb/kbdkid5_Pcb_Right.stl right
       - name: Upload PCB mock STL
         uses: actions/upload-artifact@v4
         with:
@@ -77,13 +78,13 @@ jobs:
         run: |
           mkdir -p mock
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_slit_test.py --pass mock/kbdkid5_Slit_Test.stl
+            freecadcmd kbdkid5/scripts/export_slit_test.py --pass mock/kbdkid5_Slit_Test.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_slit_test.py --pass mock/kbdkid5_Slit_Test_Wide.stl wide
+            freecadcmd kbdkid5/scripts/export_slit_test.py --pass mock/kbdkid5_Slit_Test_Wide.stl wide
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_mock.py --pass mock/kbdkid5_Mock_Left.stl
+            freecadcmd kbdkid5/scripts/export_mock.py --pass mock/kbdkid5_Mock_Left.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_mock.py --pass mock/kbdkid5_Mock_Right.stl right
+            freecadcmd kbdkid5/scripts/export_mock.py --pass mock/kbdkid5_Mock_Right.stl right
       - name: Upload fused mock and slit test STL
         uses: actions/upload-artifact@v4
         with:
@@ -91,7 +92,7 @@ jobs:
           path: mock/
           if-no-files-found: error
 
-  plate:
+  kbdkid5-plate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -102,13 +103,13 @@ jobs:
         run: |
           mkdir -p plate
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_plate.py --pass plate/kbdkid5_Plate_Left.stl
+            freecadcmd kbdkid5/scripts/export_plate.py --pass plate/kbdkid5_Plate_Left.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_plate.py --pass plate/kbdkid5_Plate_Right.stl right
+            freecadcmd kbdkid5/scripts/export_plate.py --pass plate/kbdkid5_Plate_Right.stl right
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_plate.py --pass plate/kbdkid5_Plate_Left_Covered.stl covered
+            freecadcmd kbdkid5/scripts/export_plate.py --pass plate/kbdkid5_Plate_Left_Covered.stl covered
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_plate.py --pass plate/kbdkid5_Plate_Right_Covered.stl \
+            freecadcmd kbdkid5/scripts/export_plate.py --pass plate/kbdkid5_Plate_Right_Covered.stl \
             right covered
       - name: Upload switch plate STL
         uses: actions/upload-artifact@v4
@@ -117,7 +118,7 @@ jobs:
           path: plate/
           if-no-files-found: error
 
-  tray:
+  kbdkid5-tray:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -128,13 +129,13 @@ jobs:
         run: |
           mkdir -p tray
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_nano_bay_test.py --pass tray/kbdkid5_Nano_Bay_Test.stl
+            freecadcmd kbdkid5/scripts/export_nano_bay_test.py --pass tray/kbdkid5_Nano_Bay_Test.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_clamp_tab.py --pass tray/kbdkid5_Nano_Clamp_Tab.stl
+            freecadcmd kbdkid5/scripts/export_clamp_tab.py --pass tray/kbdkid5_Nano_Clamp_Tab.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_tray.py --pass tray/kbdkid5_Tray_Left.stl
+            freecadcmd kbdkid5/scripts/export_tray.py --pass tray/kbdkid5_Tray_Left.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd scripts/export_tray.py --pass tray/kbdkid5_Tray_Right.stl right
+            freecadcmd kbdkid5/scripts/export_tray.py --pass tray/kbdkid5_Tray_Right.stl right
       - name: Upload tray, nano clamp tab and nano bay test STL
         uses: actions/upload-artifact@v4
         with:

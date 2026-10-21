@@ -16,7 +16,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_plate.py --pass <plate.stl> [right] [covered] [key=value ...]
+    freecadcmd kbdkid5/scripts/export_plate.py --pass <plate.stl> [right] [covered] [key=value ...]
 
 The word "right" mirrors the plate across the layout's right-half
 mirror line (see layout.py), the pit and the pattern shift included.
@@ -90,7 +90,7 @@ FACE_TOLERANCE_MM = 0.001
 PROBE_DEPTH_MM = 0.3
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_plate.py --pass <plate.stl> [right] [covered]
+usage: freecadcmd kbdkid5/scripts/export_plate.py --pass <plate.stl> [right] [covered]
            [hole_diameter={PLATE_HOLE_DIAMETER_MM:.2f}]
            [pattern_shift={DEFAULT_PATTERN_SHIFT_MM}]
            [side_shave={DEFAULT_SIDE_SHAVE_MM}]

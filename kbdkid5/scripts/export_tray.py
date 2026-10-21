@@ -35,7 +35,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_tray.py --pass <tray.stl> [right] [key=value ...]
+    freecadcmd kbdkid5/scripts/export_tray.py --pass <tray.stl> [right] [key=value ...]
 
 The word "right" makes the right half: the tray built with that half's
 socket cuts and its slip fit pin holes, mirrored across the layout's
@@ -241,7 +241,7 @@ JOINED_TOLERANCE_MM = 1e-6
 JOINED_OVERLAP_TOLERANCE_MM3 = 1e-3
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_tray.py --pass <tray.stl> [right]
+usage: freecadcmd kbdkid5/scripts/export_tray.py --pass <tray.stl> [right]
            [pin_hole_diameter=<mm>] [nano_length=<mm>] [nano_width=<mm>]
            [nano_pocket_fit=<mm>] [clamp_press=<mm>] [bar_clearance=<mm>]
            [battery_shoulder=<mm>]

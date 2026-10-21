@@ -12,7 +12,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_pcb.py --pass <mock.stl> [right] [pull_in=0.2]
+    freecadcmd kbdkid5/scripts/export_pcb.py --pass <mock.stl> [right] [pull_in=0.2]
 
 The mock's x and y are the layout's, its bottom face on z = 0, while
 in the layout's frame z = 0 is the tray floor's top (the PCB's
@@ -33,7 +33,7 @@ from freecad_common import check_closed_mesh, export_stl, run_and_exit, script_a
 from pcb_shape import DEFAULT_PULL_IN_MM, all_holes, build_mock, half_outline
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_pcb.py --pass <mock.stl> [right] [pull_in={DEFAULT_PULL_IN_MM}]
+usage: freecadcmd kbdkid5/scripts/export_pcb.py --pass <mock.stl> [right] [pull_in={DEFAULT_PULL_IN_MM}]
 
   right      export the right half: outline and drills mirrored across the
              layout's right-half mirror line, x = {layout.RIGHT_HALF_MIRROR_X_MM:.3f},

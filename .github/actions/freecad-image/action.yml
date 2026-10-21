@@ -1,5 +1,5 @@
 # Provides the freecad-headless image to a job, restored from the
-# Actions cache when scripts/freecad.Dockerfile has not changed, built
+# Actions cache when docker/freecad.Dockerfile has not changed, built
 # and saved to the cache otherwise. Every export job runs this first.
 name: FreeCAD image
 description: Restore or build the headless FreeCAD image
@@ -11,12 +11,12 @@ runs:
       uses: actions/cache@v4
       with:
         path: /tmp/freecad-headless.tar
-        key: freecad-headless-${{ hashFiles('scripts/freecad.Dockerfile') }}
+        key: freecad-headless-${{ hashFiles('docker/freecad.Dockerfile') }}
     - name: Build the image
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        docker build -t freecad-headless -f scripts/freecad.Dockerfile scripts
+        docker build -t freecad-headless -f docker/freecad.Dockerfile docker
         docker save freecad-headless -o /tmp/freecad-headless.tar
     - name: Load the image
       if: steps.cache.outputs.cache-hit == 'true'

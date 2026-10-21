@@ -65,6 +65,7 @@ PLATE_MODEL_FILE = os.path.normpath(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         os.pardir,
+        os.pardir,
         "resources",
         "kbdkid3-plate-left.FCStd",
     )

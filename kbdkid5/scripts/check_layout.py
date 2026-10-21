@@ -1,6 +1,6 @@
 """Check layout.py's geometry, and DESIGN.md's figures against it.
 
-    python3 scripts/check_layout.py
+    python3 kbdkid5/scripts/check_layout.py
 
 Plain Python, no FreeCAD. The checks run in order. Each one prints a
 line with the tightest margin it found; the first one that fails

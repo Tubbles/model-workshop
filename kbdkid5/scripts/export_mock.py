@@ -41,7 +41,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_mock.py --pass <mock.stl> [right] [key=value ...]
+    freecadcmd kbdkid5/scripts/export_mock.py --pass <mock.stl> [right] [key=value ...]
 
 It checks for one valid solid with both layers' volume, every plate
 cutout centered on its key's center hole, every slit centered on its
@@ -61,7 +61,7 @@ from freecad_common import check_closed_mesh, export_stl, run_and_exit, script_a
 from plate_shape import build_plate
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_mock.py --pass <mock.stl> [right]
+usage: freecadcmd kbdkid5/scripts/export_mock.py --pass <mock.stl> [right]
            [pull_in={pcb_shape.DEFAULT_PULL_IN_MM}] [slit_width=...] [slit_length=...]
 
   right        export the right half: outline, plate and drills mirrored across

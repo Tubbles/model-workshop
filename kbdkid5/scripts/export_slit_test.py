@@ -38,7 +38,7 @@ Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
 invocation):
 
-    freecadcmd scripts/export_slit_test.py --pass <strip.stl> [wide]
+    freecadcmd kbdkid5/scripts/export_slit_test.py --pass <strip.stl> [wide]
         [pull_in=0.2]
 
 It prints each cell's clearance (or width) and slit widths and checks
@@ -92,7 +92,7 @@ NOTCH_DEPTH_MM = 0.8
 NOTCH_PITCH_MM = 2.0
 
 USAGE = f"""\
-usage: freecadcmd scripts/export_slit_test.py --pass <strip.stl> [wide]
+usage: freecadcmd kbdkid5/scripts/export_slit_test.py --pass <strip.stl> [wide]
            [pull_in={pcb_shape.DEFAULT_PULL_IN_MM}]
 
   wide       the wide strip: both slits of cell 1 {WIDE_FIRST_SLIT_WIDTH_MM} wide as modelled,
