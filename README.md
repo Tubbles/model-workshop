@@ -1,13 +1,6 @@
 # model-workshop
 
-FreeCAD scripts that build 3D-printable models, run headless in a container. Each project has a directory of its own with its scripts and a README that describes its parts.
-
-| Directory | What it holds | README |
-|---|---|---|
-| `model/kbdkid5/` | kbdkid5, a wireless split keyboard whose halves join into one board: its tray, switch plate, PCB mock, fused mock and test strips | [model/kbdkid5/README.md](model/kbdkid5/README.md) |
-| `model/kbdkid4/` | The printed parts of kbdkid4, a split wireless keyboard designed in LibrePCB: its tray, switch plate, PCB replica and carrying case | [model/kbdkid4/README.md](model/kbdkid4/README.md) |
-| `model/solder-spool-axle/` | The axle of a solder spool holder | [model/solder-spool-axle/README.md](model/solder-spool-axle/README.md) |
-| `model/camera-arm/` | An arm that holds a Raspberry Pi Camera Module 2 over a stock Ender 3 V2 | [model/camera-arm/README.md](model/camera-arm/README.md) |
+FreeCAD scripts that build 3D-printable models, run headless in a container. The projects are under `model/`, listed in [model/README.md](model/README.md).
 
 ## Getting the STLs
 

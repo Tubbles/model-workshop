@@ -8,7 +8,7 @@ A workshop for 3D-printable models, each built by FreeCAD scripts that run headl
 
 ## Layout
 
-- One directory per project under `model/` (`model/kbdkid5/`, `model/kbdkid4/`, `model/solder-spool-axle/`, `model/camera-arm/`), each with a `CLAUDE.md` for agents, a `README.md` for humans and `scripts/`. kbdkid5 also has its `DESIGN.md`.
+- One directory per project under `model/` (`model/kbdkid5/`, `model/kbdkid4/`, `model/solder-spool-axle/`, `model/camera-arm/`), each with a `CLAUDE.md` for agents, a `README.md` for humans and `scripts/`. kbdkid5 also has its `DESIGN.md`. `model/README.md` lists them for humans, in a table with a row per project.
 - `docker/freecad.Dockerfile`: the one FreeCAD image every export runs in (Debian trixie's FreeCAD). `.github/actions/freecad-image` restores it from the Actions cache, keyed on the Dockerfile, or builds it.
 - `resources/kbdkid3-plate-left.FCStd`: the kbdkid3 plate model that kbdkid4's and kbdkid5's plates are cut from.
 - `.github/workflows/ci.yml`: one workflow whose jobs run in parallel, each job's name starting with its project's name.
@@ -32,7 +32,7 @@ freecadcmd exits 0 even when the script raised, sets `__name__` to the file's st
 - A directory under `model/` named for the model, with `CLAUDE.md`, `README.md` (what it is, the printed parts and how each prints, the artifact and its files) and `scripts/`.
 - A job in `.github/workflows/ci.yml` named after the project, its directory's name (or the project plus a kind, when it has several artifacts), in the style of the jobs there: checkout, the `SHORT_SHA` step, `.github/actions/freecad-image`, the export with the repository mounted at `/work`, and `actions/upload-artifact`.
 - The artifact named `<project>-<kind>-${{ env.SHORT_SHA }}`, or `<project>-${{ env.SHORT_SHA }}` for a project with one artifact.
-- A row in README.md's project table, and sections in PLAN.md, TODO.md and SUGGESTIONS.md when it has entries for them.
+- A row in `model/README.md`'s project table, and sections in PLAN.md, TODO.md and SUGGESTIONS.md when it has entries for them.
 
 ## Workflow
 
