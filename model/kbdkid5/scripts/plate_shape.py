@@ -78,10 +78,10 @@ PLATE_MODEL_FILE = os.path.normpath(
 PLATE_OBJECT_NAME = "PointArray"
 
 # The plate's holes swallow the screw heads (DESIGN.md, "Mounting": M2
-# screws as on kbdkid4), with kbdkid4's figures.
-SCREW_HEAD_DIAMETER_MM = 3.77  # measured on kbdkid4's screws
-SCREW_HEAD_CLEARANCE_MM = 0.4  # extra so a printed hole clears the head
-PLATE_HOLE_DIAMETER_MM = SCREW_HEAD_DIAMETER_MM + SCREW_HEAD_CLEARANCE_MM
+# screws as on kbdkid4), with layout.py's figures under kbdkid4's names.
+SCREW_HEAD_DIAMETER_MM = layout.MOUNTING_SCREW_HEAD_DIAMETER_MM
+SCREW_HEAD_CLEARANCE_MM = layout.PLATE_HEAD_HOLE_CLEARANCE_MM
+PLATE_HOLE_DIAMETER_MM = layout.PLATE_HEAD_HOLE_DIAMETER_MM
 
 # Every cutout has to agree on the alignment within this (kbdkid4's).
 ALIGNMENT_RESIDUAL_LIMIT_MM = 0.05

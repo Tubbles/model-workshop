@@ -549,6 +549,12 @@ MOUNTING_DRILL_CENTERS_MM = (
     (113.824, 59.214),
 )
 
+# The plate's holes swallow the screw heads (M2 screws as on kbdkid4),
+# with kbdkid4's figures. plate_shape.py cuts them.
+MOUNTING_SCREW_HEAD_DIAMETER_MM = 3.77  # measured on kbdkid4's screws
+PLATE_HEAD_HOLE_CLEARANCE_MM = 0.4  # extra so a printed hole clears the head
+PLATE_HEAD_HOLE_DIAMETER_MM = MOUNTING_SCREW_HEAD_DIAMETER_MM + PLATE_HEAD_HOLE_CLEARANCE_MM
+
 # The tray (DESIGN.md, "Heights": all as kbdkid4). tray_shape.py
 # re-exports these under kbdkid4's names.
 TRAY_GAP_MM = 0.4  # PCB edge to the cavity wall
@@ -2173,11 +2179,11 @@ NANO_CLAMP_NOSE_DEPTH_MM = 2.1  # below the plate's underside
 NANO_CLAMP_BORE_DIAMETER_MM = STANDOFF_BORE_DIAMETER_MM  # an M2 heat-set insert's, the standoffs'
 NANO_CLAMP_INSERT_LENGTH_MM = 3.0  # M2 x 3
 NANO_CLAMP_SCREW_LENGTH_MM = 4.0  # M2 x 4, under the head
-# The screw's head: kbdkid4's measured diameter (plate_shape.py's
-# SCREW_HEAD_DIAMETER_MM) and, unmeasured, the largest height ISO 4762
-# gives an M2 socket head. The tab's hole is the PCB's mounting drill's
-# printed fit, 2.4 as printed.
-NANO_CLAMP_SCREW_HEAD_DIAMETER_MM = 3.77
+# The screw's head: kbdkid4's measured diameter (the mounting screws',
+# MOUNTING_SCREW_HEAD_DIAMETER_MM) and, unmeasured, the largest height
+# ISO 4762 gives an M2 socket head. The tab's hole is the PCB's
+# mounting drill's printed fit, 2.4 as printed.
+NANO_CLAMP_SCREW_HEAD_DIAMETER_MM = MOUNTING_SCREW_HEAD_DIAMETER_MM
 NANO_CLAMP_SCREW_HEAD_HEIGHT_MM = 2.0
 NANO_CLAMP_SCREW_HOLE_DIAMETER_MM = printed_fit(MOUNTING_DRILL_DIAMETER_MM, SNUG_FIT_MM)
 
