@@ -13,11 +13,12 @@ permissions:
 # exports. Each job's name starts with its project's name, its
 # directory under model/. Every export job restores or builds the
 # FreeCAD image through .github/actions/freecad-image. The kbdkid4 jobs
-# check out Tubbles/kbdkid4's default branch into external/kbdkid4 and
-# run the exports there, since the scripts read its board files
-# relative to the working directory. A push to kbdkid4 does not run
-# this workflow: run it by hand (workflow_dispatch) to export from
-# kbdkid4's latest board.
+# get kbdkid4's board through .github/actions/kbdkid4-board: the STEP
+# that kbdkid4's latest successful CI run on main regenerated, and that
+# run's commit checked out into external/kbdkid4, where the exports run,
+# since the scripts read its board files relative to the working
+# directory. A push to kbdkid4 does not run this workflow: once
+# kbdkid4's own run has passed, run it by hand (workflow_dispatch).
 env:
   # A pull request's github.sha is a merge commit, not the PR's head.
   HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -154,20 +155,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
-      - name: Check out kbdkid4's board files
-        uses: actions/checkout@v4
-        with:
-          repository: Tubbles/kbdkid4
-          path: external/kbdkid4
+      - uses: ./.github/actions/kbdkid4-board
       - uses: ./.github/actions/freecad-image
       - name: Export tray STL
         run: |
           mkdir -p tray
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_tray.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_tray.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/tray/kbdkid4_v1_Tray_Left.stl
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_tray.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_tray.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/tray/kbdkid4_v1_Tray_Right.stl right
       - name: Upload tray STL
         uses: actions/upload-artifact@v4
@@ -182,26 +179,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
-      - name: Check out kbdkid4's board files
-        uses: actions/checkout@v4
-        with:
-          repository: Tubbles/kbdkid4
-          path: external/kbdkid4
+      - uses: ./.github/actions/kbdkid4-board
       - uses: ./.github/actions/freecad-image
       - name: Export plate STL
         run: |
           mkdir -p plate
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/resources/kbdkid3-plate-left.FCStd /work/plate/kbdkid4_v1_Plate_Left.stl
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/resources/kbdkid3-plate-left.FCStd /work/plate/kbdkid4_v1_Plate_Right.stl right
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/resources/kbdkid3-plate-left.FCStd /work/plate/kbdkid4_v1_Plate_Left_Covered.stl covered
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/resources/kbdkid3-plate-left.FCStd /work/plate/kbdkid4_v1_Plate_Right_Covered.stl right covered
       - name: Upload plate STL
         uses: actions/upload-artifact@v4
@@ -216,20 +209,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
-      - name: Check out kbdkid4's board files
-        uses: actions/checkout@v4
-        with:
-          repository: Tubbles/kbdkid4
-          path: external/kbdkid4
+      - uses: ./.github/actions/kbdkid4-board
       - uses: ./.github/actions/freecad-image
       - name: Export PCB replica STL
         run: |
           mkdir -p pcb
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_pcb.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_pcb.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/pcb/kbdkid4_v1_Pcb_Left.stl
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_pcb.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_pcb.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/pcb/kbdkid4_v1_Pcb_Right.stl right
       - name: Upload PCB replica STL
         uses: actions/upload-artifact@v4
@@ -244,20 +233,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
-      - name: Check out kbdkid4's board files
-        uses: actions/checkout@v4
-        with:
-          repository: Tubbles/kbdkid4
-          path: external/kbdkid4
+      - uses: ./.github/actions/kbdkid4-board
       - uses: ./.github/actions/freecad-image
       - name: Export case STL
         run: |
           mkdir -p case
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_case.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_case.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/case/kbdkid4_v1_Case_Left.stl
           docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
-            freecadcmd /work/model/kbdkid4/scripts/export_case.py --pass output/v1/kbdkid4_v1.step \
+            freecadcmd /work/model/kbdkid4/scripts/export_case.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step \
             /work/case/kbdkid4_v1_Case_Right.stl right
       - name: Upload case STL
         uses: actions/upload-artifact@v4

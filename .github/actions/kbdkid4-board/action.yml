@@ -1,0 +1,43 @@
+# Provides kbdkid4's board to a job: the STEP model that kbdkid4's
+# latest successful CI run on main regenerated with librepcb-cli (its
+# librepcb-ci-outputs artifact), at
+# external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step, and a checkout of
+# that run's commit at external/kbdkid4, so the board files match the
+# STEP. Every kbdkid4 job runs this after checking out this repository.
+# kbdkid4 is public, so github.token reads it.
+name: kbdkid4 board
+description: Check out kbdkid4 and download the STEP of its latest successful CI run on main
+runs:
+  using: composite
+  steps:
+    - name: Find kbdkid4's latest successful CI run on main
+      id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        run=$(gh run list --repo Tubbles/kbdkid4 --branch main --workflow ci.yml \
+          --status success --limit 1 --json databaseId,headSha \
+          --jq '.[0] | select(.) | "\(.databaseId) \(.headSha)"')
+        if [ -z "$run" ]; then
+          echo "::error::found no successful CI run of Tubbles/kbdkid4 on main"
+          exit 1
+        fi
+        read -r run_id head_sha <<< "$run"
+        echo "id=$run_id" >> "$GITHUB_OUTPUT"
+        echo "head-sha=$head_sha" >> "$GITHUB_OUTPUT"
+        echo "kbdkid4 CI run $run_id at commit $head_sha"
+    - name: Check out kbdkid4 at that run's commit
+      uses: actions/checkout@v4
+      with:
+        repository: Tubbles/kbdkid4
+        ref: ${{ steps.run.outputs.head-sha }}
+        path: external/kbdkid4
+    - name: Download that run's outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: librepcb-ci-outputs
+        repository: Tubbles/kbdkid4
+        run-id: ${{ steps.run.outputs.id }}
+        github-token: ${{ github.token }}
+        path: external/kbdkid4-outputs
