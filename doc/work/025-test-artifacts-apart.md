@@ -19,4 +19,4 @@ Done:
 - A merge's pattern needs a kind between `part-` or `test-` and the hash, so it never matches a merged artifact or the other group's intermediates. Checked with Python's fnmatch against every artifact name the workflow makes. The merge action matches with minimatch, which agrees with fnmatch here, since no pattern or name has a slash, a leading dot or a brace.
 - README.md (Getting the STLs), the kbdkid5 and kbdkid4 READMEs, CLAUDE.md (the artifact bullet and Starting a project), the two projects' CLAUDE.md, the workflow's header comment, work item 024 and SUGGESTIONS.md follow.
 
-Open: CI's first run with this change should end with the six artifacts and no intermediates: kbdkid5 with 12 STLs, kbdkid5-test with 11, kbdkid4 with 8, kbdkid4-test with 2, camera-arm with 4 and solder-spool-axle with 1.
+CI run 39834968878 (c2b6220) ended with exactly the six artifacts, flat, and no intermediates: kbdkid5 with 12 STLs, kbdkid5-test with 11, kbdkid4 with 8, kbdkid4-test with 2, camera-arm with 4 and solder-spool-axle with 1, each STL in the group its name says. Nothing is open.
