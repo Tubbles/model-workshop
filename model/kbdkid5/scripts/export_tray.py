@@ -68,7 +68,7 @@ from tray_shape import UP, build_clamp_tab, build_tray, mirror_for_right_half
 
 # DESIGN.md's figures, transcribed independently of layout.py, each
 # compared within half its last digit.
-DESIGN_TRAY_OUTSIDE_MM = (140.7, 85.0, 14.6)  # along x, along y, tall
+DESIGN_TRAY_OUTSIDE_MM = (134.8, 85.0, 14.6)  # along x, along y, tall
 DESIGN_FLOOR_UNDERSIDE_Z_MM = -1.2
 DESIGN_RIM_Z_MM = 13.4
 DESIGN_GAP_MM = 0.4
@@ -88,30 +88,16 @@ DESIGN_MOUNTING_DRILLS_MM = (
     (113.824, 59.214),
 )
 # The sixth standoff merges with the joint block, the magnet slot at
-# 67.511 along the slant cut through it, and its bore keeps this much
+# 48.26 along the slant cut through it, and its bore keeps this much
 # plastic toward the slot.
 DESIGN_MERGED_STANDOFF_BORE_WALL_MM = 0.83
-# DESIGN.md's slant runs through the thumb's corner and its north end
-# on to the south edge. Its south end (x 138.265) and the mirror line
-# midway between it and the west edge at x 0 (69.133) are computed from
-# those corners, as layout.py does: rounded, they leave the joined
-# trays' faces 0.0001 off, far past the joined check's tolerance.
-DESIGN_SLANT_THUMB_CORNER_MM = (132.398, 18.335)
-DESIGN_SLANT_NORTH_END_MM = (113.348, 77.867)
-DESIGN_SLANT_SOUTH_END_MM = (
-    DESIGN_SLANT_THUMB_CORNER_MM[0]
-    + (DESIGN_SLANT_THUMB_CORNER_MM[0] - DESIGN_SLANT_NORTH_END_MM[0])
-    * DESIGN_SLANT_THUMB_CORNER_MM[1]
-    / (DESIGN_SLANT_NORTH_END_MM[1] - DESIGN_SLANT_THUMB_CORNER_MM[1]),
-    0.0,
-)
-DESIGN_SLANT_ENDS_MM = (DESIGN_SLANT_SOUTH_END_MM, DESIGN_SLANT_NORTH_END_MM)
-DESIGN_MIRROR_LINE_X_MM = DESIGN_SLANT_SOUTH_END_MM[0] / 2.0
+DESIGN_MIRROR_LINE_X_MM = 66.199
+DESIGN_SLANT_ENDS_MM = ((132.398, 18.335), (113.348, 77.867))  # south, north
 DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES = 17.74
 DESIGN_JOINT_FACE_OUT_OF_SLANT_MM = 1.2
 DESIGN_JOINT_FACE_BOTTOM_CHAMFER_MM = 0.4
 DESIGN_JOINT_BLOCK_THICKNESS_MM = 4.0
-DESIGN_DOWEL_PIN_ALONGS_MM = (22.751, 78.251)
+DESIGN_DOWEL_PIN_ALONGS_MM = (3.5, 59.0)
 DESIGN_DOWEL_PIN_SPACING_MM = 55.5
 DESIGN_DOWEL_PIN_Z_MM = 4.15  # midway between the bed and the PCB
 # Per half, False the left one, True the right one: the left half's
@@ -126,11 +112,12 @@ DESIGN_PLASTIC_OVER_DOWEL_HOLES_MM = {False: 3.15, True: 3.1}
 DESIGN_DOWEL_BOSS_ACROSS_MM = 7.0
 DESIGN_DOWEL_PIN_LENGTH_MM = 16.0
 DESIGN_PIN_CHANNEL_MARGIN_MM = 1.0  # the joined channel's length past the pin's, as modelled
-DESIGN_MAGNET_ALONGS_MM = (33.491, 44.831, 56.171, 67.511)
+DESIGN_MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 48.26)
 DESIGN_MAGNET_SLOT_MM = (8.5, 3.5)  # along the slant, across it
 DESIGN_MAGNET_SLOT_BOTTOM_Z_MM = -0.7
 DESIGN_MAGNET_SKIN_MM = 0.5
 DESIGN_MAGNETS_APART_JOINED_MM = 1.0
+DESIGN_THUMB_EAST_EDGE_X_MM = 132.398
 DESIGN_PARKING_HOLE_DIAMETER_MM = 4.5
 DESIGN_PARKING_HOLE_FLAT_MM = 1.86
 DESIGN_PLASTIC_OVER_PARKING_HOLE_MM = 3.85
@@ -247,7 +234,7 @@ WALL_PROBE_Z_MM = 10.0
 # Under the ledge's top.
 LEDGE_PROBE_Z_MM = 6.0
 FLOOR_PROBE_MM = (60.0, 40.0)  # open floor, clear of every standoff and boss
-SLANT_PROBE_ALONG_MM = 50.5
+SLANT_PROBE_ALONG_MM = 31.25
 
 # How far a measuring line reaches either side of its point.
 PROBE_REACH_MM = 30.0
@@ -357,16 +344,6 @@ def design_slant_frame(right):
     return south, half_vector(direction, right), half_vector(outward, right)
 
 
-def design_slant_x_at_y(y, outward):
-    """The x at which the line `outward` mm out of DESIGN.md's slant
-    crosses y, on the left half."""
-    (south_x, south_y), (north_x, north_y) = DESIGN_SLANT_ENDS_MM
-    length = math.hypot(north_x - south_x, north_y - south_y)
-    direction = ((north_x - south_x) / length, (north_y - south_y) / length)
-    on_line = (south_x + outward * direction[1], south_y - outward * direction[0])
-    return on_line[0] + (y - on_line[1]) * direction[0] / direction[1]
-
-
 def slant_place(right, along, outward, z):
     """The point along and outward of DESIGN.md's slant on the given
     half, at height z."""
@@ -389,6 +366,7 @@ def wall_probes(right):
         (("west", "east"), (0.0, 34.0), (-1.0, 0.0)),
         (("south", "south"), (18.8, 0.0), (0.0, -1.0)),
         (("north of column 4", "north of column 4"), (85.249, 80.248), (0.0, 1.0)),
+        (("thumb's east", "thumb's west"), (DESIGN_THUMB_EAST_EDGE_X_MM, 10.0), (1.0, 0.0)),
     ]
     probes = [
         (names[right], half_point(point, right), half_vector(outward, right))
@@ -687,11 +665,8 @@ def measure_joint_face(tray, right, figures):
         f"flat from {min(alongs):.4f} to {max(alongs):.4f} along the slant, z {box.ZMin:.3f} to "
         f"{box.ZMax:.3f}, {holes} openings",
     ]
-    if holes != len(DESIGN_DOWEL_PIN_ALONGS_MM) + 1:
-        raise SystemExit(
-            f"error: the joint face has {holes} openings, expected the pin holes and the "
-            "parking hole"
-        )
+    if holes != len(DESIGN_DOWEL_PIN_ALONGS_MM):
+        raise SystemExit(f"error: the joint face has {holes} openings, expected the pin holes")
     lowest_boss = min(DESIGN_DOWEL_PIN_ALONGS_MM) - DESIGN_DOWEL_BOSS_ACROSS_MM / 2.0
     highest_boss = max(DESIGN_DOWEL_PIN_ALONGS_MM) + DESIGN_DOWEL_BOSS_ACROSS_MM / 2.0
     if lowest_boss < min(alongs) or highest_boss > max(alongs):
@@ -868,11 +843,9 @@ def measure_magnet_slots(tray, right, figures):
 
 
 def measure_parking_hole(tray, right, figures):
-    """The parking hole from the joint face on its axis, which the face
-    crosses aslant, to its bottom, and its boss."""
     inward = vector(half_vector((-1.0, 0.0), right))
     across = App.Vector(0, 1, 0)
-    face_x = design_slant_x_at_y(DESIGN_PARKING_HOLE_Y_MM, DESIGN_JOINT_FACE_OUT_OF_SLANT_MM)
+    face_x = DESIGN_THUMB_EAST_EDGE_X_MM + DESIGN_GAP_MM + DESIGN_WALL_MM
     mouth_plan = half_point((face_x, DESIGN_PARKING_HOLE_Y_MM), right)
     mouth = vector(mouth_plan, DESIGN_PARKING_HOLE_Z_MM)
     _, to_bottom = run_through(tray, mouth.add(inward * 0.5), inward, False)
@@ -884,7 +857,7 @@ def measure_parking_hole(tray, right, figures):
     back_low, back_high = run_through(tray, mouth.add(inward * (depth + 0.1)), inward, True)
     over, where = least_plastic_over(tray, mouth, inward, sample_depths(0.1, depth - 0.1))
     # The boss's own width 1.0 short of the hole's bottom: nearer the
-    # mouth it merges with its fill and the joint block.
+    # mouth it merges with the lower dowel boss.
     beside = mouth.add(inward * (depth - 1.0)).add(
         UP * (DESIGN_PARKING_HOLE_DIAMETER_MM / 2.0 + 0.5)
     )

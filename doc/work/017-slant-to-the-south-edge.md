@@ -12,3 +12,5 @@ Done:
 - DESIGN.md (Outline, The joint, Plate and mocks) has the figures.
 
 Still open: print the plate, and the trays to go with it. A plate from 19eaff7 on fits only the trays from 433cbf9 on.
+
+Work item 019 took this outline back out (2026-10-22).

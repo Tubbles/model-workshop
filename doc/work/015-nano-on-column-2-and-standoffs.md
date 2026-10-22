@@ -9,7 +9,7 @@ Later the same day: "What do you think about moving the north-east standoff one 
 Done:
 
 - The nice!nano 0.475 east of column 2's center line, its bay with a west wall of its own and both walls raised to the PCB's underside wherever they keep 0.5 from the sockets of either half. The power switch on column 0's north wall. kbdkid4's standoff at (18.574, 56.832) and the north ledge over columns 0 and 1 back. The center standoff at (56.091, 23.460), a key south and a key west and then 0.9 west and 0.75 south, for the plate's head hole (df02939). The north block's east end measured on the block, past the ledge's rounded corner (3160768).
-- The north-east standoff one key west, at (75.724, 62.785), with S140's flat, and a sixth at (113.824, 59.214), merged with the joint block, the magnet slot at 67.511 cut through it. `check_layout.py` holds every standoff's bore 0.6 from the joint's voids, 0.832 at the sixth, and FreeCAD measured 0.8316 on both trays (c412684, CI run 39657567625).
+- The north-east standoff one key west, at (75.724, 62.785), with S140's flat, and a sixth at (113.824, 59.214), merged with the joint block, the northernmost magnet slot cut through it. `check_layout.py` holds every standoff's bore 0.6 from the joint's voids, 0.832 at the sixth, and FreeCAD measured 0.8316 on both trays (c412684, CI run 39657567625).
 - DESIGN.md (Mounting, Tray, Parts in the tray) has the figures and why.
 
 The sixth standoff's ring does not clear the magnet slot: the slot cuts 0.468 into it, and only the bore keeps clear of it, by 0.832, as the user's later message allows. Square to the slant, the standoff would have to stand 0.468 further in for its ring to clear the slot.

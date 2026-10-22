@@ -40,12 +40,11 @@ north wall, the reset pin hole through the north wall, the nice!nano's
 pry slot through the clamp's block and foot and the clamp block's
 insert bore. Then
 the magnet slots, open toward the cavity (but the south 2.165 of the
-one at 67.511 along the slant, which the sixth standoff walls off), with
+one at 48.26 along the slant, which the sixth standoff walls off), with
 the wall cut back over them, the flat-topped teardrop pin holes (the
 half's fit and depth, the right half's with a lead-in at the mouth),
-the flat-topped teardrop parking hole in through the joint face,
-aslant, and the chamfer along
-the joint face's bottom edge. Each
+the flat-topped teardrop parking hole and the chamfer along the joint
+face's bottom edge. Each
 step checks its volume and probes what it made. Last the floor is
 checked closed: its underside is the void-free footprint's, so no void
 reaches it (work item 009).
@@ -523,10 +522,10 @@ def boss_bodies(corner_radius, right):
 
 
 def add_bosses(tray, corner_radius, right):
-    """Fuse the bosses and fills one by one (one boolean did not take the
-    lower dowel boss and the parking boss while they overlapped), each
-    adding plastic but no more than its own volume, and solid at its
-    center of mass afterwards."""
+    """Fuse the bosses and fills one by one (the lower dowel boss and the
+    parking boss overlap, which one boolean with both would not take),
+    each adding plastic but no more than its own volume, and solid at
+    its center of mass afterwards."""
     for label, body in boss_bodies(corner_radius, right):
         result = tray.fuse(body)
         require_one_valid_solid(result, f"adding {label}")
@@ -692,7 +691,7 @@ def cut_magnet_slot(tray, along):
     and the floor, the cut-back in the wall. The slot's inner side lies
     on the block's inner face, so it opens toward the cavity, but where
     a standoff merges with the block: the sixth standoff walls off the
-    south 2.165 of the slot at 67.511 along the slant, flush with that
+    south 2.165 of the slot at 48.26 along the slant, flush with that
     face, so the slot still prints 3.1 across there and the magnet still
     drops in from the top."""
     bottom = layout.MAGNET_SLOT_BOTTOM_Z_MM

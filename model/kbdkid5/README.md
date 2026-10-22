@@ -15,7 +15,7 @@ CI uploads both halves as the `kbdkid5-pcb-<short commit hash>` artifact: `kbdki
 
 ## 3D printed switch plate
 
-`model/kbdkid5/scripts/export_plate.py` exports the switch plate: kbdkid3's plate cells on the layout's keys, the switch-free triangles along the slant covered, holes over the screw heads at the mounting drills, and kbdkid4's `side_shave` off the west, east and slanted edges. `pattern_shift` moves the hole pattern along x with the outline held, 0 by default. The word `covered` makes the plate for a half without the hard-to-reach key S123: its cutout is filled in and a pit in the underside clears its diode. DESIGN.md (Plate and mocks) has the figures. The plate is written upside down, its top face on the bed.
+`model/kbdkid5/scripts/export_plate.py` exports the switch plate: kbdkid3's plate cells on the layout's keys, the switch-free corner by the slant covered, holes over the screw heads at the mounting drills, and kbdkid4's `side_shave` off the west, east and slanted edges. `pattern_shift` moves the hole pattern along x with the outline held, 0 by default. The word `covered` makes the plate for a half without the hard-to-reach key S123: its cutout is filled in and a pit in the underside clears its diode. DESIGN.md (Plate and mocks) has the figures. The plate is written upside down, its top face on the bed.
 
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_plate.py --pass plate.stl [right] [covered] \
@@ -93,7 +93,7 @@ For a test print, `pin_hole_diameter` overrides the half's pin hole fit as model
 
 Every part goes into its socket in the tray, and then gets a blob of hot glue on top, which only keeps it down against vibration. Use hot glue and nothing permanent, so every part can come out undamaged and go into a new print (DESIGN.md, Parts in the tray).
 
-Put a magnet into each of the joint's slots, against the thin skin at the joint face, with alternating poles along the joint, the right half opposite to the left, so the halves pull together and center themselves, and hold it with a blob of hot glue. To join the halves, press the dowel pins into the left half's holes, then push the right half on. Hot glue an S-04-02-N magnet to the bottom of the parking hole that enters each half's joint face beside the thumb key, where it holds a pin while the halves are used apart.
+Put a magnet into each of the joint's slots, against the thin skin at the joint face, with alternating poles along the joint, the right half opposite to the left, so the halves pull together and center themselves, and hold it with a blob of hot glue. To join the halves, press the dowel pins into the left half's holes, then push the right half on. Hot glue an S-04-02-N magnet to the bottom of the parking hole in each half's thumb key east wall, where it holds a pin while the halves are used apart.
 
 The power switch's three leads come bent down. Straighten each with flat-nose pliers so it points straight back from the body, level with where it leaves it, and cut off the lead the wiring leaves unused if you like. Slide the switch north along the floor behind column 0's north wall, knob first through the slot, between the cradle's end blocks, until its face meets the ledge, then drop its retainer (below) into the grooves behind it, the retainer's opening over the leads. To take the switch out, lift the PCB off, pull the retainer out and slide the switch back south. Cut the reset button's two leads to taste, then press the button down into its socket behind the pin hole in column 3's north wall, between the side walls, its actuator toward the hole, its cover against the stop on the floor and its leads in the notches of the wall behind it. Cut no lead of either part shorter than 2 mm behind the body (the reset button's measured from its base's bottom face), which leaves the power switch's solder joints behind its retainer and room for the wires behind both (DESIGN.md, Parts in the tray).
 
@@ -146,5 +146,5 @@ For both halves:
 - 8 supermagnete S-08-03-N disc magnets for the joint, 2 S-04-02-N for the pin parking.
 - 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
 - M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
-- For the hand-wired frame, 57 M2 x 3 heat-set inserts and 57 M2 x 4 pan head screws (29 for the left half's backing, 28 for the right's).
+- For the hand-wired frame, 56 M2 x 3 heat-set inserts and 56 M2 x 4 pan head screws (28 for each half's backing).
 - 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.

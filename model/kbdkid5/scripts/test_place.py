@@ -146,7 +146,7 @@ class StandoffRunsTest(unittest.TestCase):
                        key=lambda row: row.value)
             self.assertEqual(round(bore.value, 3),
                              check_layout.DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM)
-            self.assertIn("magnet slot at 67.511", bore.obstacle)
+            self.assertIn("magnet slot at 48.26", bore.obstacle)
             merged = {row.obstacle: row.value for row in report.rows
                       if row.status == "merged" and row.context == context}
             self.assertEqual(round(-merged["joint block"], 3), 0.468)
@@ -165,7 +165,7 @@ class StandoffRunsTest(unittest.TestCase):
         broken = {(row.obstacle, row.context) for row in breaks}
         for _right, context in place.CONTEXTS:
             self.assertIn(("joint block", context), broken)
-            self.assertIn(("magnet slot at 67.511 along the slant", context), broken)
+            self.assertIn(("magnet slot at 48.26 along the slant", context), broken)
 
     def test_north_east_standoff(self):
         problem, _gathered = place.standoff_problem("north-east", place.NORTH_EAST_STANDOFF_TARGET)

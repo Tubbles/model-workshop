@@ -399,24 +399,12 @@ CELL_INSET_SOUTH_MM = 0.318
 CELL_INSET_NORTH_MM = 0.397
 OUTLINE_CORNER_RADIUS_MM = 0.47625
 
-# The slant runs through the thumb cell's top right corner and column
-# 5's top cell's top right corner, both moved in by the east and north
+# The slant runs from the thumb cell's top right corner to column 5's
+# top cell's top right corner, both moved in by the east and north
 # insets (DESIGN.md): parallel to the corner to corner line, 0.574
-# inside it. It ended at the thumb's corner until the user had it run on
-# south to the outline's south edge (DESIGN.md, Outline), so the half
-# takes in the triangle east of the thumb and the joint face runs the
-# half's full height. The south end is where the line through the two
-# corners crosses that edge, so the thumb's corner stays on the slant.
-SLANT_THUMB_CORNER_MM = (132.398, 18.335)
+# inside it.
+SLANT_SOUTH_END_MM = (132.398, 18.335)
 SLANT_NORTH_END_MM = (113.348, 77.867)
-SOUTH_EDGE_Y_MM = 0.0
-SLANT_SOUTH_END_MM = (
-    SLANT_THUMB_CORNER_MM[0]
-    + (SLANT_THUMB_CORNER_MM[0] - SLANT_NORTH_END_MM[0])
-    * (SLANT_THUMB_CORNER_MM[1] - SOUTH_EDGE_Y_MM)
-    / (SLANT_NORTH_END_MM[1] - SLANT_THUMB_CORNER_MM[1]),
-    SOUTH_EDGE_Y_MM,
-)  # x 138.265
 
 OUTLINE_VERTICES_MM = (
     (0.0, 0.0),
@@ -430,7 +418,8 @@ OUTLINE_VERTICES_MM = (
     (94.774, 2.381),
     (113.824, 2.381),
     (113.824, 0.0),
-    SLANT_SOUTH_END_MM,  # the south edge under the thumb, then the slant
+    (132.398, 0.0),
+    SLANT_SOUTH_END_MM,  # the east edge of the thumb, then the slant
     SLANT_NORTH_END_MM,
     (94.774, 77.867),
     (94.774, 80.248),
@@ -482,14 +471,6 @@ def slant_point(along, outward):
     )
 
 
-def slant_x_at_y(y, outward):
-    """The x at which the line `outward` mm out of the slant, run on
-    past either end, crosses y."""
-    direction_x, direction_y = slant_direction()
-    south_x, south_y = slant_point(0.0, outward)
-    return south_x + (y - south_y) * direction_x / direction_y
-
-
 def slant_rectangle(along_center, along_width, outward_range):
     """A rectangle square to the slant, in plan: along_width wide along
     it around along_center, over outward_range across it. Outward lies
@@ -507,7 +488,7 @@ def slant_rectangle(along_center, along_width, outward_range):
 
 
 # The mirror line for the right half (DESIGN.md, "Frame and units", and
-# the module docstring): the outline's center line, x = 69.133.
+# the module docstring): the outline's center line, x = 66.199.
 RIGHT_HALF_MIRROR_X_MM = (
     min(x for x, _ in OUTLINE_VERTICES_MM) + max(x for x, _ in OUTLINE_VERTICES_MM)
 ) / 2.0
@@ -536,7 +517,7 @@ def mirror_for_right_half(point):
 # north-east standoff one key to the left? And then adding a new
 # standoff south east of the north easternmost key?"). The sixth runs
 # into the joint block, which it merges with, and the magnet slot at
-# 67.511 along the slant is cut through it: only its bore needs the
+# 48.26 along the slant is cut through it: only its bore needs the
 # plastic around it (the user: "the standoff doesn't have to be 100 %
 # clear of everything, the inner bore is more important").
 MOUNTING_DRILL_DIAMETER_MM = 2.4
@@ -1049,11 +1030,9 @@ LEDGE_NOTCH_WIDTH_MM = 3.0
 LEDGE_NOTCH_DEPTH_MM = 3.0
 LEDGE_NOTCH_CLEARANCE_MM = 0.5
 SOCKET_TAB_NOTCH_KEYS = ("S100", "S101", "S102", "S103")  # column 0, along the west edge
-# On the right half the thumb's tab reached past the thumb's east edge
-# (in the left half's frame) and took a notch and a pocket there. Since
-# the slant ran on south past it, the tab keeps 0.889 from the joint
-# block, more than the clearance, so no right half tab needs a notch.
-RIGHT_SOCKET_TAB_NOTCH_KEYS = ()
+# On the right half the thumb's tab, along the thumb's outer edge (the
+# east edge in the left half's frame).
+RIGHT_SOCKET_TAB_NOTCH_KEYS = ("S163",)
 
 # Ledge reliefs: wherever a socket polygon comes within
 # LEDGE_RELIEF_CLEARANCE_MM of the ledge's inner face along an outline
@@ -1081,7 +1060,8 @@ SOCKET_LEDGE_RELIEF_KEYS = (
     "S153",
     "S163",
 )
-# On the right half the bottom row's lobes.
+# On the right half the bottom row's lobes, and the thumb's tab (inside
+# its notch).
 RIGHT_SOCKET_LEDGE_RELIEF_KEYS = ("S103", "S113", "S123", "S133", "S143", "S153", "S163")
 
 # Standoff flats: wherever a socket polygon comes within
@@ -1435,23 +1415,20 @@ PRINT_RISE_OF_TOP_FACES_MM = 0.05
 # the cavity: the skin and a 3.0 magnet's printed fit across fill the
 # block's 4.0, which leaves no room for a wall on the slot's inner side.
 # The sixth standoff (MOUNTING_DRILL_CENTERS_MM), merged with the block,
-# walls off the south 2.165 of the slot at 67.511, flush with the
+# walls off the south 2.165 of the slot at 48.26, flush with the
 # block's inner face, so the slot still prints 3.1 across there and the
 # magnet still drops in from the top.
 # The slots run from z -0.7 up (0.5 above the bed), between the pins at
 # the given centers along the slant: spread evenly between the bosses
 # when the slots were 8.2 long (3.14 from each boss and from each
-# other), now 2.99 from the bosses and 2.84 apart. They stayed where
-# they were when the slant ran on south, at 14.24, 25.58, 36.92 and
-# 48.26 from the thumb's corner (SLANT_THUMB_CORNER_MM, 19.251 along
-# the slant).
+# other), now 2.99 from the bosses and 2.84 apart.
 MAGNET_DIAMETER_MM = 8.0
 MAGNET_THICKNESS_MM = 3.0
 MAGNET_SLOT_ALONG_MM = printed_fit(MAGNET_DIAMETER_MM, SLIP_FIT_MM)
 MAGNET_SLOT_ACROSS_MM = printed_fit(MAGNET_THICKNESS_MM, SLIP_FIT_MM)
 MAGNET_SLOT_BOTTOM_Z_MM = -0.7
 MAGNET_SKIN_MM = 0.5
-MAGNET_ALONGS_MM = (33.491, 44.831, 56.171, 67.511)
+MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 48.26)
 
 # Above the block the wall's inner face is cut back to each slot, from
 # the block's top to the rim, over the slot's width along the slant: the
@@ -1467,18 +1444,16 @@ MAGNET_WALL_CUTBACK_TOP_Z_MM = TRAY_RIM_Z_MM
 # across reaching from the face into the tray past its hole's bottom,
 # from the floor up to the PCB's underside like the block. The pins and
 # magnets sit at the same places along the slant on both halves, since
-# the halves mate face to face. The pins were set as far apart as the
-# joint face allowed: each boss ended where the outline's slant ended
-# (the upper one 0.006 short), which kept it on the face's flat part
-# between the tray's corner rounds. At 55.5, where the upper pin first
-# sat, its boss overlapped the right half's S150 socket. They stayed
-# where they were when the slant ran on south, 3.5 and 59.0 from the
-# thumb's corner (SLANT_THUMB_CORNER_MM, 19.251 along the slant).
+# the halves mate face to face. The pins are as far apart as the joint
+# face allows: each boss ends where the outline's slant ends (the upper
+# one 0.006 short), which keeps it on the face's flat part between the
+# tray's corner rounds. At 55.5, where the upper pin first sat, its boss
+# overlapped the right half's S150 socket.
 DOWEL_PIN_DIAMETER_MM = 4.0
 DOWEL_PIN_LENGTH_MM = 16.0
 DOWEL_PIN_EMBEDDED_MM = 8.0
 DOWEL_PIN_Z_MM = (FLOOR_UNDERSIDE_Z_MM + PCB_UNDERSIDE_Z_MM) / 2.0  # 4.15
-DOWEL_PIN_ALONGS_MM = (22.751, 78.251)
+DOWEL_PIN_ALONGS_MM = (3.5, 59.0)
 DOWEL_BOSS_DIAMETER_MM = 7.0
 DOWEL_BOSS_TOP_Z_MM = PCB_UNDERSIDE_Z_MM
 
@@ -1588,6 +1563,15 @@ def slant_line_crossing_y(along, y):
     return (on_slant_x + outward * normal[0], y)
 
 
+def slant_line_crossing_x(along, x):
+    """The point with the given x on the line square to the slant at
+    `along`."""
+    on_slant_x, on_slant_y = slant_point(along, 0.0)
+    normal = slant_outward_normal()
+    outward = (x - on_slant_x) / normal[0]
+    return (x, on_slant_y + outward * normal[1])
+
+
 def upper_boss_fill_polygon(right=False):
     """The plastic filling the crevice that would open between the upper
     dowel boss's north side, the north ledge's face and the block, out
@@ -1605,22 +1589,20 @@ def upper_boss_fill_polygon(right=False):
 
 
 # Pin parking: in split mode each half carries one pin in a teardrop
-# hole running along -x at y 13.1 and z 3.4, in a boss under the PCB,
-# the pin's slip fit like the right half's dowel holes. The hole came in
-# through the thumb key's short east wall until the slant ran on south
-# (DESIGN.md, Outline). That wall is now the joint face, so the hole
-# keeps its axis and comes in through the joint face, aslant: nowhere
-# else is there room (DESIGN.md, Pin parking). The pin goes in 14.5,
-# measured on its axis from the joint face, and a supermagnete
-# S-04-02-N (4 x 2) glued at the hole's bottom holds it, so the hole
-# reaches 14.5 + 2.0 from the face, its last 2.0 the magnet's seat,
-# whose glued fit comes to the hole's own diameter. The boss is 7
-# across like the dowel bosses, reaches 1.5 behind the hole's bottom
-# (the dowel bosses' plastic around a pin) and stands from the floor to
-# the PCB's underside, which rests on it, so it keeps the ledge's
-# clearance from the sockets. North of it, up to the lower dowel boss, a
-# fill closes the crevice between the two and the joint block. In plan
-# both are given here up to the slant: the joint block fills the rest.
+# hole through the thumb key's short east wall (the outline's east
+# edge, x 132.398 up to the slant), running along -x at y 13.1 and
+# z 3.4, in a boss under the PCB, the pin's slip fit like the right
+# half's dowel holes. The pin goes in 14.5 and a supermagnete S-04-02-N
+# (4 x 2) glued at the hole's bottom holds it, so the hole reaches
+# 14.5 + 2.0 from the tray's outer face, its last 2.0 the magnet's seat,
+# whose glued fit comes to the hole's own diameter. The boss is 7 across
+# like the dowel bosses, reaches 1.5 behind the hole's bottom (the
+# dowel bosses' plastic around a pin) and stands from the floor to the
+# PCB's underside, which rests on it, so it keeps the ledge's clearance
+# from the sockets. North of it, up to the lower dowel boss, a fill
+# closes the crevice between the two. In plan both are given here up to
+# the outline's east edge: the ledge and the wall fill the rest.
+THUMB_EAST_EDGE_X_MM = SLANT_SOUTH_END_MM[0]  # the edge ends at the slant
 PARKING_HOLE_DIAMETER_MM = printed_fit(DOWEL_PIN_DIAMETER_MM, SLIP_FIT_MM)
 PARKING_HOLE_Y_MM = 13.1
 PARKING_HOLE_Z_MM = 3.4
@@ -1635,55 +1617,46 @@ PARKING_BOSS_TOP_Z_MM = PCB_UNDERSIDE_Z_MM
 
 
 def parking_hole_x_range():
-    """From the hole's bottom to the joint face on its axis, where the
-    pin's insertion is measured from."""
-    face_x = slant_x_at_y(PARKING_HOLE_Y_MM, JOINT_FACE_OUTWARD_MM)
-    return (face_x - PARKING_HOLE_DEPTH_MM, face_x)
-
-
-def parking_hole_y_range():
-    radius = PARKING_HOLE_DIAMETER_MM / 2.0
-    return (PARKING_HOLE_Y_MM - radius, PARKING_HOLE_Y_MM + radius)
+    """From the hole's bottom to the tray's outer face east of the
+    thumb."""
+    outer_face_x = THUMB_EAST_EDGE_X_MM + TRAY_GAP_MM + TRAY_WALL_MM
+    return (outer_face_x - PARKING_HOLE_DEPTH_MM, outer_face_x)
 
 
 def parking_hole_polygon():
     """The parking hole in plan: its flat top stands right over the
-    circle, so it is the hole's diameter wide, from its bottom to the
-    joint face, which crosses it aslant."""
-    low_x = parking_hole_x_range()[0]
-    low_y, high_y = parking_hole_y_range()
-    return (
-        (low_x, low_y),
-        (slant_x_at_y(low_y, JOINT_FACE_OUTWARD_MM), low_y),
-        (slant_x_at_y(high_y, JOINT_FACE_OUTWARD_MM), high_y),
-        (low_x, high_y),
-    )
+    circle, so it is the hole's diameter wide."""
+    low_x, high_x = parking_hole_x_range()
+    radius = PARKING_HOLE_DIAMETER_MM / 2.0
+    low_y = PARKING_HOLE_Y_MM - radius
+    high_y = PARKING_HOLE_Y_MM + radius
+    return ((low_x, low_y), (high_x, low_y), (high_x, high_y), (low_x, high_y))
 
 
 def parking_boss_polygon():
-    """The parking hole's boss in plan, up to the slant."""
+    """The parking hole's boss in plan, up to the outline's east edge."""
     low_x = parking_hole_x_range()[0] - PARKING_BOSS_BEHIND_HOLE_MM
     half_across = PARKING_BOSS_ACROSS_MM / 2.0
     low_y = PARKING_HOLE_Y_MM - half_across
     high_y = PARKING_HOLE_Y_MM + half_across
     return (
         (low_x, low_y),
-        (slant_x_at_y(low_y, 0.0), low_y),
-        (slant_x_at_y(high_y, 0.0), high_y),
+        (THUMB_EAST_EDGE_X_MM, low_y),
+        (THUMB_EAST_EDGE_X_MM, high_y),
         (low_x, high_y),
     )
 
 
 def parking_boss_fill_polygon():
     """The parking boss's extension north to the lower dowel boss: the
-    triangle between the boss's north side, the slant and the dowel
-    boss's south side."""
+    triangle between the boss's north side, the outline's east edge and
+    the dowel boss's south side."""
     boss_north_y = PARKING_HOLE_Y_MM + PARKING_BOSS_ACROSS_MM / 2.0
     south_side = min(DOWEL_PIN_ALONGS_MM) - DOWEL_BOSS_DIAMETER_MM / 2.0
     return (
         slant_line_crossing_y(south_side, boss_north_y),
-        (slant_x_at_y(boss_north_y, 0.0), boss_north_y),
-        slant_point(south_side, 0.0),
+        (THUMB_EAST_EDGE_X_MM, boss_north_y),
+        slant_line_crossing_x(south_side, THUMB_EAST_EDGE_X_MM),
     )
 
 
@@ -3336,7 +3309,7 @@ FRAME_BOSS_CENTERS_MM = {
         (42.099, 37.520), (44.099, 18.220), (44.099, 75.370), (44.349, 57.070), (63.149, 20.601),
         (63.149, 39.651), (63.149, 58.701), (75.724, 19.451), (75.724, 76.101), (82.199, 18.220),
         (82.199, 37.270), (82.199, 56.320), (82.199, 75.370), (94.774, 17.070), (101.249, 15.839),
-        (101.249, 34.889), (101.249, 53.939), (101.249, 72.989), (113.749, 13.477),
+        (101.249, 34.889), (101.249, 53.939), (101.249, 72.989),
     ),
     True: (
         (12.099, 13.457), (12.099, 32.507), (12.099, 51.557), (18.574, 12.307), (18.574, 69.457),

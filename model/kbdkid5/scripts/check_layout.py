@@ -122,11 +122,10 @@ PLATE_HEAD_HOLE_FROM_CUTOUTS_MM = 0.5
 
 # DESIGN.md's figures, each compared within half its last digit.
 DESIGN_SLANT_OFFSET_MM = 0.574
-DESIGN_SLANT_LENGTH_MM = 81.76
-DESIGN_SLANT_SOUTH_OF_THUMB_CORNER_MM = 19.251  # along the slant
+DESIGN_SLANT_LENGTH_MM = 62.51
 DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES = 17.74
-DESIGN_HALF_SIZE_MM = (138.3, 82.6)
-DESIGN_MIRROR_LINE_X_MM = 69.133
+DESIGN_HALF_SIZE_MM = (132.4, 82.6)
+DESIGN_MIRROR_LINE_X_MM = 66.199
 DESIGN_HEIGHTS_Z_MM = (  # (what, z)
     ("socket bottoms", 7.48),
     ("PCB top", 11.1),
@@ -165,11 +164,11 @@ DESIGN_STANDOFF_FLATS = (
     ("S140", (75.724, 62.785), 0.487, 0.787),
 )
 DESIGN_STANDOFF_FLAT_BOTTOM_Z_MM = 6.48
-# The right half's sockets (DESIGN.md, "Tray"): no tab notches, the
-# thumb's tab clear of the joint block since the slant ran on south, the
-# bottom row's reliefs, and no flats.
-DESIGN_RIGHT_TAB_NOTCH_KEYS = set()
-DESIGN_RIGHT_THUMB_TAB_FROM_JOINT_BLOCK_MM = 0.890
+# The right half's sockets (DESIGN.md, "Tray"): the thumb's tab past the
+# thumb's outer edge, notched and pocketed like column 0's on the left
+# (the same pocket figures), the bottom row's reliefs, and no flats.
+DESIGN_RIGHT_TAB_NOTCH_KEYS = {"S163"}
+DESIGN_RIGHT_TAB_TIP_PAST_THUMB_EDGE_MM = 0.231
 DESIGN_RIGHT_LEDGE_RELIEF_KEYS = {"S103", "S113", "S123", "S133", "S143", "S153", "S163"}
 DESIGN_RIGHT_STANDOFF_FLATS = ()
 DESIGN_RIGHT_CLOSEST_SOCKET_TO_STANDOFF_MM = 1.114
@@ -187,10 +186,10 @@ DESIGN_LEAST_PLASTIC_BETWEEN_VOIDS_MM = {False: 2.09, True: 1.80}
 DESIGN_DOWEL_PIN_SLANT_Y_MM = (21.7, 74.5)
 # How far the lower boss's south end and the upper boss's north end lie
 # inside the outline slant's ends.
-DESIGN_DOWEL_BOSSES_INSIDE_SLANT_ENDS_MM = (19.251, 0.006)
+DESIGN_DOWEL_BOSSES_INSIDE_SLANT_ENDS_MM = (0.0, 0.006)
 # The plastic around the standoffs' bores where the joint's slots and
 # holes come nearest: the sixth standoff's, merged with the joint block,
-# beside the magnet slot at 67.511 along the slant, on both halves.
+# beside the magnet slot at 48.26 along the slant, on both halves.
 DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM = 0.832
 # The plate the standoffs' head holes keep from the switch cutouts where
 # they come nearest, in each of the plate's layers: the north-east
@@ -334,7 +333,7 @@ DESIGN_NANO_ROOMS_INTO_STRIPS_MM = {
            ("over the P1.01/P1.02/P1.07 pads", "east"): (0.44, 2)},
 }
 # The hand-wired frame (work item 014).
-DESIGN_FRAME_BOSS_COUNT = {False: 29, True: 28}
+DESIGN_FRAME_BOSS_COUNT = {False: 28, True: 28}
 DESIGN_FRAME_BACKING_TOP_Z_MM = 7.233  # on the bosses' ends, 2.267 under the frame
 DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM = 6.383
 DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM = 4.883
@@ -1335,9 +1334,6 @@ def check_outline_on_cells():
 
 
 def check_slant():
-    """The slant runs through the thumb cell's and column 5's top cell's
-    top right corners moved in by the insets, ends at the latter, and
-    runs on south past the former to the outline's south edge."""
     thumb_corner = layout.key_cell_top_right_corner(layout.THUMB_KEY_CENTER_MM)
     column_5_corner = layout.key_cell_top_right_corner(
         layout.KEY_CENTERS_MM[layout.TOP_ROW_KEY_OF_COLUMN_5]
@@ -1345,28 +1341,18 @@ def check_slant():
     inset = (-layout.CELL_INSET_EAST_MM, -layout.CELL_INSET_NORTH_MM)
     problems = []
     worst_end_error = 0.0
-    for label, corner, point in (
-        ("thumb's corner", thumb_corner, layout.SLANT_THUMB_CORNER_MM),
-        ("north end", column_5_corner, layout.SLANT_NORTH_END_MM),
+    for label, corner, end in (
+        ("south", thumb_corner, layout.SLANT_SOUTH_END_MM),
+        ("north", column_5_corner, layout.SLANT_NORTH_END_MM),
     ):
         expected = (corner[0] + inset[0], corner[1] + inset[1])
-        error = math.dist(expected, point)
+        error = math.dist(expected, end)
         worst_end_error = max(worst_end_error, error)
         if error > 0.0005:
             problems.append(
-                f"the slant's {label} {point} is {error:.4f} from the cell corner {corner} "
+                f"the {label} end {end} is {error:.4f} from the cell corner {corner} "
                 f"moved in by the insets, {expected}"
             )
-    off_slant = abs(dot(vector_between(layout.SLANT_SOUTH_END_MM, layout.SLANT_THUMB_CORNER_MM),
-                        layout.slant_outward_normal()))
-    if off_slant > 1e-9:
-        problems.append(f"the thumb's corner lies {off_slant:.2e} off the slant")
-    south_edge_y = min(y for _, y in layout.OUTLINE_VERTICES_MM)
-    if abs(layout.SLANT_SOUTH_END_MM[1] - south_edge_y) > 1e-9:
-        problems.append(
-            f"the slant's south end {layout.SLANT_SOUTH_END_MM} is not on the south edge "
-            f"(y {south_edge_y})"
-        )
     corner_line = vector_between(thumb_corner, column_5_corner)
     slant = layout.slant_vector()
     sine = cross(corner_line, slant) / (math.hypot(*corner_line) * math.hypot(*slant))
@@ -1381,18 +1367,12 @@ def check_slant():
             "offset inside the corner to corner line", offset, DESIGN_SLANT_OFFSET_MM, 3
         ),
         require_figure("length", layout.slant_length(), DESIGN_SLANT_LENGTH_MM, 2),
-        require_figure(
-            "of it south of the thumb's corner",
-            math.dist(layout.SLANT_SOUTH_END_MM, layout.SLANT_THUMB_CORNER_MM),
-            DESIGN_SLANT_SOUTH_OF_THUMB_CORNER_MM,
-            3,
-        ),
         require_figure("degrees from north", angle, DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES, 2),
     ]
     fail_on(problems + failed(figures), "the slant does not run as DESIGN.md states")
     return (
-        f"slant:     through the cell corners less the insets (off by {worst_end_error:.4f} at "
-        f"most) on to the south edge at x {layout.SLANT_SOUTH_END_MM[0]:.3f}, " + joined(figures)
+        f"slant:     ends at the cell corners less the insets (off by {worst_end_error:.4f} at "
+        f"most), " + joined(figures)
     )
 
 
@@ -1871,34 +1851,25 @@ def thin_flat_problems(socket_rules, right=False):
     return problems
 
 
-def thumb_tab_from_joint_block(right=True):
-    """How far the thumb's tab tip on the given half lies inside the
-    joint block's inner face, the slant's ledge."""
-    tip = layout.socket_tab_tip_on_half(layout.THUMB_KEY_NAME, right)
-    inside_slant = -dot(vector_between(layout.SLANT_SOUTH_END_MM, tip),
-                        layout.slant_outward_normal())
-    return inside_slant - (layout.JOINT_BLOCK_THICKNESS_MM - layout.JOINT_FACE_OUTWARD_MM)
-
-
 def tab_figures(right=False):
-    if right:
-        return [
-            require_figure(
-                "the thumb's tab tip from the joint block",
-                thumb_tab_from_joint_block(right),
-                DESIGN_RIGHT_THUMB_TAB_FROM_JOINT_BLOCK_MM,
-                3,
-            )
-        ]
     keys = layout.socket_tab_notch_keys(right)
     tips = [layout.socket_tab_tip_on_edge(key, right) for key in keys]
     past_edge = [past for _index, _along, past in tips]
     pockets = [cut for key in keys for cut in layout.socket_tab_cuts(key, right) if cut.cuts_wall]
     depths = [cut.across_range[1] - layout.TRAY_GAP_MM for cut in pockets]
-    return [
-        require_figure_for_all(
+    if right:
+        past_figure = require_figure_for_all(
+            "tab tip past the thumb's outer edge",
+            past_edge,
+            DESIGN_RIGHT_TAB_TIP_PAST_THUMB_EDGE_MM,
+            3,
+        )
+    else:
+        past_figure = require_figure_for_all(
             "tab tips past the west edge", past_edge, DESIGN_TAB_TIP_PAST_WEST_EDGE_MM, 3
-        ),
+        )
+    return [
+        past_figure,
         require_figure_for_all(
             "from the cavity wall",
             [layout.TRAY_GAP_MM - past for past in past_edge],
@@ -2240,7 +2211,7 @@ def magnet_slot_opening_problems(opening_across, wall_left):
     or the opening above it too tight for it with
     MAGNET_DROP_IN_CLEARANCE_MM, the slot not open toward the cavity,
     or the cut-back through the wall. The sixth standoff walls off the
-    south 2.165 of the slot at 67.511 along the slant, flush with the
+    south 2.165 of the slot at 48.26 along the slant, flush with the
     block's inner face, so the slot still prints 3.1 across there and the
     magnet still drops in from the top."""
     clearance = MAGNET_DROP_IN_CLEARANCE_MM
@@ -2468,31 +2439,26 @@ def parking_boss_problems(right):
     return problems + ([] if ok else [text]), f"{text}, {tightest.where}"
 
 
-def joint_face_along(y):
-    """How far along the slant the joint face crosses y."""
-    face_point = (layout.slant_x_at_y(y, layout.JOINT_FACE_OUTWARD_MM), y)
-    return dot(vector_between(layout.SLANT_SOUTH_END_MM, face_point), layout.slant_direction())
-
-
 def check_parking_hole(right=False):
-    """The parking hole runs in through the joint face, between the
-    slant's ends, its magnet's seat no wider than the hole itself (one
-    teardrop serves both). The hole is kept clear in plan of the sockets
-    (the thumb's above all) and the standoffs (the one at (114.141,
-    19.765) above all, by their rule, standoff_rules()) at any height,
-    and of the joint's other voids by check_joint_voids(). Its boss may
-    merge with the tray's other plastic, but keeps the ledge's clearance
-    from the sockets."""
+    """The parking hole runs through the thumb's east wall, its magnet's
+    seat no wider than the hole itself (one teardrop serves both). The
+    hole is kept clear in plan of the sockets (the thumb's above all)
+    and the standoffs (the one at (114.141, 19.765) above all, by their
+    rule, standoff_rules()) at any height, and of the joint's other
+    voids by check_joint_voids(). Its boss may merge with the tray's
+    other plastic, but keeps the ledge's clearance from the sockets."""
     centers = layout.MOUNTING_DRILL_CENTERS_MM
     hole = layout.parking_hole_polygon()
-    low_y, high_y = layout.parking_hole_y_range()
-    mouth = (joint_face_along(low_y), joint_face_along(high_y))
-    face_margin = min(mouth[0], layout.slant_length() - mouth[1])
+    east_edge_low_y = 0.0
+    east_edge_high_y = layout.SLANT_SOUTH_END_MM[1]
+    low_y = min(y for _, y in hole)
+    high_y = max(y for _, y in hole)
+    wall_margin = min(low_y - east_edge_low_y, east_edge_high_y - high_y)
     problems = []
-    if face_margin < -TOLERANCE_MM:
+    if wall_margin < -TOLERANCE_MM:
         problems.append(
-            f"the hole's mouth runs from {mouth[0]:.3f} to {mouth[1]:.3f} along the slant, past "
-            "the joint face's ends"
+            f"the hole spans y {low_y:.3f} to {high_y:.3f}, past the thumb's east edge "
+            f"(y {east_edge_low_y} to {east_edge_high_y})"
         )
     if layout.PARKING_MAGNET_SEAT_DIAMETER_MM > layout.PARKING_HOLE_DIAMETER_MM + TOLERANCE_MM:
         problems.append(
@@ -2515,10 +2481,9 @@ def check_parking_hole(right=False):
     boss_problems, boss_text = parking_boss_problems(right)
     fail_on(problems + boss_problems, f"{half_label(right)}the parking hole or its boss collides")
     return (
-        f"parking:   {half_label(right)}hole {layout.PARKING_HOLE_DIAMETER_MM:.1f} across in "
-        f"through the joint face, its mouth from {mouth[0]:.3f} to {mouth[1]:.3f} along the "
-        f"slant, clear of the sockets by {from_sockets} and the standoffs by {from_standoffs}, "
-        f"{boss_text}"
+        f"parking:   {half_label(right)}hole {layout.PARKING_HOLE_DIAMETER_MM:.1f} across through "
+        f"the thumb's east wall ({wall_margin:.3f} from its ends), clear of the sockets by "
+        f"{from_sockets} and the standoffs by {from_standoffs}, {boss_text}"
     )
 
 
