@@ -76,7 +76,7 @@ What to check and report:
 
 - Each socket in its pocket before the backing goes on: good is a light push, flat against the frame, and it stays in when the frame is turned over and tapped. Loose means it falls out or rattles, too tight means it needs a tool or will not sit flat.
 - The backing: it sits flat on every boss without rocking and without pushing any socket out of its pocket.
-- A switch pressed into each socket: the socket must not move or tilt, and the switch sits flat on the frame without wobbling sideways. Report every socket that gives, especially the thumb's (no boss near it), S100's, S130's and the bottom row's, and on the right half S122's and S150's (no boss north of them).
+- A switch pressed into each socket: the socket must not move or tilt, and the switch sits flat on the frame without wobbling sideways. Report every socket that gives, especially the thumb's (no boss near it), S100's, S130's and the bottom row's, and S110's and S140's on the left half and S122's and S150's on the right (no boss north of them).
 - In the tray: the frame drops in by hand and sits flat on all six standoffs, the walls touch nothing, and nothing under the backing rubs. The thumb switch's center post and pegs and S150's peg by the joint may hit the tray's parking boss and upper dowel boss (doc/work/014-hand-wired-frame.md): report whether those switches seat fully. With a tray that has the shelves under the backing's edges (DESIGN.md, Tray), the frame must still drop in and sit flat on all six standoffs without rocking: if it does not, the backing stands on a shelf, so report where.
 - Along the south edge and the outer edge (the west edge on the left half, the east one on the right), press the keys over the backing's edge: the backing should give less than before and stop on the shelf under it. Report each stretch where it still gives as much as before.
 - Report each of these as good, loose or tight, with the key names.
@@ -147,5 +147,5 @@ For both halves:
 - 8 supermagnete S-08-03-N disc magnets for the joint, 2 S-04-02-N for the pin parking.
 - 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
 - M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
-- For the hand-wired frame, 56 M2 x 3 heat-set inserts and 56 M2 x 4 screws (28 for each half's backing), their heads flat underneath and at most 4.0 across and 1.5 tall.
+- For the hand-wired frame, 45 M2 x 3 heat-set inserts and 45 M2 x 4 screws (22 for the left half's backing, 23 for the right's), their heads flat underneath and at most 4.0 across and 1.5 tall.
 - 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.

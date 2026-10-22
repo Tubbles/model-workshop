@@ -21,7 +21,8 @@ The frame's bosses go as the search that placed FRAME_BOSS_CENTERS_MM
 did (boss_seeds()): every key's own place and the bottom row's corners
 each solved on its own, a key's corners its Alternatives, the answers
 merged into the first place nearer than the bosses' spacing, and the
-places solved again together under the pair rule.
+places solved again together under the pair rule. The seeds of the
+places the user took out since (TAKEN_OUT_BOSS_SEEDS) are left out.
 
 The standoffs' rules do not depend on where the other standoffs are,
 nor the bosses' on where the other bosses are, so the part being placed
@@ -107,10 +108,34 @@ STANDOFF_WINDOW = 8.0  # around the target
 # keeps the rules within BOSS_REACH of it. BOSS_REACH and the merging of
 # places nearer than the bosses' spacing are tmp/frame015/search2.py's,
 # whose run on the committed scripts (tmp/tray_move/boss_search.py)
-# gave FRAME_BOSS_CENTERS_MM.
+# gave FRAME_BOSS_CENTERS_MM, with the places the user took out below.
 BOSS_NORTH_OFFSET = (-2.8, 4.0)
 BOSS_CORNER_OFFSETS = (("west", (-9.525, 3.1)), ("east", (9.525, 3.1)))
 BOSS_REACH = 3.0
+
+# The search's places the user took out (doc/work/021: 50 M2 x 4 screws
+# on hand against the 56 the two backings took), per half, each as the
+# labels of the seeds whose answers merged into it, which boss_seeds()
+# leaves out so that the search finds the bosses that stay. The comments
+# give the work item's numbers (FRAME_BOSS_CENTERS_MM's order before it)
+# and the places.
+TAKEN_OUT_BOSS_SEEDS = {
+    False: (
+        ("S103's east corner", "S113's west corner"),  # L4 (18.574, 12.307)
+        ("S110 north",),  # L9 (25.049, 70.607)
+        ("S123's west corner",),  # L10 (37.624, 17.070)
+        ("S133's east corner", "S143's west corner"),  # L18 (75.724, 19.451)
+        ("S140 north",),  # L23 (82.199, 75.370)
+        ("S143's east corner", "S153's west corner"),  # L24 (94.774, 17.070)
+    ),
+    True: (
+        ("S103's east corner", "S113's west corner"),  # R4 (18.574, 12.307)
+        ("S113's east corner", "S123's west corner"),  # R10 (37.624, 12.307)
+        ("S123's east corner", "S133's west corner"),  # R15 (56.416, 17.115)
+        ("S133's east corner", "S143's west corner"),  # R20 (75.724, 19.451)
+        ("S143's east corner", "S153's west corner"),  # R25 (94.774, 17.070)
+    ),
+}
 
 # A plan point over the west strip's insulator (layout.part_envelopes()),
 # for the screw head lifted in z: its middle.
@@ -282,8 +307,10 @@ def bottom_row():
 def boss_seeds(right):
     """(label, target, fallback (label, target) or None) in the order
     the frame's search took them: each key's own place, else each of its
-    north corners, then the bottom row's corners."""
+    north corners, then the bottom row's corners, less the seeds of the
+    places the user took out (TAKEN_OUT_BOSS_SEEDS)."""
     sign = -1.0 if right else 1.0
+    taken_out = {label for labels in TAKEN_OUT_BOSS_SEEDS[right] for label in labels}
     seeds = []
     for key, (x, y) in layout.KEY_CENTERS_MM.items():
         north = (x + sign * BOSS_NORTH_OFFSET[0], y + BOSS_NORTH_OFFSET[1])
@@ -293,7 +320,7 @@ def boss_seeds(right):
                   for side, corner in corners]
         if key in bottom_row():
             seeds += [(f"{key}'s {side} corner", corner, None) for side, corner in corners]
-    return seeds
+    return [seed for seed in seeds if seed[0] not in taken_out]
 
 
 def boss_part(name, gathered, target, context):
