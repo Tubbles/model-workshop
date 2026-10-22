@@ -6,10 +6,10 @@ An arm that holds a Raspberry Pi Camera Module 2 over a stock Ender 3 V2, lookin
 
 `model/camera-arm/scripts/export_camera_arm.py` writes four STLs, each lying on the bed the way it prints, without support:
 
-- `Camera_Arm.stl`, the arm, on its side: its profile, in the vertical plane of the camera's viewing direction, lies on the bed, and the part is built up from there along the case's width.
-- `Camera_T_Nut.stl`, the T-nut, with the face that bears on the slot's lips on the bed and the pocket for its M3 nut opening upward.
-- `Camera_Case_Back.stl`, the back shell, its back face on the bed.
-- `Camera_Case_Front.stl`, the front shell, its front face with the lens window on the bed.
+- `camera-arm.stl`, the arm, on its side: its profile, in the vertical plane of the camera's viewing direction, lies on the bed, and the part is built up from there along the case's width.
+- `camera-arm-t-nut.stl`, the T-nut, with the face that bears on the slot's lips on the bed and the pocket for its M3 nut opening upward.
+- `camera-arm-case-back.stl`, the back shell, its back face on the bed.
+- `camera-arm-case-front.stl`, the front shell, its front face with the lens window on the bed.
 
 CI runs the export from this repository's root:
 

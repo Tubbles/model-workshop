@@ -2,7 +2,7 @@
 
 The 3D printed parts of [kbdkid4](https://github.com/Tubbles/kbdkid4), a split wireless keyboard designed in [LibrePCB](https://librepcb.org): a tray, a switch plate, a PCB replica and a carrying case. The keyboard's design lives in the kbdkid4 repository, and these scripts build the parts from its board: the STEP model that kbdkid4's latest successful CI run on main regenerated with librepcb-cli, and the board files of that run's commit, `boards/boards.lp` with the default board it lists and `circuit/circuit.lp`. They read the board files relative to the working directory, so they run inside a kbdkid4 checkout.
 
-CI runs each export with the commands below, from this repository's root, after `.github/actions/kbdkid4-board` has checked out that run's commit at `external/kbdkid4` and downloaded its STEP to `external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step`, and uploads each part as an artifact named after this repository's commit. A push to kbdkid4 does not start this repository's CI, so after a board change, once kbdkid4's own CI run has passed, run this repository's workflow by hand from the Actions tab. kbdkid4's artifacts expire after GitHub's retention period, so after a long quiet spell rerun kbdkid4's CI first (it can be started by hand too).
+CI runs each export with the commands below, from this repository's root, after `.github/actions/kbdkid4-board` has checked out that run's commit at `external/kbdkid4` and downloaded its STEP to `external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step`, and puts every part in one artifact named after this repository's commit, `kbdkid4-<short commit hash>` (the root [README.md](../../README.md), Getting the STLs). A push to kbdkid4 does not start this repository's CI, so after a board change, once kbdkid4's own CI run has passed, run this repository's workflow by hand from the Actions tab. kbdkid4's artifacts expire after GitHub's retention period, so after a long quiet spell rerun kbdkid4's CI first (it can be started by hand too).
 
 ## 3D printed tray
 
@@ -13,7 +13,7 @@ CI runs each export with the commands below, from this repository's root, after 
 
 The parameters (gap, wall, floor, depth, standoff and ledge dimensions) and their defaults are listed in the script's usage header and constants block (gap, wall, floor, depth and standoff height in `model/kbdkid4/scripts/tray_shape.py`).
 
-CI exports both halves as the `kbdkid4-tray-<short commit hash>` artifact: `kbdkid4_v1_Tray_Left.stl` as described, and `kbdkid4_v1_Tray_Right.stl` built with the board's other side up (the word `right`), where the right half's switches and hotswap sockets sit, then turned over so it prints opening-up. That is not a mirror of the left tray: the right half's sockets do not reach the board edge, so that tray has no ledge notches, and the ledge reliefs (the ledge cut away beside any underside body, the nice!nano, a hotswap socket or the battery connector, that comes within `relief_clearance` of it, so a populated board seats despite print swelling) follow that half's parts. For the same reason the left tray's wall is pocketed where the west socket tabs reach it, leaving them 0.5 mm from it, and a standoff that any of those bodies comes within 1 mm of gets a flat on that side. The nice!nano's depth there is measured, not taken from its package model (doc/components.md, section 1, Top side parts).
+CI exports both halves: `kbdkid4-tray-left.stl` as described, and `kbdkid4-tray-right.stl` built with the board's other side up (the word `right`), where the right half's switches and hotswap sockets sit, then turned over so it prints opening-up. That is not a mirror of the left tray: the right half's sockets do not reach the board edge, so that tray has no ledge notches, and the ledge reliefs (the ledge cut away beside any underside body, the nice!nano, a hotswap socket or the battery connector, that comes within `relief_clearance` of it, so a populated board seats despite print swelling) follow that half's parts. For the same reason the left tray's wall is pocketed where the west socket tabs reach it, leaving them 0.5 mm from it, and a standoff that any of those bodies comes within 1 mm of gets a flat on that side. The nice!nano's depth there is measured, not taken from its package model (doc/components.md, section 1, Top side parts).
 
 ## 3D printed switch plate
 
@@ -22,7 +22,7 @@ CI exports both halves as the `kbdkid4-tray-<short commit hash>` artifact: `kbdk
     docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
         freecadcmd /work/model/kbdkid4/scripts/export_plate.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step /work/resources/kbdkid3-plate-left.FCStd /work/plate.stl [right] [covered] [pattern_shift=0.25] [side_shave=0.1] [hole_diameter=4.17]
 
-CI exports both halves, plain and covered, as the `kbdkid4-plate-<short commit hash>` artifact: `kbdkid4_v1_Plate_Left.stl`, `kbdkid4_v1_Plate_Right.stl` mirrored across the board's center line (the word `right`), `kbdkid4_v1_Plate_Left_Covered.stl` and `kbdkid4_v1_Plate_Right_Covered.stl`.
+CI exports both halves, plain and covered: `kbdkid4-plate-left.stl`, `kbdkid4-plate-right.stl` mirrored across the board's center line (the word `right`), `kbdkid4-plate-covered-left.stl` and `kbdkid4-plate-covered-right.stl`.
 
 ## 3D printed PCB replica
 
@@ -31,7 +31,7 @@ CI exports both halves, plain and covered, as the `kbdkid4-plate-<short commit h
     docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
         freecadcmd /work/model/kbdkid4/scripts/export_pcb.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step /work/pcb.stl [right] [pull_in=0.2] [thickness=1.6]
 
-CI uploads both halves as the `kbdkid4-pcb-<short commit hash>` artifact: `kbdkid4_v1_Pcb_Left.stl`, and `kbdkid4_v1_Pcb_Right.stl` mirrored across the board's center line (the word `right`). A bare board turned over would be its own mirror image, but a print is not: its bed side and its top side come out with different surfaces.
+CI exports both halves: `kbdkid4-pcb-mock-left.stl`, and `kbdkid4-pcb-mock-right.stl` mirrored across the board's center line (the word `right`). A bare board turned over would be its own mirror image, but a print is not: its bed side and its top side come out with different surfaces.
 
 ## 3D printed carrying case
 
@@ -48,4 +48,4 @@ The case assumes a 1.0 mm rubber sole glued under each tray, a half 24 mm tall f
     docker run --rm -v "$PWD":/work -w /work/external/kbdkid4 freecad-headless \
         freecadcmd /work/model/kbdkid4/scripts/export_case.py --pass /work/external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step /work/case.stl [right]
 
-Without `right` it exports the left half's shell, with `right` the right half's. Both come out floor down and opening up, so they print without supports. CI uploads both as the `kbdkid4-case-<short commit hash>` artifact: `kbdkid4_v1_Case_Left.stl` and `kbdkid4_v1_Case_Right.stl`.
+Without `right` it exports the left half's shell, with `right` the right half's. Both come out floor down and opening up, so they print without supports. CI exports both as `kbdkid4-case-left.stl` and `kbdkid4-case-right.stl`.

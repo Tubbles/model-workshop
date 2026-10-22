@@ -19,10 +19,11 @@ for the freecadcmd quirks that shape the invocation):
 
     freecadcmd model/camera-arm/scripts/export_camera_arm.py --pass <output directory>
 
-and writes Camera_Arm.stl, Camera_T_Nut.stl, Camera_Case_Back.stl and
-Camera_Case_Front.stl there, each lying on z = 0 the way it prints,
-without support. It also prints the fits, the clearances to the
-printer and what part of the bed the camera sees over the Y travel.
+and writes camera-arm.stl, camera-arm-t-nut.stl,
+camera-arm-case-back.stl and camera-arm-case-front.stl there, each
+lying on z = 0 the way it prints, without support. It also prints the
+fits, the clearances to the printer and what part of the bed the
+camera sees over the Y travel.
 
 Assembly order: fix the arm to the rail before the case goes on. The
 back shell sits over the M3 bolt's axis, so once the case is on, only
@@ -258,10 +259,10 @@ usage: freecadcmd model/camera-arm/scripts/export_camera_arm.py --pass <output d
 """
 
 PART_FILE_NAMES = {
-    "arm": "Camera_Arm.stl",
-    "t_nut": "Camera_T_Nut.stl",
-    "case_back": "Camera_Case_Back.stl",
-    "case_front": "Camera_Case_Front.stl",
+    "arm": "camera-arm.stl",
+    "t_nut": "camera-arm-t-nut.stl",
+    "case_back": "camera-arm-case-back.stl",
+    "case_front": "camera-arm-case-front.stl",
 }
 
 

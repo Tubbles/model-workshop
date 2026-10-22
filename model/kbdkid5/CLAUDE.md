@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code working on kbdkid5, in `model/kbdkid5/`. Read its [README.md](README.md) (the parts, how they print and go together, the commands and the CI artifacts) and [DESIGN.md](DESIGN.md) (the design with every figure) first, since this file does not repeat them. The workshop's layout, workflow and conventions are in the root [CLAUDE.md](../../CLAUDE.md).
+Guidance for Claude Code working on kbdkid5, in `model/kbdkid5/`. Read its [README.md](README.md) (the parts, how they print and go together, the commands and the CI artifact) and [DESIGN.md](DESIGN.md) (the design with every figure) first, since this file does not repeat them. The workshop's layout, workflow and conventions are in the root [CLAUDE.md](../../CLAUDE.md).
 
 ## Scripts
 
