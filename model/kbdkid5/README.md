@@ -77,12 +77,13 @@ What to check and report:
 - Each socket in its pocket before the backing goes on: good is a light push, flat against the frame, and it stays in when the frame is turned over and tapped. Loose means it falls out or rattles, too tight means it needs a tool or will not sit flat.
 - The backing: it sits flat on every boss without rocking and without pushing any socket out of its pocket.
 - A switch pressed into each socket: the socket must not move or tilt, and the switch sits flat on the frame without wobbling sideways. Report every socket that gives, especially the thumb's (no boss near it), S100's, S130's and the bottom row's, and on the right half S122's and S150's (no boss north of them).
-- In the tray: the frame drops in by hand and sits flat on all six standoffs, the walls touch nothing, and nothing under the backing rubs. The thumb switch's center post and pegs and S150's peg by the joint may hit the tray's parking boss and upper dowel boss (doc/work/014-hand-wired-frame.md): report whether those switches seat fully.
+- In the tray: the frame drops in by hand and sits flat on all six standoffs, the walls touch nothing, and nothing under the backing rubs. The thumb switch's center post and pegs and S150's peg by the joint may hit the tray's parking boss and upper dowel boss (doc/work/014-hand-wired-frame.md): report whether those switches seat fully. With a tray that has the shelves under the backing's edges (DESIGN.md, Tray), the frame must still drop in and sit flat on all six standoffs without rocking: if it does not, the backing stands on a shelf, so report where.
+- Along the south edge and the outer edge (the west edge on the left half, the east one on the right), press the keys over the backing's edge: the backing should give less than before and stop on the shelf under it. Report each stretch where it still gives as much as before.
 - Report each of these as good, loose or tight, with the key names.
 
 ## 3D printed tray
 
-`model/kbdkid5/scripts/export_tray.py` exports a half's tray: walls, floor and the ledge the PCB rests on, standoffs bored for M2 heat-set inserts at the mounting drills, the cuts that clear the switches' hotswap sockets, the joint along the slanted edge, and the mounts for the parts that are not on the PCB (DESIGN.md: Tray, Parts in the tray, The joint). The tray is written floor on the bed.
+`model/kbdkid5/scripts/export_tray.py` exports a half's tray: walls, floor and the ledge the PCB rests on, the shelves along the south and outer edges that catch the hand-wired frame's backing, standoffs bored for M2 heat-set inserts at the mounting drills, the cuts that clear the switches' hotswap sockets, the joint along the slanted edge, and the mounts for the parts that are not on the PCB (DESIGN.md: Tray, Parts in the tray, The joint). The tray is written floor on the bed.
 
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_tray.py --pass tray.stl [right] [pin_hole_diameter=<mm>] \

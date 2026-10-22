@@ -17,7 +17,9 @@ build_tray() builds a half's tray shell and joint (work item 003) from
 layout.py, kbdkid4's export_tray.py on the layout instead of a STEP.
 First the walls and floor, every corner bent with the same concentric
 pair of radii, the ledge with the joint block in its place along the
-slant, the standoffs bored for M2 heat-set inserts, and the dowel pin
+slant, the shelves on the ledge's face under the edges of the
+hand-wired frame's backing (work item 020), notched for its screw
+heads, the standoffs bored for M2 heat-set inserts, and the dowel pin
 bosses and the parking hole's boss, up to the PCB's underside, with the
 fills that close the crevices beside them. Then the cuts, all exactly as
 layout.py gives them: the ledge cut-aways layout.py declares for the
@@ -313,6 +315,8 @@ class Tray:
     fits: layout.MountFits  # the mounts' fits the tray was built with
     mounts: list  # (label, added volume) of the mounts' bodies
     bed_area: float  # the floor's underside, closed
+    shelves: float  # the volume the shelves under the backing's edges added
+    shelf_notches: tuple  # their notches for the backing's screw heads (layout.TrayCut)
 
 
 def layout_polygon_wire(polygon, z):
@@ -415,6 +419,74 @@ def add_ledge(tray, corner_radius):
     ) * LEDGE_TOP_Z_MM
     require_volume("the ledge and the joint block", result.Volume - tray.Volume, nominal, 0.05)
     return result
+
+
+def backing_shelf_body(corner_radius, right):
+    """The shelves under the backing's edges (layout.py's
+    backing_shelf_polygon()) with the ledge and the walls behind them, up
+    to the shelves' top: the outside less the well inside the shelves'
+    face, its corners rounded as add_ledge() rounds the ledge's well
+    (sharp where they have run out of radius, 2.13 at every inward
+    corner), less the notches for the half's backing screw heads. Fused
+    onto the tray it adds the shelves and, below their top, fills the
+    ledge's rounded corners beside them."""
+    top = layout.BACKING_SHELF_TOP_Z_MM
+    well = rounded_prism(
+        layout.backing_shelf_polygon(),
+        0.0,
+        top + CUT_EXTRA_MM,
+        corner_radius - DEFAULT_WALL_MM - DEFAULT_LEDGE_WIDTH_MM,
+        corner_radius + DEFAULT_LEDGE_WIDTH_MM,
+    )
+    body = outer_prism(top, corner_radius).cut(well)
+    notches = [
+        plan_prism(layout.tray_cut_polygon(notch), FLOOR_UNDERSIDE_Z_MM - CUT_EXTRA_MM,
+                   top + CUT_EXTRA_MM)
+        for notch in layout.backing_shelf_notches(right)
+    ]
+    if notches:
+        body = body.cut(Part.makeCompound(notches))
+    return body
+
+
+def notch_area_in_shelf(notch):
+    """The plan area a shelf's notch takes from the shelf: from the
+    shelves' face to the notch's far side, over its length."""
+    along_low, along_high = notch.along_range
+    depth = notch.across_range[1] + layout.backing_shelf_face_reach()
+    return (along_high - along_low) * depth
+
+
+def add_backing_shelves(tray, corner_radius, right):
+    """Fuse the shelves (backing_shelf_body()) and check them. They add
+    their sharp pieces' volume less the notches' within 1%: the rounds
+    of their face take off as much as they fill in the ledge's rounded
+    corners beside them, but for the round where the outer edge's shelf
+    starts. Each piece is solid in its middle below the top and open
+    over it, and each notch is open. Returns (tray, added volume)."""
+    top = layout.BACKING_SHELF_TOP_Z_MM
+    notches = layout.backing_shelf_notches(right)
+    result = tray.fuse(backing_shelf_body(corner_radius, right))
+    require_one_valid_solid(result, "fusing the shelves")
+    pieces = layout.backing_shelf_pieces()
+    area = (sum(layout.polygon_signed_area(piece) for _label, _index, piece in pieces)
+            - sum(notch_area_in_shelf(notch) for notch in notches))
+    added = result.Volume - tray.Volume
+    require_volume("the shelves", added, area * top, 0.01)
+    for label, _index, piece in pieces:
+        x = sum(point[0] for point in piece) / len(piece)
+        y = sum(point[1] for point in piece) / len(piece)
+        if not is_solid_at(result, App.Vector(x, y, top / 2.0)):
+            raise SystemExit(f"error: the {label} is not solid in its middle")
+        if is_solid_at(result, App.Vector(x, y, top + PROBE_OFFSET_MM)):
+            raise SystemExit(f"error: the {label} is not open over its top")
+    for notch in notches:
+        along = sum(notch.along_range) / 2.0
+        across = (notch.across_range[1] - layout.backing_shelf_face_reach()) / 2.0
+        x, y = layout.outline_edge_point(notch.edge_index, along, across)
+        if is_solid_at(result, App.Vector(x, y, top / 2.0)):
+            raise SystemExit(f"error: the {notch.label} is not open")
+    return result, added
 
 
 def standoff_area_in_joint_block(center):
@@ -1505,6 +1577,7 @@ def build_tray(right=False, pin_hole_diameter=None, fits=None):
     corner_radius = tray_corner_radius(outer_wire, DEFAULT_GAP_MM, DEFAULT_WALL_MM)
     tray, cavity = build_walls(corner_radius)
     tray = add_ledge(tray, corner_radius)
+    tray, shelves = add_backing_shelves(tray, corner_radius, right)
     tray = add_standoffs(tray)
     tray = add_bosses(tray, corner_radius, right)
     cuts = []
@@ -1546,6 +1619,8 @@ def build_tray(right=False, pin_hole_diameter=None, fits=None):
         fits,
         mounts,
         bed_area,
+        shelves,
+        layout.backing_shelf_notches(right),
     )
 
 

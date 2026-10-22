@@ -1099,7 +1099,8 @@ def socket_standoff_flat_declarations(right=False):
 
 @dataclass(frozen=True)
 class TrayCut:
-    """A box cut out of the ledge, and with cuts_wall out of the wall's
+    """A box cut out of the ledge (or a shelf's notch,
+    backing_shelf_notches()), and with cuts_wall out of the wall's
     inner face too: in plan the rectangle over along_range and
     across_range in outline edge edge_index's frame
     (tray_cut_polygon()), over z_range."""
@@ -3490,3 +3491,161 @@ def frame_wall_outer_polygon(key, right=False):
         points = [mirror_for_right_half(point) for point in points]
     outline = counter_clockwise(points)
     return offset_polygon(outline, half_fit_gap(0.0, FRAME_POCKET_FIT_MM) + TRAY_WALL_MM)
+
+
+# The shelves under the backing's edges (work item 020, DESIGN.md, Tray,
+# Shelves): a step on the ledge's inner face along the south edge, all
+# its steps, and along the outer edge (x 0, the right half's east edge
+# once mirrored), on both halves, to catch the hand-wired frame's
+# backing where it sags. A shelf stands from the floor up to
+# BACKING_SHELF_TOP_Z_MM, solid like the ledge so it prints without
+# support, and reaches BACKING_SHELF_REACH_MM in from the ledge's face,
+# under the backing's edge, which lies FRAME_TRAY_CLEARANCE_MM inside
+# that face. Its top stays under the backing's underside as printed even
+# where it rises as an up-facing bottom does, so the backing only comes
+# down onto it and is never held up by it, which would lift the frame
+# off its standoffs (check_layout.py). It keeps FRAME_TRAY_CLEARANCE_MM
+# in plan from every backing screw head it would reach, the heads' own
+# rule from the tray, by a notch in its face (backing_shelf_notches()),
+# and the outer edge's shelf stops BACKING_SHELF_FROM_PARTS_MM short of
+# the power switch at that edge's north end
+# (backing_shelf_outer_edge_start()). The slant, where the magnet slots
+# open in the joint block's face, and the north edges, taken by the
+# parts, get none (doc/work/020-backing-shelves.md). The shelves' face
+# is sharp-cornered here. tray_shape.py rounds its inward corners as it
+# rounds the ledge's.
+BACKING_SHELF_TOP_Z_MM = 6.0
+BACKING_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
+BACKING_SHELF_FROM_PARTS_MM = 0.5
+BACKING_SHELF_OUTER_EDGE_INDEX = len(OUTLINE_VERTICES_MM) - 1  # x 0, run from its north end
+# The south edge's runs and the steps between them, from the south-west
+# corner to the thumb's south-east corner.
+BACKING_SHELF_SOUTH_EDGE_INDICES = tuple(
+    range(OUTLINE_VERTICES_MM.index((SLANT_SOUTH_END_MM[0], 0.0)))
+)
+BACKING_SHELF_EDGE_INDICES = (BACKING_SHELF_OUTER_EDGE_INDEX,) + BACKING_SHELF_SOUTH_EDGE_INDICES
+
+
+def backing_shelf_face_reach():
+    """How far the shelves' face lies inside the outline."""
+    return ledge_reach() + BACKING_SHELF_REACH_MM
+
+
+def backing_shelf_face_corners():
+    """The outline moved in to the shelves' face along their edges and
+    to the ledge's inner face (the joint block's along the slant)
+    elsewhere, sharp-cornered: corner i where edges i - 1 and i meet, the
+    outer edge's shelf running on to the north edge."""
+    distances = list(outline_offset_distances(
+        TRAY_GAP_MM - TRAY_LEDGE_WIDTH_MM, JOINT_FACE_OUTWARD_MM - JOINT_BLOCK_THICKNESS_MM))
+    for index in BACKING_SHELF_EDGE_INDICES:
+        distances[index] = -backing_shelf_face_reach()
+    return offset_polygon(OUTLINE_VERTICES_MM, distances)
+
+
+def power_switch_body_going_in():
+    """The power switch's body over the path it slides north along into
+    its cradle, the knob going first through its slot (DESIGN.md): its
+    envelope run south by the knob's length."""
+    body = POWER_SWITCH_BODY
+    return replace(body, piece="body going in",
+                   y_range=(body.y_range[0] - POWER_SWITCH_KNOB_LENGTH_MM, body.y_range[1]))
+
+
+def backing_shelf_outer_edge_obstacles():
+    """What of the power switch the outer edge's shelf stops short of:
+    its body going in, the cradle with the retainer's socket, and the
+    retainer."""
+    return ((power_switch_body_going_in(),) + power_switch_cradle_boxes()
+            + (power_switch_retainer_envelope(),))
+
+
+def backing_shelf_outer_edge_start():
+    """How far along the outer edge, from its north end, its shelf
+    starts: BACKING_SHELF_FROM_PARTS_MM south of the southmost of the
+    power switch's pieces that come within that of the shelf's face. The
+    edge runs south along x 0, the switch east of it."""
+    index = BACKING_SHELF_OUTER_EDGE_INDEX
+    face_x = outline_edge_point(index, 0.0, -backing_shelf_face_reach())[0]
+    south = min(piece.y_range[0] for piece in backing_shelf_outer_edge_obstacles()
+                if piece.x_range[0] < face_x + BACKING_SHELF_FROM_PARTS_MM)
+    return outline_edge_coordinates((face_x, south - BACKING_SHELF_FROM_PARTS_MM), index)[0]
+
+
+def backing_shelf_pieces():
+    """(label, outline edge index, counter-clockwise convex
+    quadrilateral) of the shelf along each of its edges, before the
+    notches: from the ledge's inner face to the shelves' face, the outer
+    edge's from where it starts."""
+    count = len(OUTLINE_VERTICES_MM)
+    ledge, face = ledge_inner_polygon(), backing_shelf_face_corners()
+    pieces = []
+    for index in BACKING_SHELF_EDGE_INDICES:
+        start_ledge, start_face = ledge[index], face[index]
+        if index == BACKING_SHELF_OUTER_EDGE_INDEX:
+            along = backing_shelf_outer_edge_start()
+            start_ledge = outline_edge_point(index, along, -ledge_reach())
+            start_face = outline_edge_point(index, along, -backing_shelf_face_reach())
+        end = (index + 1) % count
+        pieces.append((f"shelf along outline edge {index}", index,
+                       (start_ledge, ledge[end], face[end], start_face)))
+    return pieces
+
+
+def backing_shelf_polygon():
+    """The shelves' face as tray_shape.py builds the shelves from it,
+    sharp-cornered and counter-clockwise: backing_shelf_face_corners()
+    with the outer edge's shelf stepping back out to the ledge's inner
+    face where it starts."""
+    index = BACKING_SHELF_OUTER_EDGE_INDEX
+    along = backing_shelf_outer_edge_start()
+    step = (ledge_inner_polygon()[index], outline_edge_point(index, along, -ledge_reach()),
+            outline_edge_point(index, along, -backing_shelf_face_reach()))
+    face = backing_shelf_face_corners()
+    return face[:index] + step + face[index + 1:]
+
+
+def step_past(value, up):
+    """The first 0.001 step past the value, up or down, the next one
+    where the value lies on a step but for float noise."""
+    steps = round(1000.0 * value, 6)
+    return (math.floor(steps) + 1 if up else math.ceil(steps) - 1) / 1000.0
+
+
+def backing_shelf_notch(center, index, radius):
+    """The notch (a TrayCut) in the shelf along outline edge `index`
+    that clears the circle of the radius at center: over the part of the
+    circle past the shelves' face, across from LEDGE_CUT_OVERSHOOT_MM in
+    front of the face to the circle's far side, from the floor up
+    through the shelf's top. Its ends and its far side lie on the 0.001
+    steps past the circle's (step_past()), as this module states its
+    figures, so the circle clears the shelf with up to that to spare. A
+    ValueError where the circle reaches the ledge, which a notch in the
+    shelf cannot clear."""
+    along, across = outline_edge_coordinates(center, index)
+    face = -backing_shelf_face_reach()
+    if across + radius >= -ledge_reach():
+        raise ValueError(f"the circle of {radius} at {center} reaches the ledge along outline "
+                         f"edge {index}, which a notch in its shelf cannot clear")
+    face_past_center = face - across
+    half_length = (math.sqrt(radius**2 - face_past_center**2) if face_past_center > 0.0
+                   else radius)
+    return TrayCut(f"shelf notch for the head at {center}", index,
+                   (step_past(along - half_length, up=False),
+                    step_past(along + half_length, up=True)),
+                   (face - LEDGE_CUT_OVERSHOOT_MM, step_past(across + radius, up=True)),
+                   (0.0, BACKING_SHELF_TOP_Z_MM))
+
+
+def backing_shelf_notches(right=False):
+    """The notches (TrayCut) that keep the shelves FRAME_TRAY_CLEARANCE_MM
+    in plan from every screw head of the half's backing, one for each
+    head and shelf piece it would come closer to."""
+    radius = FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0 + FRAME_TRAY_CLEARANCE_MM
+    notches = []
+    for center in frame_boss_centers(right):
+        for _label, index, piece in backing_shelf_pieces():
+            distance, _nearest = nearest_polygon_point(center, piece)
+            if distance < radius or inside_convex_polygon(center, piece):
+                notches.append(backing_shelf_notch(center, index, radius))
+    return tuple(notches)

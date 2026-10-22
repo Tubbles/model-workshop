@@ -1,15 +1,19 @@
 """Export a half's 3D-printable tray shell and joint (STL) from the layout.
 
 tray_shape.py builds the tray (see its docstring): walls, floor, ledge
-and joint block, standoffs bored for M2 heat-set inserts, the dowel pin
-and parking bosses with their fills, the ledge cut-aways and the
-sockets' cuts as layout.py gives them, the parts' mounts, the magnet
+and joint block, the shelves on the ledge's face, standoffs bored for
+M2 heat-set inserts, the dowel pin and parking bosses with their
+fills, the ledge cut-aways and the sockets' cuts as layout.py gives
+them, the parts' mounts, the magnet
 slots, the flat-topped teardrop pin holes and parking hole, and the
 joint face's bottom chamfer. This script mirrors it for the right half,
 measures it and prints what it found against DESIGN.md's figures, which
 it transcribes itself (the DESIGN_* constants below), never against the
 constants the tray is built from: the outside's size, the walls, the
-floor, the ledge and the joint block, the standoffs and their bores
+floor, the ledge and the joint block, the shelves under the hand-wired
+frame's backing (each straight run of their face, its height and
+reach, and the notches for the backing's screw heads), the standoffs
+and their bores
 (the one merged with the joint block, its bore's plastic toward the
 magnet slot cut through it), the joint face's angle, place and bottom
 chamfer, the pin holes (depth, diameter, the plastic behind and over
@@ -130,6 +134,23 @@ DESIGN_SOCKET_BOTTOM_Z_MM = 7.48
 # The least any socket keeps from the tray as cut: the ledge relief's
 # and the tab pocket's clearance.
 DESIGN_LEAST_SOCKET_CLEARANCE_MM = 0.5
+# The shelves under the hand-wired frame's backing's edges (DESIGN.md,
+# "Tray", Shelves), the left half's: their face as modelled, sharp, from
+# the outer edge's shelf's start at the ledge's face to the thumb's
+# ledge, running as the outline does, the cavity on its left. Every
+# inward corner (a right turn) is rounded as the ledge's are, and each
+# end meets the ledge's face square.
+DESIGN_SHELF_FACE_MM = (
+    (0.6, 63.386), (3.6, 63.386), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
+    (53.074, 10.744), (79.324, 10.744), (79.324, 8.363), (98.374, 8.363), (98.374, 5.981),
+    (117.424, 5.981), (117.424, 3.6), (131.798, 3.6),
+)
+DESIGN_SHELF_TOP_Z_MM = 6.0
+DESIGN_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
+DESIGN_SHELF_ROUND_MM = 2.13  # the ledge's inner face's, wherever the outline steps in
+# Per half, the notches for the backing's screw heads: (count, deep,
+# long).
+DESIGN_SHELF_NOTCHES = {False: (3, 0.102, 1.408), True: (0, None, None)}
 # The parts' mounts (DESIGN.md, "Parts in the tray"), the left half's,
 # placed on either half by half_point(). The nice!nano's mounts follow
 # the board, so they are given from its edges, and the board from its
@@ -231,8 +252,9 @@ DESIGN_PCB_CONNECTOR_ZONE_MM = ((20.0, 37.0), (65.5, 74.5))
 # above the ledge and clear of every cut. The slant's is its middle,
 # between two magnet slots. The ledge is measured at the west one.
 WALL_PROBE_Z_MM = 10.0
-# Under the ledge's top.
-LEDGE_PROBE_Z_MM = 6.0
+# Under the ledge's top, over the shelves' and under the tab notches'
+# bottoms (z 6.5).
+LEDGE_PROBE_Z_MM = 6.25
 FLOOR_PROBE_MM = (60.0, 40.0)  # open floor, clear of every standoff and boss
 SLANT_PROBE_ALONG_MM = 31.25
 
@@ -520,6 +542,127 @@ def measure_ledge(tray, right, figures):
         figures.check("top z", top, DESIGN_LEDGE_TOP_Z_MM, 1),
     ]
     return f"ledge:      {where}: {', '.join(texts)}"
+
+
+def shelf_segments():
+    """(start, length, unit direction, unit normal toward the cavity,
+    (inward at its start, at its end)) of each straight run of DESIGN.md's
+    shelf face, in the left half's frame. The face runs as the outline
+    does, so the cavity lies on its left, and a corner where it turns
+    right is an inward one, rounded. Its ends meet the ledge's face."""
+    points = DESIGN_SHELF_FACE_MM
+    inward = [False]
+    for before, corner, after in zip(points, points[1:], points[2:]):
+        cross = ((corner[0] - before[0]) * (after[1] - corner[1])
+                 - (corner[1] - before[1]) * (after[0] - corner[0]))
+        inward.append(cross < 0.0)
+    inward.append(False)
+    segments = []
+    for index, (start, end) in enumerate(zip(points, points[1:])):
+        length = math.dist(start, end)
+        direction = ((end[0] - start[0]) / length, (end[1] - start[1]) / length)
+        normal = (-direction[1], direction[0])
+        segments.append((start, length, direction, normal, (inward[index], inward[index + 1])))
+    return segments
+
+
+def planar_faces_facing(tray, right, normal):
+    """(vertices in the left half's frame, z range) of the tray's planar
+    faces on the given half whose outward normal is the left half's
+    normal there."""
+    wanted = half_vector(normal, right)
+    found = []
+    for face in tray.Faces:
+        if not isinstance(face.Surface, Part.Plane):
+            continue
+        face_normal = face.normalAt(*face.Surface.parameter(face.CenterOfMass))
+        if face_normal.x * wanted[0] + face_normal.y * wanted[1] < 1.0 - 1e-9:
+            continue
+        points = [half_point((vertex.Point.x, vertex.Point.y), right) for vertex in face.Vertexes]
+        found.append((points, (face.BoundBox.ZMin, face.BoundBox.ZMax)))
+    return found
+
+
+def faces_along(faces, start, length, direction, normal, offset):
+    """((low, high) along the run, z range) of the faces lying offset
+    along the normal from a straight run, within its length."""
+    found = []
+    for points, z_range in faces:
+        alongs = [(x - start[0]) * direction[0] + (y - start[1]) * direction[1] for x, y in points]
+        offsets = [(x - start[0]) * normal[0] + (y - start[1]) * normal[1] for x, y in points]
+        if (max(abs(each - offset) for each in offsets) < 1e-4
+                and min(alongs) > -1e-4 and max(alongs) < length + 1e-4):
+            found.append(((min(alongs), max(alongs)), z_range))
+    return found
+
+
+def notch_bottoms(faces, start, length, direction, normal):
+    """(how deep, (low, high) along the run) of the faces facing the
+    cavity behind a straight run of the shelves' face, short of the
+    ledge's face: the notches' bottoms."""
+    found = []
+    for points, _z_range in faces:
+        alongs = [(x - start[0]) * direction[0] + (y - start[1]) * direction[1] for x, y in points]
+        offsets = [(x - start[0]) * normal[0] + (y - start[1]) * normal[1] for x, y in points]
+        depth = -offsets[0]
+        if (max(offsets) - min(offsets) < 1e-4 and 1e-3 < depth < DESIGN_SHELF_REACH_MM - 1e-2
+                and min(alongs) > -1e-4 and max(alongs) < length + 1e-4):
+            found.append((depth, (min(alongs), max(alongs))))
+    return found
+
+
+def shelf_reach(tray, right, start, length, direction, normal):
+    """How far the shelf reaches in from the ledge's face across the
+    middle of a straight run: from 0.5 behind its face, the plastic's
+    end toward the cavity at half the shelf's height and the open
+    stretch's back to the ledge's face just over its top."""
+    middle = (start[0] + direction[0] * length / 2.0 - normal[0] * 0.5,
+              start[1] + direction[1] * length / 2.0 - normal[1] * 0.5)
+    toward_cavity = vector(half_vector(normal, right))
+    _low, face = run_through(tray, vector(half_point(middle, right), DESIGN_SHELF_TOP_Z_MM / 2.0),
+                             toward_cavity, True)
+    ledge, _high = run_through(tray, vector(half_point(middle, right), LEDGE_PROBE_Z_MM),
+                               toward_cavity, False)
+    return face - ledge
+
+
+def measure_shelves(tray, right, figures):
+    """Each straight run of the shelves' face: its plane DESIGN.md's, its
+    straight length (DESIGN.md's less the round at an inward end), its z
+    range (from the floor's top to the shelves' top), on the long runs
+    their reach in from the ledge's face, and the notches behind it for
+    the backing's screw heads."""
+    lines = []
+    notches = []
+    for start, length, direction, normal, inward_ends in shelf_segments():
+        faces = planar_faces_facing(tray, right, normal)
+        pieces = faces_along(faces, start, length, direction, normal, 0.0)
+        if not pieces:
+            raise SystemExit(f"error: no shelf face on the run from {start} along {direction}")
+        low = min(along[0] for along, _z in pieces)
+        high = max(along[1] for along, _z in pieces)
+        straight = length - DESIGN_SHELF_ROUND_MM * sum(inward_ends)
+        where = half_point(start, right)
+        texts = [
+            figures.check("straight", high - low, round(straight, 3), 2),
+            figures.check("from z", min(z[0] for _along, z in pieces), 0.0, 2),
+            figures.check("to", max(z[1] for _along, z in pieces), DESIGN_SHELF_TOP_Z_MM, 2),
+            f"in {len(pieces)} {'piece' if len(pieces) == 1 else 'pieces'}",
+        ]
+        if straight > 2.0 * DESIGN_SHELF_ROUND_MM:
+            reach = shelf_reach(tray, right, start, length, direction, normal)
+            texts.append(figures.check("reach", reach, DESIGN_SHELF_REACH_MM, 2))
+        notches.extend(notch_bottoms(faces, start, length, direction, normal))
+        lines.append(f"shelf:      from ({where[0]:.3f}, {where[1]:.3f}), {length:.3f} long as "
+                     f"modelled: {', '.join(texts)}")
+    count, depth, notch_length = DESIGN_SHELF_NOTCHES[right]
+    texts = [figures.check("notches", len(notches), count, 0)]
+    if notches:
+        texts.append(figures.check("deep", max(each for each, _along in notches), depth, 3))
+        texts.append(figures.check("long", max(along[1] - along[0] for _depth, along in notches),
+                                   notch_length, 3))
+    lines.append(f"shelf:      for the backing's screw heads, {', '.join(texts)}")
+    return lines
 
 
 def measure_block(tray, right, figures):
@@ -1589,6 +1732,7 @@ def measure(tray, right, pin_hole_radius, design, mount_design, fits):
     lines.extend(measure_walls(tray, right, figures))
     lines.append(measure_floor(tray, right, figures))
     lines.append(measure_ledge(tray, right, figures))
+    lines.extend(measure_shelves(tray, right, figures))
     lines.append(measure_block(tray, right, figures))
     lines.append(measure_standoffs(tray, right, figures))
     lines.append(measure_joint_face(tray, right, figures))
@@ -1780,6 +1924,8 @@ def print_build(build):
           f"volume {build.solid.Volume / 1000.0:.3f} cm3")
     print(f"corners:    every bend {build.corner_radius - layout.TRAY_WALL_MM:.2f} inside / "
           f"{build.corner_radius:.2f} outside, concentric")
+    print(f"shelves:    under the backing's edges up to z {layout.BACKING_SHELF_TOP_Z_MM}, "
+          f"{build.shelves:.3f} mm3 added, {len(build.shelf_notches)} notches for its screw heads")
     for label, removed in build.cuts:
         print(f"cut:        {label}, {removed:.3f} mm3")
     for label in build.skipped_cuts:

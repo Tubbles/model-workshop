@@ -19,11 +19,12 @@ leaves free. Its west face (BAY_WEST_X_MM) cuts the floor and columns
 south face (BAY_SOUTH_Y_MM) the floor
 south of the clamp's block, so the bay keeps floor beyond the walls
 and the block to hold.
-The box crosses nothing else: every other feature of the tray lies
-wholly inside it or wholly outside, at least BAY_BOX_MARGIN_MM from
-its faces, and the faces keep BAY_BOX_MARGIN_MM plus the corner's
-radius from every vertex of the outer face's, the cavity wall's and
-the ledge's outlines, so they cut no rounded corner, which the script
+The box crosses nothing else: every other feature of the tray (the
+shelves under the backing's edges among them) lies wholly inside it or
+wholly outside, at least BAY_BOX_MARGIN_MM from its faces, and the
+faces keep BAY_BOX_MARGIN_MM plus the corner's radius from every
+vertex of the outer face's, the cavity wall's, the ledge's and the
+shelves' outlines, so they cut no rounded corner, which the script
 checks.
 
 The bays sit BAY_GAP_MM apart along x, bay 1 the westernmost, each
@@ -241,8 +242,9 @@ def bay_features(fits):
     """(label, convex plan polygon, must lie inside) of every feature of
     the left tray but the walls, the ledge and the floor: the mounts'
     boxes (the nice!nano's must lie inside), the ledge cut-aways, the
-    west socket strip's pocket and the sockets' cuts, the standoffs
-    (their flats lie on them) and the joint."""
+    west socket strip's pocket and the sockets' cuts, the shelves under
+    the backing's edges, the standoffs (their flats lie on them) and
+    the joint."""
     boxes = layout.mount_bodies(fits) + layout.mount_voids(fits)
     mounts = [(check_layout.describe_mount(box), check_layout.box_polygon(box),
                box.part == "nice!nano") for box in boxes]
@@ -250,12 +252,13 @@ def bay_features(fits):
     cuts.append(layout.nano_strip_ledge_pocket(fits))
     cuts.extend(layout.all_socket_tray_cuts())
     tray_cuts = [(cut.label, layout.tray_cut_polygon(cut), False) for cut in cuts]
+    shelves = [(label, piece, False) for label, piece, _z_range in check_layout.shelf_pieces()]
     standoffs = [(f"standoff at {center}", standoff_square(center), False)
                  for center in layout.MOUNTING_DRILL_CENTERS_MM]
     joint = [(label, polygon, False) for label, polygon, _ in
              check_layout.joint_features() + check_layout.boss_fills() + check_layout.joint_voids()]
     joint.append(("parking hole's boss", layout.parking_boss_polygon(), False))
-    return mounts + tray_cuts + standoffs + joint
+    return mounts + tray_cuts + shelves + standoffs + joint
 
 
 def inside_margin(polygon, x_range, y_range):
@@ -294,14 +297,16 @@ def bay_box_problems(fits):
 
 def outline_corner_radii(corner_radius):
     """(label, sharp polygon, its convex corners' radius, its concave
-    corners' radius) of each outline the walls, the ledge and the floor
-    are rounded from, as tray_shape.py rounds them (a ledge corner out
-    of radius is sharp)."""
+    corners' radius) of each outline the walls, the ledge, the shelves
+    and the floor are rounded from, as tray_shape.py rounds them (a
+    ledge or shelf corner out of radius is sharp)."""
     wall, ledge = DEFAULT_WALL_MM, DEFAULT_LEDGE_WIDTH_MM
     return (
         ("outer face", layout.tray_outer_polygon(), corner_radius, corner_radius - wall),
         ("cavity wall", layout.tray_cavity_polygon(), corner_radius - wall, corner_radius),
         ("ledge's inner face", layout.ledge_inner_polygon(),
+         max(0.0, corner_radius - wall - ledge), corner_radius + ledge),
+        ("shelves' face", layout.backing_shelf_polygon(),
          max(0.0, corner_radius - wall - ledge), corner_radius + ledge),
     )
 

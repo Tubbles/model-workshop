@@ -62,10 +62,12 @@ between the cavity and the outer face (whole but for the sockets' tab
 pockets, since its windows and the magnet slots' cut-backs only take
 more away), the ledge (cut away where DESIGN.md says and where the
 sockets get notches and reliefs, the joint block in its place along
-the slant) and the standoffs (with the sockets' flats). The tray
-rounds its convex corners inside with the wall's inner radius (0.4 on
-kbdkid4's tray), so a part within that of a convex cavity corner has
-less room than reported here.
+the slant), the shelves on the ledge's face under the hand-wired
+frame's backing (work item 020, notched for its screw heads, checked
+against the backing, the heads and the parts) and the standoffs (with
+the sockets' flats). The tray rounds its convex corners inside with
+the wall's inner radius (0.4 on kbdkid4's tray), so a part within that
+of a convex cavity corner has less room than reported here.
 
 The rules a standoff (its drill, body and bore, and the switch
 plate's head hole over it) and a hand-wired frame's boss (the boss and
@@ -342,6 +344,24 @@ DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
 # order: the post, the pegs, the blades, the NC pad's.
 DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
+# The shelves under the backing's edges (work item 020): their face from
+# the outer edge's shelf's start at the ledge's face to the thumb's
+# ledge, as modelled, sharp-cornered.
+DESIGN_SHELF_FACE_MM = (
+    (0.6, 63.386), (3.6, 63.386), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
+    (53.074, 10.744), (79.324, 10.744), (79.324, 8.363), (98.374, 8.363), (98.374, 5.981),
+    (117.424, 5.981), (117.424, 3.6), (131.798, 3.6),
+)
+DESIGN_SHELF_TOP_Z_MM = 6.0
+DESIGN_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
+DESIGN_SHELF_UNDER_BACKING_MM = 2.5  # in from the backing's edge
+# Between the shelf's top and the backing's underside as printed, the
+# shelf's top rising as a top face or as an up-facing bottom.
+DESIGN_SHELF_UNDER_BACKING_PRINTED_MM = {"a top face": 0.333, "an up-facing bottom": 0.183}
+DESIGN_SHELF_OUTER_EDGE_START_Y_MM = 63.386  # 0.5 south of the power switch's body going in
+DESIGN_SHELF_FROM_HEADS_MM = 0.5
+DESIGN_SHELF_FROM_PARTS_MM = 0.5  # the parts and the tray's other bodies and voids
+DESIGN_SHELF_LEAST_FROM_PARTS_MM = 0.5  # on both halves, the power switch's body going in
 # The nice!nano's pry slot and recess (work item 010).
 DESIGN_PRY_SLOT_X_MM = (39.224, 44.224)
 DESIGN_PRY_SLOT_Y_MM = (37.478, 46.768)  # through the clamp's block and foot
@@ -684,6 +704,10 @@ def wall_z_range():
     return (layout.FLOOR_UNDERSIDE_Z_MM, layout.TRAY_RIM_Z_MM)
 
 
+def shelf_z_range():
+    return (0.0, layout.BACKING_SHELF_TOP_Z_MM)
+
+
 def half_label(right):
     """What starts a check's line for the right half."""
     return "right half: " if right else ""
@@ -763,6 +787,24 @@ def ledge_pieces(right=False, fits=layout.DEFAULT_MOUNT_FITS):
         else:
             label = f"ledge along outline edge {index}"
         pieces.extend(cut_piece(label, ring_piece, ledge_z_range(), cuts))
+    return pieces
+
+
+def shelf_notches(right=False):
+    """The given half's shelf notches as layout.py cuts them."""
+    try:
+        return layout.backing_shelf_notches(right)
+    except ValueError as error:
+        raise CheckFailure(str(error))
+
+
+def shelf_pieces(right=False):
+    """(label, convex polygon, z range) of the given half's shelves under
+    the backing's edges (work item 020), notched for its screw heads."""
+    notches = shelf_notches(right)
+    pieces = []
+    for label, _index, piece in layout.backing_shelf_pieces():
+        pieces.extend(cut_piece(label, piece, shelf_z_range(), notches))
     return pieces
 
 
@@ -1157,11 +1199,12 @@ def standoff_plate_rules():
 
 def standoff_merges(right=False, fits=layout.DEFAULT_MOUNT_FITS):
     """Where the body may run into the tray instead of keeping clear of
-    it: it merges with the half's ledge and joint block as cut, and the
-    joint's magnet slots and dowel holes may cut through it, its bore
-    keeping its wall from them (standoff_bore_rules()), as the sixth
-    standoff merges with the joint block (DESIGN.md, Tray)."""
-    pieces = ledge_pieces(right, fits) + magnet_slots() + dowel_holes(right)
+    it: it merges with the half's ledge and joint block as cut and its
+    shelves as notched, and the joint's magnet slots and dowel holes may
+    cut through it, its bore keeping its wall from them
+    (standoff_bore_rules()), as the sixth standoff merges with the joint
+    block (DESIGN.md, Tray)."""
+    pieces = ledge_pieces(right, fits) + shelf_pieces(right) + magnet_slots() + dowel_holes(right)
     return [PlacementRule(name="body merging with the tray", feature="body",
                           radius=layout.STANDOFF_DIAMETER_MM / 2.0,
                           feature_z_range=standoff_z_range(), obstacle=label, kind="polygon",
@@ -3331,9 +3374,9 @@ def printed_tray_obstacles(right, fits=layout.DEFAULT_MOUNT_FITS):
     as cut, its plastic with the print's swelling, and the clamp screw's
     steel head without it. The standoffs are apart (standoff_problems())."""
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
-    tray = (ledge_pieces(right, fits) + wall_pieces(right) + joint_features(right)
-            + boss_fills(right) + mount_pieces(layout.mount_bodies(fits)
-                                               + layout.nano_clamp_part_boxes(fits)[:-1]))
+    tray = (ledge_pieces(right, fits) + shelf_pieces(right) + wall_pieces(right)
+            + joint_features(right) + boss_fills(right)
+            + mount_pieces(layout.mount_bodies(fits) + layout.nano_clamp_part_boxes(fits)[:-1]))
     printed = [(label, polygon, z_range, swelling) for label, polygon, z_range in tray]
     steel = [(label, polygon, z_range, 0.0)
              for label, polygon, z_range in mount_pieces(layout.nano_clamp_part_boxes(fits)[-1:])]
@@ -3686,12 +3729,12 @@ def check_nano_strips(right=False):
 
 def pry_slot_obstacles(right, fits=layout.DEFAULT_MOUNT_FITS):
     """(label, plan polygon) of everything the pry slot keeps clear of:
-    the half's ledge, walls and joint, the standing bodies but the
-    clamp's block and foot, which it runs through, the wire rooms and the
-    parts but the nice!nano."""
+    the half's ledge, shelves, walls and joint, the standing bodies but
+    the clamp's block and foot, which it runs through, the wire rooms and
+    the parts but the nice!nano."""
     block_and_foot = layout.nano_clamp_boxes(fits)
-    tray = (ledge_pieces(right, fits) + wall_pieces(right) + joint_features(right)
-            + boss_fills(right))
+    tray = (ledge_pieces(right, fits) + shelf_pieces(right) + wall_pieces(right)
+            + joint_features(right) + boss_fills(right))
     obstacles = [(label, polygon) for label, polygon, _ in tray]
     obstacles.extend((describe_mount(box), box_polygon(box)) for box in standing_bodies(fits)
                      if box not in block_and_foot)
@@ -3761,17 +3804,18 @@ def circle_band_y_range(center, radius, x_range):
 def pry_toothpick_corners(standoff_centers, right, fits=layout.DEFAULT_MOUNT_FITS):
     """(label, (y, z)) as printed of the north top edge of everything
     the toothpick crosses south of the board within the slot's width,
-    the half's ledge, walls, dowel bosses and fills, the standing bodies
-    but the clamp's block and foot, which the slot runs through, the
-    standoffs at standoff_centers and the parts but the nice!nano, the
-    tray's grown by the swelling and its tops by a top face's rise."""
+    the half's ledge, shelves, walls, dowel bosses and fills, the
+    standing bodies but the clamp's block and foot, which the slot runs
+    through, the standoffs at standoff_centers and the parts but the
+    nice!nano, the tray's grown by the swelling and its tops by a top
+    face's rise."""
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
     rise = layout.PRINT_RISE_OF_TOP_FACES_MM
     band = layout.nano_pry_slot_box(fits).x_range
     board_south = layout.nano_south_end_y(fits)
     block_and_foot = layout.nano_clamp_boxes(fits)
-    tray = (ledge_pieces(right, fits) + wall_pieces(right) + dowel_bosses(right)
-            + boss_fills(right)
+    tray = (ledge_pieces(right, fits) + shelf_pieces(right) + wall_pieces(right)
+            + dowel_bosses(right) + boss_fills(right)
             + mount_pieces([box for box in standing_bodies(fits) if box not in block_and_foot]))
     corners = []
     for label, polygon, z_range in tray:
@@ -4026,12 +4070,14 @@ def frame_own_obstacles(right):
 
 def frame_tray_obstacles(standoff_centers, right):
     """(label, kind, shape, z range) of the tray as the frame meets it:
-    the ledge as cut, the cavity wall, the joint's bosses and fills, the
-    parking boss, the standoffs at standoff_centers (whole, without the
-    sockets' flats), the mounts, the parts (but the PCB connector's
-    zone, which the frame does not have) and the wire rooms."""
+    the ledge as cut, the shelves as notched, the cavity wall, the
+    joint's bosses and fills, the parking boss, the standoffs at
+    standoff_centers (whole, without the sockets' flats), the mounts, the
+    parts (but the PCB connector's zone, which the frame does not have)
+    and the wire rooms."""
     obstacles = [(label, "polygon", polygon, z_range) for label, polygon, z_range in
-                 ledge_pieces(right) + wall_pieces(right) + dowel_bosses(right) + boss_fills(right)]
+                 ledge_pieces(right) + shelf_pieces(right) + wall_pieces(right)
+                 + dowel_bosses(right) + boss_fills(right)]
     obstacles.append(("parking boss", "polygon", layout.parking_boss_polygon(),
                       layout.parking_boss_z_range()))
     obstacles.extend((f"standoff at {center}", "circle", (center, layout.STANDOFF_DIAMETER_MM / 2.0),
@@ -4265,6 +4311,152 @@ def check_frame_backing(right=False):
             f"{tray_room}, {strips} cutouts over the nice!nano's strips")
 
 
+# The shelves under the backing's edges (work item 020): their face
+# DESIGN.md's, their top under the backing as printed, and clear of the
+# backing's screw heads by the heads' gathered rule and of the parts and
+# the tray's other bodies and voids. The wire rooms keep clear of them
+# as printed (check_wire_rooms()), the pry slot and the toothpick
+# (check_pry_slot()) too.
+
+
+def shelf_face_offset():
+    """How far layout.py's shelf face lies at most from DESIGN.md's
+    polyline, vertex by vertex from its first vertex on."""
+    polygon = layout.backing_shelf_polygon()
+    first = min(range(len(polygon)), key=lambda index: math.dist(polygon[index],
+                                                                 DESIGN_SHELF_FACE_MM[0]))
+    return max(math.dist(polygon[(first + offset) % len(polygon)], point)
+               for offset, point in enumerate(DESIGN_SHELF_FACE_MM))
+
+
+def shelf_across_figures():
+    """(the shelves' reach in from the ledge's face, in from the
+    backing's edge) along each shelf edge, the sharp polygons'."""
+    ledge = layout.ledge_inner_polygon()
+    face = layout.backing_shelf_face_corners()
+    backing = layout.frame_backing_outline()
+    reaches, under = [], []
+    for index in layout.BACKING_SHELF_EDGE_INDICES:
+        face_across = layout.outline_edge_coordinates(face[index], index)[1]
+        reaches.append(layout.outline_edge_coordinates(ledge[index], index)[1] - face_across)
+        under.append(layout.outline_edge_coordinates(backing[index], index)[1] - face_across)
+    return reaches, under
+
+
+def shelf_gaps_under_backing():
+    """{rise: the shelf's top as printed under the backing's underside as
+    printed}, the top rising as a top face or as an up-facing bottom."""
+    underside = layout.backing_underside_z_as_printed()
+    top = layout.BACKING_SHELF_TOP_Z_MM
+    return {"a top face": underside - top - layout.PRINT_RISE_OF_TOP_FACES_MM,
+            "an up-facing bottom": underside - top - layout.PRINT_RISE_OF_UP_FACING_BOTTOMS_MM}
+
+
+def shelf_obstacles(right):
+    """(label, kind, shape, z range) of the parts and the tray's other
+    bodies and voids the shelves keep clear of: the parts, the power
+    switch's body going in, the mount bodies, the clamp's tab and screw
+    head, the mount voids, the standoffs, the joint's features, fills
+    and voids and the parking boss."""
+    envelopes = list(layout.part_envelopes()) + [layout.power_switch_body_going_in()]
+    obstacles = [(describe_envelope(envelope), "polygon", box_polygon(envelope), envelope.z_range)
+                 for envelope in envelopes]
+    boxes = (list(layout.mount_bodies()) + list(layout.nano_clamp_part_boxes())
+             + list(layout.mount_voids()))
+    obstacles.extend((describe_mount(box), "polygon", box_polygon(box), box.z_range)
+                     for box in boxes)
+    obstacles.extend((f"standoff at {center}", "circle",
+                      (center, layout.STANDOFF_DIAMETER_MM / 2.0), standoff_z_range())
+                     for center in layout.MOUNTING_DRILL_CENTERS_MM)
+    obstacles.extend((label, "polygon", polygon, z_range) for label, polygon, z_range in
+                     joint_features(right) + boss_fills(right) + joint_voids(right))
+    obstacles.append(("parking boss", "polygon", layout.parking_boss_polygon(),
+                      layout.parking_boss_z_range()))
+    return obstacles
+
+
+def shelf_clearances(right):
+    """(problems, from the heads, from the parts and the rest): the
+    shelves as notched against the heads by the gathered "head from the
+    tray" rule and against shelf_obstacles() where their heights meet."""
+    head_rules = rules_named(frame_boss_rules(layout.MOUNTING_DRILL_CENTERS_MM, right),
+                             ("head from the tray",))
+    problems = []
+    heads, parts = Tightest(), Tightest()
+    for label, piece, z_range in shelf_pieces(right):
+        where_piece = describe_piece(label, z_range)
+        for rule in rules_against(head_rules, label, piece):
+            for center in layout.frame_boss_centers(right):
+                clearance = rule_clearance(center, rule)
+                heads.update(clearance, f"the head at {center} and the {where_piece}")
+                if clearance < rule.minimum - TOLERANCE_MM:
+                    problems.append(f"the head at {center} keeps {clearance:.3f} from the "
+                                    f"{where_piece}, less than {rule.minimum}")
+        for obstacle, kind, shape, obstacle_z_range in shelf_obstacles(right):
+            if not ranges_overlap(z_range, obstacle_z_range):
+                continue
+            if kind == "circle":
+                clearance = circle_separation(shape[0], shape[1], piece)
+            else:
+                clearance = convex_separation(piece, shape)
+            parts.update(clearance, f"the {obstacle} and the {where_piece}")
+            if clearance < DESIGN_SHELF_FROM_PARTS_MM - TOLERANCE_MM:
+                problems.append(f"the {obstacle} keeps {clearance:.3f} from the {where_piece}, "
+                                f"less than {DESIGN_SHELF_FROM_PARTS_MM}")
+    return problems, heads, parts
+
+
+def shelf_notch_text(notches):
+    """What the notches are, for the check's line: they move with the
+    bosses, so DESIGN.md's figures for them are export_tray.py's to
+    check, as the bosses' own tightest figures are only printed."""
+    if not notches:
+        return "no notches"
+    depths = [notch.across_range[1] + layout.backing_shelf_face_reach() for notch in notches]
+    lengths = [notch.along_range[1] - notch.along_range[0] for notch in notches]
+    heads = ", ".join(notch.label.removeprefix("shelf notch for the head at ")
+                      for notch in notches)
+    return (f"{len(notches)} notches, for the heads at {heads}, {max(depths):.3f} deep, "
+            f"{max(lengths):.3f} long at most")
+
+
+def check_backing_shelves(right=False):
+    """The shelves under the backing's edges: their face, top and reach
+    DESIGN.md's, their top under the backing's underside as printed
+    however it rises, the outer edge's shelf's start, and their
+    clearances (shelf_clearances()), the heads' at least DESIGN.md's."""
+    broken = [f"the {label} is not convex" for label, _index, piece in layout.backing_shelf_pieces()
+              if not is_convex(piece)]
+    fail_on(broken, "the shelves' model is broken")
+    reaches, under = shelf_across_figures()
+    gaps = shelf_gaps_under_backing()
+    start = layout.outline_edge_point(layout.BACKING_SHELF_OUTER_EDGE_INDEX,
+                                      layout.backing_shelf_outer_edge_start(), 0.0)
+    problems, heads, parts = shelf_clearances(right)
+    figures = [
+        require_figure("face off DESIGN.md's at most", shelf_face_offset(), 0.0, 3),
+        require_figure("top z", layout.BACKING_SHELF_TOP_Z_MM, DESIGN_SHELF_TOP_Z_MM, 1),
+        require_figure_for_all("reach in from the ledge's face", reaches, DESIGN_SHELF_REACH_MM,
+                               1),
+        require_figure_for_all("from the backing's edge", under, DESIGN_SHELF_UNDER_BACKING_MM, 1),
+    ] + [
+        require_figure(f"under the backing as printed, rising as {rise}", gaps[rise], stated, 3)
+        for rise, stated in DESIGN_SHELF_UNDER_BACKING_PRINTED_MM.items()
+    ] + [
+        require_figure("the outer edge's from y", start[1], DESIGN_SHELF_OUTER_EDGE_START_Y_MM, 3),
+        require_figure("from the parts and the tray's other bodies and voids", parts.value,
+                       DESIGN_SHELF_LEAST_FROM_PARTS_MM, 3),
+    ]
+    if min(gaps.values()) <= TOLERANCE_MM:
+        problems.append(f"the shelves' top reaches the backing's underside as printed: {gaps}")
+    if heads.value < DESIGN_SHELF_FROM_HEADS_MM - TOLERANCE_MM:
+        problems.append(f"a head keeps {heads}, less than {DESIGN_SHELF_FROM_HEADS_MM}")
+    fail_on(problems + failed(figures),
+            f"{half_label(right)}the shelves under the backing off DESIGN.md")
+    return (f"shelves:   {half_label(right)}{joined(figures)} ({parts.where}); the heads clear "
+            f"by {heads}, {shelf_notch_text(shelf_notches(right))}")
+
+
 def on_right_half(check):
     """The check run on the right half, as a check of its own."""
 
@@ -4334,6 +4526,8 @@ CHECKS = (
     on_right_half(check_frame_bosses),
     check_frame_backing,
     on_right_half(check_frame_backing),
+    check_backing_shelves,
+    on_right_half(check_backing_shelves),
 )
 
 
