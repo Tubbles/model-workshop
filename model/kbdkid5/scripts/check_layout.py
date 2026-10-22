@@ -333,7 +333,7 @@ DESIGN_NANO_ROOMS_INTO_STRIPS_MM = {
     True: {("over the B+ pad", "west"): (0.1235, 4), ("over the B- pad", "east"): (0.1235, 4),
            ("over the P1.01/P1.02/P1.07 pads", "east"): (0.44, 2)},
 }
-# The nice!nano's pry slot and recess (work item 010).
+# The hand-wired frame (work item 014).
 DESIGN_FRAME_BOSS_COUNT = {False: 28, True: 27}
 DESIGN_FRAME_BACKING_TOP_Z_MM = 7.233  # on the bosses' ends, 2.267 under the frame
 DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM = 6.383
@@ -343,6 +343,7 @@ DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
 # order: the post, the pegs, the blades, the NC pad's.
 DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
+# The nice!nano's pry slot and recess (work item 010).
 DESIGN_PRY_SLOT_X_MM = (39.224, 44.224)
 DESIGN_PRY_SLOT_Y_MM = (37.478, 46.768)  # through the clamp's block and foot
 DESIGN_PRY_SLOT_FROM_LEDGE_MM = 1.0
