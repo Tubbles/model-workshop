@@ -6,7 +6,7 @@ Guidance for Claude Code working in this repository: only what is for agents. Re
 
 - `model/<project>/`: one directory per project, set up as Starting a project says. kbdkid5's also has its `DESIGN.md`.
 - `docker/freecad.Dockerfile`: the one FreeCAD image every export runs in. `.github/actions/freecad-image` provides it to a CI job. Their header comments have the details.
-- `docker/placement.Dockerfile`: the placement solver's Python image (work item 016), run locally through podman. Its header comment has the details, README.md the commands.
+- `docker/placement.Dockerfile`: the placement solver's Python image (work item 016), run locally through podman and by CI's placement job. Its header comment has the details, README.md the commands.
 - `tools/placement/`: the placement solver's generic core, which never imports a project. Its package docstring (`__init__.py`) is the code map. kbdkid5's problems for it are `model/kbdkid5/scripts/place.py` (kbdkid5's CLAUDE.md).
 - `resources/kbdkid3-plate-left.FCStd`: the kbdkid3 plate model that kbdkid4's and kbdkid5's plates are cut from.
 - `.github/workflows/ci.yml`: the one workflow, with every project's jobs. Its comments explain how the jobs are laid out and which changes run no CI.

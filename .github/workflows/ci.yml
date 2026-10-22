@@ -41,6 +41,23 @@ jobs:
       - name: Check the layout
         run: python3 model/kbdkid5/scripts/check_layout.py
 
+  # Not a project's: the placement solver's tests (tools/placement/)
+  # and kbdkid5's runs of it, which read check_layout.py's rules.
+  placement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the placement image
+        run: docker build -t placement -f docker/placement.Dockerfile docker
+      - name: Test the solver
+        run: |
+          docker run --rm -v "$PWD":/work -w /work placement \
+            python3 -B -m unittest discover -s tools/placement/tests -t tools
+      - name: Test kbdkid5's placements
+        run: |
+          docker run --rm -v "$PWD":/work -w /work placement \
+            python3 -B model/kbdkid5/scripts/test_place.py
+
   kbdkid5-socket-test:
     runs-on: ubuntu-latest
     steps:

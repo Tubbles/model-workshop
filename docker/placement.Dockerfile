@@ -1,5 +1,6 @@
 # Python for the placement solver (work item 016, tools/placement/) and
-# the scripts that use it, which run plain Python locally.
+# the scripts that use it, run locally through podman and by CI's
+# placement job, which builds it on every run.
 # From the repository root, for example kbdkid5's layout check:
 #
 #     podman build -t placement -f docker/placement.Dockerfile docker

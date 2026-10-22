@@ -25,6 +25,8 @@ The solver's own tests, on made up problems with known answers:
 
     podman run --rm -v "$PWD":/work -w /work placement python3 -m unittest discover -s tools/placement/tests -t tools
 
+CI's `placement` job builds the image and runs these tests and kbdkid5's (`model/kbdkid5/scripts/test_place.py`) on every push.
+
 ## How the printer prints, and the parts
 
 - [doc/print-model.md](doc/print-model.md): how prints come out against the model (swelling, hole sizes, slits, layers), every test print and what it settled.
