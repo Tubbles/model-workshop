@@ -4,7 +4,9 @@
 # external/kbdkid4-outputs/kbdkid4/kbdkid4_v1.step, and a checkout of
 # that run's commit at external/kbdkid4, so the board files match the
 # STEP. Every kbdkid4 job runs this after checking out this repository.
-# kbdkid4 is public, so github.token reads it.
+# kbdkid4 is public, so github.token reads it. The run is picked from
+# the latest 20 by their conclusion, not by the API's status filter,
+# which now and then lists none (CI run 39809601022 failed twice on it).
 name: kbdkid4 board
 description: Check out kbdkid4 and download the STEP of its latest successful CI run on main
 runs:
@@ -17,10 +19,10 @@ runs:
         GH_TOKEN: ${{ github.token }}
       run: |
         run=$(gh run list --repo Tubbles/kbdkid4 --branch main --workflow ci.yml \
-          --status success --limit 1 --json databaseId,headSha \
-          --jq '.[0] | select(.) | "\(.databaseId) \(.headSha)"')
+          --limit 20 --json databaseId,headSha,conclusion \
+          --jq '[.[] | select(.conclusion == "success")][0] | select(.) | "\(.databaseId) \(.headSha)"')
         if [ -z "$run" ]; then
-          echo "::error::found no successful CI run of Tubbles/kbdkid4 on main"
+          echo "::error::found no successful CI run of Tubbles/kbdkid4 on main among its latest 20"
           exit 1
         fi
         read -r run_id head_sha <<< "$run"
