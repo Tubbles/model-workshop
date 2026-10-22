@@ -5,8 +5,10 @@
 # that run's commit at external/kbdkid4, so the board files match the
 # STEP. Every kbdkid4 job runs this after checking out this repository.
 # kbdkid4 is public, so github.token reads it. The run is picked from
-# the latest 20 by their conclusion, not by the API's status filter,
-# which now and then lists none (CI run 39809601022 failed twice on it).
+# the latest 20 by their conclusion, and the lookup is tried up to five
+# times, 30 s apart: during GitHub's incident of 2026-10-22 the listing
+# now and then came back without runs, and CI runs 39809601022 and
+# 39810683482 failed on it.
 name: kbdkid4 board
 description: Check out kbdkid4 and download the STEP of its latest successful CI run on main
 runs:
@@ -18,9 +20,17 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        run=$(gh run list --repo Tubbles/kbdkid4 --branch main --workflow ci.yml \
-          --limit 20 --json databaseId,headSha,conclusion \
-          --jq '[.[] | select(.conclusion == "success")][0] | select(.) | "\(.databaseId) \(.headSha)"')
+        for attempt in 1 2 3 4 5; do
+          run=$(gh run list --repo Tubbles/kbdkid4 --branch main --workflow ci.yml \
+            --limit 20 --json databaseId,headSha,conclusion \
+            --jq '[.[] | select(.conclusion == "success")][0] | select(.) | "\(.databaseId) \(.headSha)"' \
+            || true)
+          if [ -n "$run" ]; then
+            break
+          fi
+          echo "attempt $attempt found no successful run, trying again in 30 s"
+          sleep 30
+        done
         if [ -z "$run" ]; then
           echo "::error::found no successful CI run of Tubbles/kbdkid4 on main among its latest 20"
           exit 1
