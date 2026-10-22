@@ -4080,14 +4080,27 @@ def frame_tray_obstacles(standoff_centers, right):
 
 
 def frame_boss_z_range():
-    """A boss's heights: from the backing's top to the frame's
-    underside."""
-    return (DESIGN_FRAME_BACKING_TOP_Z_MM, layout.PCB_UNDERSIDE_Z_MM)
+    """A boss's heights: from the backing's top, on the bosses' ends, to
+    the frame's underside."""
+    return (layout.backing_top_z(), layout.PCB_UNDERSIDE_Z_MM)
 
 
 def frame_head_z_range():
     """A boss's screw head's heights, under the backing as printed."""
-    return (DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM, DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM)
+    return (layout.backing_screw_heads_bottom_z(), layout.backing_underside_z_as_printed())
+
+
+def frame_height_figures():
+    """The backing's heights against DESIGN.md's: its top, its underside
+    as printed and its screw heads' bottom."""
+    return [
+        require_figure("the backing's top z", layout.backing_top_z(),
+                       DESIGN_FRAME_BACKING_TOP_Z_MM, 3),
+        require_figure("its underside z as printed", layout.backing_underside_z_as_printed(),
+                       DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM, 3),
+        require_figure("its screw heads' bottom z", layout.backing_screw_heads_bottom_z(),
+                       DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM, 3),
+    ]
 
 
 def frame_boss_rule(name, feature, obstacle, kind, shape, obstacle_z_range=None, relation=CLEAR,
@@ -4243,14 +4256,15 @@ def check_frame_backing(right=False):
     """The backing: every pad inside its outline and clear of its
     cutouts, every screw head on it, and every tray piece standing into
     its heights outside it or inside a cutout, the heads by their
-    gathered rules (frame_boss_rules())."""
+    gathered rules (frame_boss_rules()), and its heights DESIGN.md's
+    (frame_height_figures())."""
     boss_centers = layout.frame_boss_centers(right)
     standoff_centers = layout.MOUNTING_DRILL_CENTERS_MM
     outline = layout.frame_backing_outline()
     cutouts = frame_backing_cutouts(standoff_centers, right)
     pads = layout.frame_pad_boxes(right)
-    backing_z = (DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM, DESIGN_FRAME_BACKING_TOP_Z_MM)
-    problems = []
+    backing_z = (layout.backing_underside_z_as_printed(), layout.backing_top_z())
+    problems = failed(frame_height_figures())
     pad_room, head_room, tray_room = Tightest(), Tightest(), Tightest()
     for key, x_range, y_range in pads:
         pad = layout.box_corners(x_range, y_range)

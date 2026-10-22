@@ -3251,6 +3251,60 @@ def backing_pad_polygons(key_center):
     return tuple(pads)
 
 
+# The backing's heights, which socket_test_shape.py builds the strips'
+# and the frame's bosses and backing to and check_layout.py checks the
+# frame's bosses and screw heads at. The backing is four layers thick.
+# Its M2 screws go up through it into the frame's inserts, so their
+# heads hang below its underside (the user, 2026-10-20: "Also we need to
+# take the backing screws sticking out below the backing piece into the
+# calculation"), as tall as the user's pan heads ("The M2 pan head
+# screws I have today have roughly 1.5 mm high heads btw").
+BACKING_THICKNESS_MM = 0.8
+BACKING_SCREW_HEAD_HEIGHT_MM = 1.5
+
+
+def boss_end_depth():
+    """Where the bosses end and the backing's top sits on them, below
+    the ceiling: 2.267, kept from the scrapped lip strip
+    (doc/log/2026-10-19.md), whose largest lip's 45 degree lead-in met
+    its wall there. That is the lip's retaining face, the socket's
+    height below the ceiling as printed (which rises), plus the lip's
+    0.35 reach past the walls' inner faces as printed less the lead-in's
+    growth past the walls' swelling. The fourth pocket strip, the hole
+    strip and the third backing are printed and stay, so the figure is
+    computed as before, not rounded: the STLs store float32, where a
+    rounded figure would move the bosses' ends and the pads."""
+    largest_reach_as_printed = 0.35
+    lead_in_tip_growth = (
+        PRINT_SWELLING_AT_45_DEGREES_MM - PRINT_SWELLING_PER_SIDE_MM
+    )
+    return (HOTSWAP_SOCKET_BODY_HEIGHT_MM + PRINT_RISE_OF_UP_FACING_BOTTOMS_MM
+            + (largest_reach_as_printed - lead_in_tip_growth))
+
+
+def backing_top_z(socket_bottom_z=None):
+    """The backing's top in the real tray, the frame in the PCB's place,
+    where it rests on the bosses' ends: the socket's bottom less the
+    pads' room."""
+    if socket_bottom_z is None:
+        socket_bottom_z = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_BODY_HEIGHT_MM
+    pads_room = boss_end_depth() - HOTSWAP_SOCKET_BODY_HEIGHT_MM
+    return socket_bottom_z - pads_room
+
+
+def backing_underside_z_as_printed(socket_bottom_z=None):
+    """The backing's underside in the real tray: its top less its
+    thickness, and lower by the backing's own rise as printed, its top
+    face resting on the bosses' ends."""
+    return backing_top_z(socket_bottom_z) - BACKING_THICKNESS_MM - PRINT_RISE_OF_TOP_FACES_MM
+
+
+def backing_screw_heads_bottom_z(socket_bottom_z=None):
+    """Where the backing's screw heads end below it in the real tray, as
+    printed."""
+    return backing_underside_z_as_printed(socket_bottom_z) - BACKING_SCREW_HEAD_HEIGHT_MM
+
+
 # The frame's pockets hold each socket at the fourth pocket strip's
 # best fit (DESIGN.md, "Pocket strip"). The walls, the bosses, the
 # backing and the backing's screw heads keep FRAME_TRAY_CLEARANCE_MM in

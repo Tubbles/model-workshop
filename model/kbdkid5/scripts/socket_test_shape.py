@@ -231,21 +231,19 @@ BOSS_SOUTH_OF_KEY_ROW_MM = -12.5
 INSERT_BORE_FLOOR_MM = 0.6
 BOSS_EDGE_MARGIN_MM = 0.5
 
-# The backing: its thickness (four layers), the screws' clearance
-# holes (the PCB's mounting drills, printed), and how far each pad lies
-# inside its socket lobe as modelled: 0.95, set for
+# The backing: its thickness, the screws' clearance holes (the PCB's
+# mounting drills, printed), and how far each pad lies inside its socket
+# lobe as modelled: 0.95, set for
 # the scrapped lip strip (its largest lip's 0.35 reach as printed, the
 # 0.1 its walls stood inside the lobe as printed at -0.20, the pad's 0.2
 # swelling and 0.3 of clearance to that lip) and kept so the third
 # backing stays. The user wants the pads smaller in plan, not a perfect
-# fit (doc/log/2026-10-18.md).
-BACKING_THICKNESS_MM = 0.8
-# The backing's M2 screws go up through it into the frame's inserts, so
-# their heads hang below its underside (the user, 2026-10-20: "Also we
-# need to take the backing screws sticking out below the backing piece
-# into the calculation"), as tall as the user's pan heads ("The M2 pan
-# head screws I have today have roughly 1.5 mm high heads btw").
-BACKING_SCREW_HEAD_HEIGHT_MM = 1.5
+# fit (doc/log/2026-10-18.md). Its thickness and its screws' heads'
+# height live in layout.py (BACKING_THICKNESS_MM,
+# BACKING_SCREW_HEAD_HEIGHT_MM, which say why), since check_layout.py
+# checks the frame's bosses and screw heads at the heights they give.
+BACKING_THICKNESS_MM = layout.BACKING_THICKNESS_MM
+BACKING_SCREW_HEAD_HEIGHT_MM = layout.BACKING_SCREW_HEAD_HEIGHT_MM
 SCREW_CLEARANCE_HOLE_DIAMETER_MM = layout.printed_fit(
     layout.MOUNTING_DRILL_DIAMETER_MM, layout.SNUG_FIT_MM
 )
@@ -371,22 +369,9 @@ def wall_depth():
 
 
 def boss_end_depth():
-    """Where the bosses end and the backing's top sits on them: 2.267,
-    kept from the scrapped lip strip (doc/log/2026-10-19.md), whose
-    largest lip's 45 degree lead-in met its wall there. That is the
-    lip's retaining face, the socket's height below the ceiling as
-    printed (which rises), plus the lip's 0.35 reach past the walls'
-    inner faces as printed less the lead-in's growth past the walls'
-    swelling. The fourth pocket strip, the hole strip and the third
-    backing are printed and stay, so the figure is computed as before,
-    not rounded: the STLs store float32, where a rounded figure would
-    move the bosses' ends and the pads."""
-    largest_reach_as_printed = 0.35
-    lead_in_tip_growth = (
-        layout.PRINT_SWELLING_AT_45_DEGREES_MM - layout.PRINT_SWELLING_PER_SIDE_MM
-    )
-    return (socket_height() + layout.PRINT_RISE_OF_UP_FACING_BOTTOMS_MM
-            + (largest_reach_as_printed - lead_in_tip_growth))
+    """Where the bosses end and the backing's top sits on them:
+    layout.boss_end_depth(), which says why."""
+    return layout.boss_end_depth()
 
 
 def boss_height():
@@ -415,20 +400,14 @@ def pad_height(index):
 
 def backing_underside_z_as_printed(socket_bottom_z=None):
     """The backing's underside in the real tray, the frame in the PCB's
-    place: the socket's bottom less the pads' room and the backing's
-    thickness, and lower by the backing's own rise as printed, its top
-    face resting on the bosses' ends."""
-    if socket_bottom_z is None:
-        socket_bottom_z = layout.PCB_UNDERSIDE_Z_MM - socket_height()
-    pads_room = boss_end_depth() - socket_height()
-    return (socket_bottom_z - pads_room - BACKING_THICKNESS_MM
-            - layout.PRINT_RISE_OF_TOP_FACES_MM)
+    place: layout.backing_underside_z_as_printed()."""
+    return layout.backing_underside_z_as_printed(socket_bottom_z)
 
 
 def backing_screw_heads_bottom_z(socket_bottom_z=None):
     """Where the backing's screw heads end below it in the real tray, as
-    printed."""
-    return backing_underside_z_as_printed(socket_bottom_z) - BACKING_SCREW_HEAD_HEIGHT_MM
+    printed: layout.backing_screw_heads_bottom_z()."""
+    return layout.backing_screw_heads_bottom_z(socket_bottom_z)
 
 
 # The socket and its pocket in plan.
