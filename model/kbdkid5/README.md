@@ -70,7 +70,7 @@ CI uploads both halves of both parts as the `kbdkid5-frame-<short commit hash>` 
 
 Print the frame as written, its top face on the bed, the walls and bosses standing up, and the backing as written, bottom down with its pads on top. Neither needs supports.
 
-To put a half together, press an M2 x 3 heat-set insert into every boss. Solder a wire to each socket tab, then push each socket into its pocket from the open side, the tab and its wire sliding up the slot in the wall. Screw the backing on with M2 x 4 pan heads, its pads under the sockets. Lay the frame in the tray on the ledge and the standoffs and screw it down at the five drills, the plate on top, as with the PCB. The wires reach the nice!nano's socket strips through the backing's cutouts over them.
+To put a half together, press an M2 x 3 heat-set insert into every boss. Solder a wire to each socket tab, then push each socket into its pocket from the open side, the tab and its wire sliding up the slot in the wall. Screw the backing on with M2 x 4 pan heads, its pads under the sockets. Lay the frame in the tray on the ledge and the standoffs and screw it down at the six drills, the plate on top, as with the PCB. The wires reach the nice!nano's socket strips through the backing's cutouts over them.
 
 What to check and report:
 
