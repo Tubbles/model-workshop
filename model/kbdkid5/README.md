@@ -70,7 +70,7 @@ CI uploads both halves of both parts as the `kbdkid5-frame-<short commit hash>` 
 
 Print the frame as written, its top face on the bed, the walls and bosses standing up, and the backing as written, bottom down with its pads on top. Neither needs supports.
 
-To put a half together, press an M2 x 3 heat-set insert into every boss. Solder a wire to each socket tab, then push each socket into its pocket from the open side, the tab and its wire sliding up the slot in the wall. Screw the backing on with M2 x 4 pan heads, its pads under the sockets. Lay the frame in the tray on the ledge and the standoffs and screw it down at the six drills, the plate on top, as with the PCB. The wires reach the nice!nano's socket strips through the backing's cutouts over them.
+To put a half together, press an M2 x 3 heat-set insert into every boss. Solder a wire to each socket tab, then push each socket into its pocket from the open side, the tab and its wire sliding up the slot in the wall. Screw the backing on with M2 x 4 screws, its pads under the sockets. Lay the frame in the tray on the ledge and the standoffs and screw it down at the six drills, the plate on top, as with the PCB. The wires reach the nice!nano's socket strips through the backing's cutouts over them.
 
 What to check and report:
 
@@ -147,5 +147,5 @@ For both halves:
 - 8 supermagnete S-08-03-N disc magnets for the joint, 2 S-04-02-N for the pin parking.
 - 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
 - M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
-- For the hand-wired frame, 56 M2 x 3 heat-set inserts and 56 M2 x 4 pan head screws (28 for each half's backing).
+- For the hand-wired frame, 56 M2 x 3 heat-set inserts and 56 M2 x 4 screws (28 for each half's backing), their heads flat underneath and at most 4.0 across and 1.5 tall.
 - 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.
