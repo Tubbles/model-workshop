@@ -3106,6 +3106,92 @@ def mount_voids(fits=DEFAULT_MOUNT_FITS):
     return openings + (nano_pry_slot_box(fits),)
 
 
+# The reliefs for the switches' center posts and side pegs (work item
+# 023, DESIGN.md, The joint, Post reliefs). The posts and pegs reach
+# SWITCH_POSTS_BELOW_PCB_MM below the PCB, over bodies that stand up to
+# its underside. By the rule the power switch's retainer keeps from
+# S100's (check_layout.py, retainer_under_posts()), the tray keeps
+# SWITCH_POST_RELIEF_CLEARANCE_MM from the posts and pegs at their
+# footprint holes' size in plan, or stays that far under their ends,
+# both as printed. So wherever one of those bodies
+# (post_relief_bodies()) comes nearer in plan, a round relief open at
+# the top is cut into it around the post or peg: the hole grown by the
+# clearance and by the print's swelling per side, which a hole loses as
+# printed, down to the clearance under the ends and the rise of an
+# up-facing bottom below that. check_layout.py holds every body of the
+# tray to the rule.
+SWITCH_POST_RELIEF_CLEARANCE_MM = 0.5
+
+
+@dataclass(frozen=True)
+class PostRelief:
+    """A round relief open at the top, diameter across around center
+    over z_range, for the post or peg whose hole (hole_diameter across)
+    stands there, cut into the body named body (plan body_polygon), in
+    the left half's frame."""
+
+    label: str
+    body: str
+    body_polygon: tuple
+    center: tuple
+    hole_diameter: float
+    diameter: float
+    z_range: tuple
+
+
+def switch_posts_and_pegs_on_half(key, right=False):
+    """(center, diameter) of a key's center post and side pegs at their
+    footprint holes' size (the first three of CHOC_FOOTPRINT_HOLES_MM)
+    on the given half, in the left half's frame."""
+    center = KEY_CENTERS_MM[key]
+    if not right:
+        return footprint_holes(center)[:3]
+    holes = footprint_holes(mirror_for_right_half(center))[:3]
+    return tuple((mirror_for_right_half(point), diameter) for point, diameter in holes)
+
+
+def switch_post_relief_diameter(hole_diameter):
+    return hole_diameter + 2.0 * (SWITCH_POST_RELIEF_CLEARANCE_MM + PRINT_SWELLING_PER_SIDE_MM)
+
+
+def switch_post_relief_bottom_z():
+    return (PCB_UNDERSIDE_Z_MM - SWITCH_POSTS_BELOW_PCB_MM - SWITCH_POST_RELIEF_CLEARANCE_MM
+            - PRINT_RISE_OF_UP_FACING_BOTTOMS_MM)
+
+
+def post_relief_bodies(right=False, fits=DEFAULT_MOUNT_FITS):
+    """(label, plan polygon) of the bodies standing up to the PCB's
+    underside that get reliefs where the rule asks for them: the dowel
+    bosses, the parking boss, their fills and the nice!nano's raised
+    walls."""
+    bosses = tuple((f"dowel boss at {along} along the slant", dowel_boss_polygon(along, right))
+                   for along in DOWEL_PIN_ALONGS_MM)
+    fills = (("upper dowel boss's fill", upper_boss_fill_polygon(right)),
+             ("parking boss's fill", parking_boss_fill_polygon()))
+    walls = tuple((box.label, plan_corners(box)) for box in nano_raised_wall_boxes(fits))
+    return bosses + (("parking boss", parking_boss_polygon()),) + fills + walls
+
+
+def switch_post_reliefs(right=False, fits=DEFAULT_MOUNT_FITS):
+    """The half's PostReliefs: one for every center post and side peg
+    whose hole comes nearer a body of post_relief_bodies() in plan than
+    the clearance and the body's swelling, by body, then key."""
+    reach = SWITCH_POST_RELIEF_CLEARANCE_MM + PRINT_SWELLING_PER_SIDE_MM
+    z_range = (switch_post_relief_bottom_z(), PCB_UNDERSIDE_Z_MM)
+    reliefs = []
+    for body, polygon in post_relief_bodies(right, fits):
+        for key in KEY_CENTERS_MM:
+            for index, (center, diameter) in enumerate(switch_posts_and_pegs_on_half(key, right)):
+                if toward_polygon(center, polygon)[0] >= diameter / 2.0 + reach:
+                    continue
+                what = ("center post" if index == 0
+                        else f"side peg at ({center[0]:.3f}, {center[1]:.3f})")
+                reliefs.append(PostRelief(f"relief for {key}'s {what} in the {body}", body,
+                                          polygon, center, diameter,
+                                          switch_post_relief_diameter(diameter), z_range))
+    return tuple(reliefs)
+
+
 # The room the wires need (DESIGN.md: wires need room behind every
 # lead): WIRE_ROOM_BEHIND_LEADS_MM beyond each lead's tip, its row's
 # width and WIRE_ROOM_BESIDE_LEADS_MM to either side, from the floor to

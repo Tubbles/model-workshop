@@ -25,7 +25,9 @@ wholly outside, at least BAY_BOX_MARGIN_MM from its faces, and the
 faces keep BAY_BOX_MARGIN_MM plus the corner's radius from every
 vertex of the outer face's, the cavity wall's, the ledge's and the
 shelves' outlines, so they cut no rounded corner, which the script
-checks.
+checks. The reliefs for S130's and S131's pegs (work item 023) are not
+among the features it checks: their circles reach past the east face,
+but what they cut of the raised east wall lies 1.0 inside it.
 
 The bays sit BAY_GAP_MM apart along x, bay 1 the westernmost, each
 joined to the next by a bridge of the floor's thickness across the

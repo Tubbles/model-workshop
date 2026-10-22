@@ -55,6 +55,13 @@ in a lane of the slot clear of the west row's last tail. The mount
 checks' problem functions take a layout.MountFits (the default unless
 given), so export_nano_bay_test.py runs them for its test bay's fits.
 
+Every body of the tray keeps the switches' center posts and side pegs
+at their holes' size the rule the power switch's retainer keeps from
+S100's, in plan or under their ends, on both halves, or is relieved
+around them by that rule (work item 023, layout.py's
+switch_post_reliefs()), and the reliefs keep the joint's plastic
+between voids from its holes and slots.
+
 Distances are in plan. Two bodies are checked against each other only
 where their z ranges overlap, since one can pass over the other. The
 tray is modelled as layout.py's sharp-cornered polygons: the wall
@@ -292,6 +299,22 @@ DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM = 1.1
 DESIGN_RETAINER_FROM_SOCKETS_MM = 2.649  # S100's
 DESIGN_RETAINER_BESIDE_LEADS_PRINTED_MM = 0.25
 DESIGN_RETAINER_OVER_LEADS_MM = 0.5
+# The reliefs under the switches' center posts and side pegs (work item
+# 023): the rule's clearance in plan and under the ends, both as
+# printed, the reliefs across by their holes' size, their bottom, their
+# centers by body (the same on both halves in the left half's frame)
+# and the least plastic between them and the joint's voids.
+DESIGN_POST_RELIEF_FROM_POSTS_MM = 0.5
+DESIGN_POST_RELIEF_UNDER_ENDS_MM = 0.5
+DESIGN_POST_RELIEF_DIAMETERS_MM = {3.4: 4.8, 1.9: 3.3}
+DESIGN_POST_RELIEF_BOTTOM_Z_MM = 7.4
+DESIGN_POST_RELIEF_CENTERS_MM = {
+    "dowel boss at 59.0 along the slant": ((109.799, 68.739),),  # S150's peg
+    "parking boss": ((123.349, 9.207), (117.849, 9.207), (128.849, 9.207)),  # S163's
+    "east wall's raised piece 2": ((60.699, 54.451),),  # S131's peg
+    "east wall's raised piece 3": ((60.699, 73.501),),  # S130's peg
+}
+DESIGN_POST_RELIEF_FROM_JOINT_VOIDS_MM = {False: 1.05, True: 1.0}  # the upper dowel hole
 DESIGN_NANO_BAR_DEPTH_MM = 0.62
 DESIGN_SHELL_PLAY_MM = {"west": 0.05, "east": 0.0, "north": 0.12}  # as printed
 DESIGN_SHELL_IN_CHANNEL_PRINTED_MM = {"sides": 0.0, "top": 0.1, "end": 0.0}
@@ -3298,6 +3321,154 @@ def check_power_switch_retainer(right=False):
             f"leads {past:.2f} past it")
 
 
+# The switches' center posts and side pegs over the tray (work item
+# 023), at their footprint holes' size, by the rule the retainer keeps
+# from S100's (retainer_under_posts()): every body of the tray keeps
+# DESIGN_POST_RELIEF_FROM_POSTS_MM from them in plan as printed, or
+# stays DESIGN_POST_RELIEF_UNDER_ENDS_MM under their ends, its top
+# rising as an up-facing bottom, or a relief layout.py cuts around them
+# (switch_post_reliefs()) keeps the rule for it.
+
+
+def post_ends_z():
+    return layout.PCB_UNDERSIDE_Z_MM - layout.SWITCH_POSTS_BELOW_PCB_MM
+
+
+def tray_bodies(right):
+    """(label, circle_clearance() kind, shape, z range) of every body of
+    the given half's tray: the wall, the ledge and the joint block as
+    cut, the shelves, the dowel bosses, the parking boss, their fills,
+    the mount bodies and the standoffs, taken whole."""
+    pieces = (wall_pieces(right) + ledge_pieces(right) + shelf_pieces(right) + dowel_bosses(right)
+              + [("parking boss", layout.parking_boss_polygon(), layout.parking_boss_z_range())]
+              + boss_fills(right) + mount_pieces(layout.mount_bodies()))
+    bodies = [(label, "polygon", polygon, z_range) for label, polygon, z_range in pieces]
+    bodies.extend((f"standoff at {center}", "circle", (center, layout.STANDOFF_DIAMETER_MM / 2.0),
+                   standoff_z_range()) for center in layout.MOUNTING_DRILL_CENTERS_MM)
+    return bodies
+
+
+def relief_keeps_rule(relief, hole_diameter, body_top):
+    """Whether a relief keeps the rule for the hole of hole_diameter at
+    its center, as printed, from a body up to body_top."""
+    beside = relief.diameter / 2.0 - layout.PRINT_SWELLING_PER_SIDE_MM - hole_diameter / 2.0
+    under = post_ends_z() - (relief.z_range[0] + layout.PRINT_RISE_OF_UP_FACING_BOTTOMS_MM)
+    return (beside >= DESIGN_POST_RELIEF_FROM_POSTS_MM - TOLERANCE_MM
+            and under >= DESIGN_POST_RELIEF_UNDER_ENDS_MM - TOLERANCE_MM
+            and relief.z_range[1] >= body_top - TOLERANCE_MM)
+
+
+def relief_at(center, hole_diameter, body_top, reliefs):
+    """The first of the reliefs around center that keeps the rule for
+    its hole from a body up to body_top, or None."""
+    for relief in reliefs:
+        if (math.dist(relief.center, center) <= TOLERANCE_MM
+                and relief_keeps_rule(relief, hole_diameter, body_top)):
+            return relief
+    return None
+
+
+def post_relief_problems(right):
+    """(problems, relieved, beside, under) of every body of the given
+    half's tray (tray_bodies()) against every switch's center post and
+    side pegs: the bodies that come within the rule's clearance in plan
+    and stand over its depth with no relief keeping the rule for them,
+    the (relief, body label) pairs a relief keeps it for, and the
+    tightest of the others in plan, where they stand over the depth,
+    and in height, where they come within the clearance."""
+    rise = layout.PRINT_RISE_OF_UP_FACING_BOTTOMS_MM
+    reliefs = layout.switch_post_reliefs(right)
+    bodies = tray_bodies(right)
+    problems, relieved = [], []
+    beside, under = Tightest(), Tightest()
+    for key in layout.KEY_CENTERS_MM:
+        for center, diameter in layout.switch_posts_and_pegs_on_half(key, right):
+            hole = f"{key}'s {diameter} hole at ({center[0]:.3f}, {center[1]:.3f})"
+            for label, kind, shape, z_range in bodies:
+                body = describe_piece(label, z_range)
+                plan = (circle_clearance(center, diameter / 2.0, kind, shape)
+                        - layout.PRINT_SWELLING_PER_SIDE_MM)
+                height = post_ends_z() - (z_range[1] + rise)
+                stays_under = height >= DESIGN_POST_RELIEF_UNDER_ENDS_MM - TOLERANCE_MM
+                if plan >= DESIGN_POST_RELIEF_FROM_POSTS_MM - TOLERANCE_MM:
+                    if not stays_under:
+                        beside.update(plan, f"the {body} and {hole}")
+                    continue
+                if stays_under:
+                    under.update(height, f"the {body} under {hole}")
+                    continue
+                relief = relief_at(center, diameter, z_range[1], reliefs)
+                if relief is None:
+                    problems.append(
+                        f"the {body} comes {plan:.3f} from {hole} in plan as printed, less than "
+                        f"{DESIGN_POST_RELIEF_FROM_POSTS_MM}, its top as printed at z "
+                        f"{z_range[1] + rise:.2f}, over the rule's "
+                        f"{post_ends_z() - DESIGN_POST_RELIEF_UNDER_ENDS_MM:.2f}, with no relief"
+                    )
+                else:
+                    relieved.append((relief, label))
+    return problems, relieved, beside, under
+
+
+def post_relief_void_plastic(reliefs, right):
+    """The least plastic between a relief and the joint's holes and
+    slots (joint_voids()), as the larger of their gap in plan and their
+    gap in height, which the plastic between them is at least."""
+    tightest = Tightest()
+    for relief in reliefs:
+        for label, polygon, z_range in joint_voids(right):
+            plan = circle_separation(relief.center, relief.diameter / 2.0, polygon)
+            height = max(z_range[0] - relief.z_range[1], relief.z_range[0] - z_range[1])
+            tightest.update(max(plan, height), f"the {relief.label} and the {label}")
+    return tightest
+
+
+def relief_place_problems(reliefs):
+    """Where the reliefs layout.py cuts stand off DESIGN.md's, by body and
+    center."""
+    cut = {(relief.body, tuple(round(value, 3) for value in relief.center)) for relief in reliefs}
+    stated = {(body, center) for body, centers in DESIGN_POST_RELIEF_CENTERS_MM.items()
+              for center in centers}
+    if cut == stated:
+        return []
+    return [f"reliefs {sorted(cut - stated)} in layout.py and {sorted(stated - cut)} in DESIGN.md "
+            "only"]
+
+
+def check_post_reliefs(right=False):
+    """Every body of the tray that comes within the rule's clearance of a
+    switch's center post or side pegs in plan stays the rule's depth
+    under their ends or is relieved by the rule (post_relief_problems()).
+    The reliefs stand where DESIGN.md has them, as wide and as deep as it
+    says, and keep the joint's plastic between voids from its holes and
+    slots."""
+    problems, relieved, beside, under = post_relief_problems(right)
+    reliefs = layout.switch_post_reliefs(right)
+    problems.extend(relief_place_problems(reliefs))
+    voids = post_relief_void_plastic(reliefs, right)
+    minimum = layout.JOINT_LEAST_PLASTIC_BETWEEN_VOIDS_MM
+    if voids.value < minimum - TOLERANCE_MM:
+        problems.append(f"{voids.where} leave {voids.value:.3f} of plastic, less than {minimum}")
+    figures = [
+        require_figure_for_all(f"across around the {hole} holes",
+                               [relief.diameter for relief in reliefs
+                                if abs(relief.hole_diameter - hole) <= TOLERANCE_MM],
+                               stated, 1)
+        for hole, stated in DESIGN_POST_RELIEF_DIAMETERS_MM.items()
+    ]
+    figures.append(require_figure_for_all("bottom z", [relief.z_range[0] for relief in reliefs],
+                                          DESIGN_POST_RELIEF_BOTTOM_Z_MM, 1))
+    figures.append(require_figure("from the joint's voids", voids.value,
+                                  DESIGN_POST_RELIEF_FROM_JOINT_VOIDS_MM[right], 2))
+    problems.extend(failed(figures))
+    fail_on(problems,
+            f"{half_label(right)}the tray in the way of the switches' center posts and side pegs")
+    bodies = ", ".join(sorted({label for _relief, label in relieved}))
+    return (f"reliefs:   {half_label(right)}{len(reliefs)} for the posts and pegs, in the "
+            f"{bodies}: {joined(figures)} ({voids.where}); the rest of the tray keeps "
+            f"{beside} from them in plan or stays {under} under their ends")
+
+
 def opening_problems(fits=layout.DEFAULT_MOUNT_FITS):
     """The knob over its whole sweep and the shell, wherever its play lets
     it go, clear of their openings as printed, and the power switch's
@@ -4532,6 +4703,8 @@ CHECKS = (
     check_mount_openings,
     check_power_switch_retainer,
     on_right_half(check_power_switch_retainer),
+    check_post_reliefs,
+    on_right_half(check_post_reliefs),
     check_pry_slot,
     on_right_half(check_pry_slot),
     check_wire_rooms,

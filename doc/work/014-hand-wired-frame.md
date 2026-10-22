@@ -13,5 +13,5 @@ Still open:
 - The thumb's socket has no boss near it on either half (DESIGN.md, Hand-wired frame, Bosses), so its backing reaches it unsupported and only its pocket holds it against a switch going in.
 - The sockets of S100 and S130 on both halves, S110 and S140 on the left half (since work item 021) and S122 and S150 on the right half have no boss north of them, only south of them and at their corners, and the right half's S130 and S150 only south of them (S120 and S102 until the nice!nano moved, work item 015).
 - The bottom row's sockets have no room for a boss south of them, and since work item 021 none at their corners, so the backing under them reaches out past the bosses north of them.
-- In the tray, the thumb switch's center post and pegs, which reach 1.4 below the frame, overlap the parking boss in plan, and S150's east peg (the west one on the right half) the upper dowel boss, as they would under a PCB. That goes to the user before the tray changes.
+- In the tray, the thumb switch's center post and pegs, which reach 1.4 below the frame, overlapped the parking boss in plan, and S150's east peg (the west one on the right half) the upper dowel boss, as they would under a PCB. Resolved by work item 023, which cuts reliefs for them into the bosses' tops (DESIGN.md, The joint, Post reliefs).
 - Nothing has been printed yet.

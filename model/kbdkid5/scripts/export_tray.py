@@ -4,7 +4,8 @@ tray_shape.py builds the tray (see its docstring): walls, floor, ledge
 and joint block, the shelves on the ledge's face, standoffs bored for
 M2 heat-set inserts, the dowel pin and parking bosses with their
 fills, the ledge cut-aways and the sockets' cuts as layout.py gives
-them, the parts' mounts, the magnet
+them, the parts' mounts, the reliefs under the switches' center posts
+and side pegs, the magnet
 slots, the flat-topped teardrop pin holes and parking hole, and the
 joint face's bottom chamfer. This script mirrors it for the right half,
 measures it and prints what it found against DESIGN.md's figures, which
@@ -18,7 +19,9 @@ and their bores
 magnet slot cut through it), the joint face's angle, place and bottom
 chamfer, the pin holes (depth, diameter, the plastic behind and over
 them, the flat top, the lead-in),
-the magnet slots, the parking hole, the sockets' clearance from the
+the magnet slots, the parking hole, the reliefs under the switches'
+center posts and side pegs (across at the mouth, the bottom, open over
+the post's or peg's place), the sockets' clearance from the
 tray as built, and the mounts: the USB shell's channel and the USB
 window, the nice!nano's north block with the bar over the shell, the
 screw clamp (its block and foot, the insert bore, and its tab,
@@ -130,6 +133,21 @@ DESIGN_PARKING_HOLE_Z_MM = 3.4
 DESIGN_PARKING_HOLE_DEPTH_MM = 16.5  # the pin's 14.5 and the magnet's 2.0
 DESIGN_PARKING_BOSS_ACROSS_MM = 7.0
 DESIGN_PARKING_BOSS_BEHIND_HOLE_MM = 1.5
+# The reliefs under the switches' center posts and side pegs (work item
+# 023), at the same places on both halves in the left half's frame:
+# (what, the post's or peg's center, its footprint hole across, the way
+# into the body the relief is cut into, the relief across). "slant" is
+# the slant's direction north. The posts and pegs end at z 8.1.
+DESIGN_POST_RELIEFS = (
+    ("S163's post in the parking boss", (123.349, 9.207), 3.4, (0.0, 1.0), 4.8),
+    ("S163's peg in the parking boss", (117.849, 9.207), 1.9, (0.0, 1.0), 3.3),
+    ("S163's peg in the parking boss", (128.849, 9.207), 1.9, (0.0, 1.0), 3.3),
+    ("S150's peg in the upper dowel boss", (109.799, 68.739), 1.9, "slant", 3.3),
+    ("S131's peg in the nice!nano's raised east wall", (60.699, 54.451), 1.9, (-1.0, 0.0), 3.3),
+    ("S130's peg in the nice!nano's raised east wall", (60.699, 73.501), 1.9, (-1.0, 0.0), 3.3),
+)
+DESIGN_POST_RELIEF_BOTTOM_Z_MM = 7.4
+DESIGN_POST_ENDS_Z_MM = 8.1
 DESIGN_SOCKET_BOTTOM_Z_MM = 7.48
 # The least any socket keeps from the tray as cut: the ledge relief's
 # and the tab pocket's clearance.
@@ -1053,6 +1071,35 @@ def measure_parking_hole(tray, right, figures):
     return f"parking:    {', '.join(texts)}"
 
 
+def measure_post_relief(tray, right, relief, figures):
+    """A relief under a switch's post or peg (DESIGN_POST_RELIEFS): across
+    at its mouth, twice the run from its center the way into its body to
+    its wall 0.25 under the body's top; its bottom, in the middle of what
+    it cuts, between the body's face 0.25 under the bottom and that wall;
+    and open over the post's or peg's place, its hole's edge farthest into
+    the body, from no higher than the bottom up past the rim."""
+    what, center, hole, into, diameter = relief
+    way = vector(design_slant_frame(right)[1] if into == "slant" else half_vector(into, right))
+    plan = half_point(center, right)
+    end = DESIGN_POST_ENDS_Z_MM
+    _back, radius = run_through(tray, vector(plan, DESIGN_LEDGE_TOP_Z_MM - 0.25), way, False)
+    _back, face = run_through(tray, vector(plan, DESIGN_POST_RELIEF_BOTTOM_Z_MM - 0.25), way,
+                              False)
+    middle = vector(plan, end).add(way * ((face + radius) / 2.0))
+    bottom = end + run_through(tray, middle, UP, False)[0]
+    low, high = run_through(tray, vector(plan, end).add(way * (hole / 2.0)), UP, False)
+    if end + low > bottom + SAME_PLACE_MM or end + high < DESIGN_RIM_Z_MM:
+        figures.problems.append(f"the relief for {what} is not open over its place")
+    texts = [
+        figures.check(f"{what} at ({plan[0]:.3f}, {plan[1]:.3f}), across at its mouth",
+                      2.0 * radius, diameter, 1),
+        f"{radius - face:.3f} into the body",
+        figures.check("bottom z", bottom, DESIGN_POST_RELIEF_BOTTOM_Z_MM, 1),
+        "open over its place",
+    ]
+    return f"relief:     {', '.join(texts)}"
+
+
 def measure_joint_face_chamfer(tray, right, figures):
     """The joint face's bottom edge chamfer at the slant's middle: how
     far it reaches in along the bed and up the face."""
@@ -1759,6 +1806,8 @@ def measure(tray, right, pin_hole_radius, design, mount_design, fits):
     lines.extend(measure_pin_holes(tray, right, pin_hole_radius, design, figures))
     lines.extend(measure_magnet_slots(tray, right, figures))
     lines.append(measure_parking_hole(tray, right, figures))
+    lines.extend(measure_post_relief(tray, right, relief, figures)
+                 for relief in DESIGN_POST_RELIEFS)
     lines.append(measure_socket_clearance(tray, right, figures))
     lines.extend(measure_mounts(tray, right, mount_design, fits, figures))
     for line in lines:

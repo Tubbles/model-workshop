@@ -40,7 +40,9 @@ recess free, no body filling a standoff's bore, then the USB shell's
 channel and the USB window, the knob slot through the ledge and the
 north wall, the reset pin hole through the north wall, the nice!nano's
 pry slot through the clamp's block and foot and the clamp block's
-insert bore. Then
+insert bore. Then the round reliefs, open at the top, that layout.py
+cuts into the bosses and the nice!nano's raised walls under the
+switches' center posts and side pegs (work item 023). Then
 the magnet slots, open toward the cavity (but the south 2.165 of the
 one at 48.26 along the slant, which the sixth standoff walls off), with
 the wall cut back over them, the flat-topped teardrop pin holes (the
@@ -310,7 +312,7 @@ class Tray:
     pin_hole_diameter: float
     pin_hole_depth: float
     pin_hole_lead_in: float
-    cuts: list  # (label, removed volume) of the ledge, wall and standoff cuts
+    cuts: list  # (label, removed volume) of the ledge, wall and standoff cuts and the reliefs
     skipped_cuts: list  # labels of the cuts that found nothing left to remove
     fits: layout.MountFits  # the mounts' fits the tray was built with
     mounts: list  # (label, added volume) of the mounts' bodies
@@ -1554,6 +1556,33 @@ def cut_mount_voids(tray, fits):
     return cut_nano_clamp_bore(tray, fits)
 
 
+def cut_post_relief(tray, relief):
+    """(tray, removed volume) after a relief for a switch's post or peg
+    (a layout.PostRelief, work item 023): a cylinder from its bottom up
+    through its body's top into the open cavity. It crosses one face of
+    its body, so it removes the circle's segment beyond that face over
+    its height, and the body stays solid under it and beyond it."""
+    radius = relief.diameter / 2.0
+    bottom, top = relief.z_range
+    x, y = relief.center
+    cutter = Part.makeCylinder(radius, top + CUT_EXTRA_MM - bottom, App.Vector(x, y, bottom), UP)
+    result = tray.cut(cutter)
+    require_one_valid_solid(result, f"the {relief.label}")
+    face, toward = layout.toward_polygon(relief.center, relief.body_polygon)
+    expected = circular_segment_area(radius, face) * (top - bottom)
+    require_volume(f"the {relief.label}", tray.Volume - result.Volume, expected, 1e-6)
+    toward = App.Vector(toward[0], toward[1], 0.0)
+    middle = App.Vector(x, y, (bottom + top) / 2.0).add(toward * ((face + radius) / 2.0))
+    for point, want_solid, what in (
+        (middle, False, "open"),
+        (App.Vector(middle.x, middle.y, bottom - PROBE_OFFSET_MM), True, "over plastic"),
+        (App.Vector(x, y, middle.z).add(toward * (radius + PROBE_OFFSET_MM)), True, "this wide"),
+    ):
+        if is_solid_at(result, point) != want_solid:
+            raise SystemExit(f"error: the {relief.label} is not {what}")
+    return result, tray.Volume - result.Volume
+
+
 def finish(tray):
     """Merge the faces the booleans split, keeping one valid solid of
     the same volume."""
@@ -1601,6 +1630,9 @@ def build_tray(right=False, pin_hole_diameter=None, fits=None):
             cuts.append((flat.label, removed))
     tray, mounts = add_mounts(tray, fits)
     tray = cut_mount_voids(tray, fits)
+    for relief in layout.switch_post_reliefs(right, fits):
+        tray, removed = cut_post_relief(tray, relief)
+        cuts.append((relief.label, removed))
     for along in layout.MAGNET_ALONGS_MM:
         tray = cut_magnet_slot(tray, along)
     for along in layout.DOWEL_PIN_ALONGS_MM:
