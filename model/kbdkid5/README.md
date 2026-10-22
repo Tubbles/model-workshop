@@ -2,7 +2,7 @@
 
 A wireless split keyboard whose halves also join into one board, the successor of [kbdkid4](https://github.com/Tubbles/kbdkid4). Its design, with every dimension, is in [DESIGN.md](DESIGN.md), and the parts to buy are below. The part choices and their sources are in [doc/components.md](../../doc/components.md), and the plan is in [PLAN.md](../../PLAN.md).
 
-CI runs each export below with the command shown, from this repository's root, and puts every STL in the `kbdkid5-<short commit hash>` artifact (the root [README.md](../../README.md), Getting the STLs). A right half part (the word `right`) is the left one mirrored, but for what DESIGN.md (Frame and units) lists. CI also runs the layout check, `python3 model/kbdkid5/scripts/check_layout.py`, which checks the layout and DESIGN.md's figures against it. It is plain Python that runs anywhere. In CI it is a job of its own beside the exports, so a failing check fails the run while the STLs still upload.
+CI runs each export below with the command shown, from this repository's root, and puts the parts' STLs in the `kbdkid5-<short commit hash>` artifact and the test prints' and mocks' in `kbdkid5-test-<short commit hash>` (the root [README.md](../../README.md), Getting the STLs). A right half part (the word `right`) is the left one mirrored, but for what DESIGN.md (Frame and units) lists. CI also runs the layout check, `python3 model/kbdkid5/scripts/check_layout.py`, which checks the layout and DESIGN.md's figures against it. It is plain Python that runs anywhere. In CI it is a job of its own beside the exports, so a failing check fails the run while the STLs still upload.
 
 ## 3D printed PCB mock
 
@@ -11,7 +11,7 @@ CI runs each export below with the command shown, from this repository's root, a
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_pcb.py --pass pcb.stl [right] [pull_in=0.2]
 
-CI exports both halves as `kbdkid5-pcb-mock-left.stl` and `kbdkid5-pcb-mock-right.stl`.
+CI exports both halves as `kbdkid5-pcb-mock-left.stl` and `kbdkid5-pcb-mock-right.stl`, in `kbdkid5-test-<short commit hash>`.
 
 ## 3D printed switch plate
 
@@ -21,7 +21,7 @@ CI exports both halves as `kbdkid5-pcb-mock-left.stl` and `kbdkid5-pcb-mock-righ
         freecadcmd model/kbdkid5/scripts/export_plate.py --pass plate.stl [right] [covered] \
         [pattern_shift=0] [side_shave=0.1] [hole_diameter=4.17]
 
-CI exports both halves, plain and covered, as `kbdkid5-plate-left.stl`, `kbdkid5-plate-right.stl`, `kbdkid5-plate-covered-left.stl` and `kbdkid5-plate-covered-right.stl`.
+CI exports both halves, plain and covered, as `kbdkid5-plate-left.stl`, `kbdkid5-plate-right.stl`, `kbdkid5-plate-covered-left.stl` and `kbdkid5-plate-covered-right.stl`, in `kbdkid5-<short commit hash>`.
 
 ## 3D printed fused mock
 
@@ -36,7 +36,7 @@ CI exports both halves, plain and covered, as `kbdkid5-plate-left.stl`, `kbdkid5
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_slit_test.py --pass strip.stl [wide] [pull_in=0.2]
 
-CI exports both halves of the fused mock and the slit strips as `kbdkid5-fused-mock-left.stl`, `kbdkid5-fused-mock-right.stl`, `kbdkid5-slit-test.stl` and `kbdkid5-slit-test-wide.stl`.
+CI exports both halves of the fused mock and the slit strips as `kbdkid5-fused-mock-left.stl`, `kbdkid5-fused-mock-right.stl`, `kbdkid5-slit-test.stl` and `kbdkid5-slit-test-wide.stl`, in `kbdkid5-test-<short commit hash>`.
 
 ## 3D printed socket test strips
 
@@ -56,7 +56,7 @@ To try the hole strip, push a socket in so its two posts enter the holes. The po
 
 To try the switch hole strip, push a switch into each cell from the face that was on the bed and wiggle it sideways. A good cell takes the switch fully in by hand, lets it sit flat and holds it without play sideways. Loose means it wobbles, too tight means it will not go fully in or sit flat. Report the tightest cell the switch goes fully into by hand and sits flat in, which cells still let it wobble, and whether the post or the pegs seem to bind first.
 
-CI exports the socket strips and the switch hole strip as `kbdkid5-socket-test-pocket.stl`, `kbdkid5-socket-test-holes.stl`, `kbdkid5-socket-test-backing.stl` and `kbdkid5-switch-hole-test.stl`.
+CI exports the socket strips and the switch hole strip as `kbdkid5-socket-test-pocket.stl`, `kbdkid5-socket-test-holes.stl`, `kbdkid5-socket-test-backing.stl` and `kbdkid5-switch-hole-test.stl`, in `kbdkid5-test-<short commit hash>`.
 
 ## 3D printed hand-wired frame
 
@@ -66,7 +66,7 @@ CI exports the socket strips and the switch hole strip as `kbdkid5-socket-test-p
         freecadcmd model/kbdkid5/scripts/export_frame.py --pass part.stl frame|backing [right] \
         [insert_length=<mm>]
 
-CI exports both halves of both parts as `kbdkid5-frame-left.stl`, `kbdkid5-frame-right.stl`, `kbdkid5-frame-backing-left.stl` and `kbdkid5-frame-backing-right.stl`.
+CI exports both halves of both parts as `kbdkid5-frame-left.stl`, `kbdkid5-frame-right.stl`, `kbdkid5-frame-backing-left.stl` and `kbdkid5-frame-backing-right.stl`, in `kbdkid5-<short commit hash>`.
 
 Print the frame as written, its top face on the bed, the walls and bosses standing up, and the backing as written, bottom down with its pads on top. Neither needs supports.
 
@@ -118,7 +118,7 @@ To try it, fit the board as in the tray, with an M2 x 4, or on the test bay an M
         freecadcmd model/kbdkid5/scripts/export_nano_bay_test.py --pass bay.stl \
         [nano_length=33.2] [nano_width=18.2]
 
-CI exports both halves, the tab, the retainer and the test bay as `kbdkid5-tray-left.stl`, `kbdkid5-tray-right.stl`, `kbdkid5-nano-clamp-tab.stl`, `kbdkid5-power-switch-retainer.stl` and `kbdkid5-nano-bay-test.stl`.
+CI exports both halves, the tab and the retainer as `kbdkid5-tray-left.stl`, `kbdkid5-tray-right.stl`, `kbdkid5-nano-clamp-tab.stl` and `kbdkid5-power-switch-retainer.stl`, in `kbdkid5-<short commit hash>`, and the test bay as `kbdkid5-nano-bay-test.stl`, in `kbdkid5-test-<short commit hash>`. The test bay takes the trays' clamp tab, so trying it takes both zips.
 
 ## Placing parts
 

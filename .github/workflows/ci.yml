@@ -18,23 +18,34 @@ on:
 permissions:
   contents: read
 
-# Every project's STLs end up in one artifact, named
-# <project>-<short commit hash> (README.md, Getting the STLs). Each
-# job's name starts with its project's name, its directory under
-# model/. A keyboard's exports are split over several jobs, so they
-# build in parallel. Each uploads its STLs once, at its end, as an
-# intermediate artifact, <project>-<kind>-<short commit hash>, and the
-# job named after the project alone merges those into the project's
-# artifact and deletes them. The merge runs only when every one of the
-# keyboard's export jobs passed. After a failed one the intermediates
-# stay on the run page, and rerunning the failed jobs reruns the merge
-# too, so a run ends with one artifact per project, never an earlier
-# attempt's partial one beside it. A job that uploaded twice would
-# leave its first artifact behind after a rerun, since the merge
-# deletes one artifact per name. The merge's pattern matches the
-# keyboard's intermediates only, not its merged artifact. It puts every
-# file in one folder, where a file replaces another of the same name,
-# so no two of a project's STLs may share a name. Every
+# A keyboard's STLs end up in two artifacts, its parts in
+# <project>-<short commit hash> and its test prints and mocks, every STL
+# whose name says test or mock, in <project>-test-<short commit hash>.
+# Every other project's end up in one, <project>-<short commit hash>
+# (README.md, Getting the STLs). Each job's name starts with its
+# project's name, its directory under model/. A keyboard's exports are
+# split over several jobs, so they build in parallel, and each job's
+# STLs are all parts or all tests. Each uploads its STLs once, at its
+# end, as an intermediate artifact,
+# <project>-part-<kind>-<short commit hash> or
+# <project>-test-<kind>-<short commit hash>, and the job named after the
+# group's artifact (kbdkid5, kbdkid5-test, kbdkid4) merges the group's
+# intermediates into it and deletes them. A group whose STLs all come
+# from one job, as kbdkid4's PCB mocks do, is uploaded by that job
+# straight under the group's artifact name, with no merge. A merge needs
+# only its group's export jobs and runs only when every one of them
+# passed, so a failed test export does not hold back the parts. After a
+# failed one the group's intermediates stay on the run page, and
+# rerunning the failed jobs reruns the merge too, so a run ends with one
+# artifact per group, never an earlier attempt's partial one beside it.
+# A job that uploaded twice would leave its first artifact behind after
+# a rerun, since the merge deletes one artifact per name. A merge's
+# pattern, <project>-part-*-<short commit hash> or
+# <project>-test-*-<short commit hash>, needs a kind before the hash, so
+# it matches its own group's intermediates only, never a merged artifact
+# or the other group's. The merge puts every file in one folder, where a
+# file replaces another of the same name, so no two STLs of a group may
+# share a name. Every
 # export job restores or builds the FreeCAD image through
 # .github/actions/freecad-image. The kbdkid4 jobs get kbdkid4's board
 # through .github/actions/kbdkid4-board: the STEP that kbdkid4's
@@ -97,7 +108,7 @@ jobs:
       - name: Upload socket test STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid5-socket-${{ env.SHORT_SHA }}
+          name: kbdkid5-test-socket-${{ env.SHORT_SHA }}
           path: socket/
           if-no-files-found: error
 
@@ -124,7 +135,7 @@ jobs:
       - name: Upload hand-wired frame and backing STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid5-frame-${{ env.SHORT_SHA }}
+          name: kbdkid5-part-frame-${{ env.SHORT_SHA }}
           path: frame/
           if-no-files-found: error
 
@@ -153,7 +164,7 @@ jobs:
       - name: Upload PCB mock, fused mock and slit test STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid5-mock-${{ env.SHORT_SHA }}
+          name: kbdkid5-test-mock-${{ env.SHORT_SHA }}
           path: mock/
           if-no-files-found: error
 
@@ -179,7 +190,7 @@ jobs:
       - name: Upload switch plate STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid5-plate-${{ env.SHORT_SHA }}
+          name: kbdkid5-part-plate-${{ env.SHORT_SHA }}
           path: plate/
           if-no-files-found: error
 
@@ -190,11 +201,9 @@ jobs:
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
       - uses: ./.github/actions/freecad-image
-      - name: Export tray, nano clamp tab, power switch retainer and nano bay test STL
+      - name: Export tray, nano clamp tab and power switch retainer STL
         run: |
           mkdir -p tray
-          docker run --rm -v "$PWD":/work -w /work freecad-headless \
-            freecadcmd model/kbdkid5/scripts/export_nano_bay_test.py --pass tray/kbdkid5-nano-bay-test.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
             freecadcmd model/kbdkid5/scripts/export_clamp_tab.py --pass tray/kbdkid5-nano-clamp-tab.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
@@ -203,24 +212,56 @@ jobs:
             freecadcmd model/kbdkid5/scripts/export_tray.py --pass tray/kbdkid5-tray-left.stl
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
             freecadcmd model/kbdkid5/scripts/export_tray.py --pass tray/kbdkid5-tray-right.stl right
-      - name: Upload tray, nano clamp tab, power switch retainer and nano bay test STL
+      - name: Upload tray, nano clamp tab and power switch retainer STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid5-tray-${{ env.SHORT_SHA }}
+          name: kbdkid5-part-tray-${{ env.SHORT_SHA }}
           path: tray/
+          if-no-files-found: error
+
+  kbdkid5-nano-bay-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the artifacts after the commit
+        run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/freecad-image
+      - name: Export nano bay test STL
+        run: |
+          mkdir -p bay
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_nano_bay_test.py --pass bay/kbdkid5-nano-bay-test.stl
+      - name: Upload nano bay test STL
+        uses: actions/upload-artifact@v4
+        with:
+          name: kbdkid5-test-nano-bay-${{ env.SHORT_SHA }}
+          path: bay/
           if-no-files-found: error
 
   kbdkid5:
     runs-on: ubuntu-latest
-    needs: [kbdkid5-socket-test, kbdkid5-frame, kbdkid5-mock, kbdkid5-plate, kbdkid5-tray]
+    needs: [kbdkid5-frame, kbdkid5-plate, kbdkid5-tray]
     steps:
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
-      - name: Merge kbdkid5's STL into one artifact
+      - name: Merge kbdkid5's part STL into one artifact
         uses: actions/upload-artifact/merge@v4
         with:
           name: kbdkid5-${{ env.SHORT_SHA }}
-          pattern: kbdkid5-*-${{ env.SHORT_SHA }}
+          pattern: kbdkid5-part-*-${{ env.SHORT_SHA }}
+          delete-merged: true
+
+  kbdkid5-test:
+    runs-on: ubuntu-latest
+    needs: [kbdkid5-socket-test, kbdkid5-mock, kbdkid5-nano-bay-test]
+    steps:
+      - name: Name the artifacts after the commit
+        run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - name: Merge kbdkid5's test and mock STL into one artifact
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: kbdkid5-test-${{ env.SHORT_SHA }}
+          pattern: kbdkid5-test-*-${{ env.SHORT_SHA }}
           delete-merged: true
 
   kbdkid4-tray:
@@ -243,7 +284,7 @@ jobs:
       - name: Upload tray STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid4-tray-${{ env.SHORT_SHA }}
+          name: kbdkid4-part-tray-${{ env.SHORT_SHA }}
           path: tray/
           if-no-files-found: error
 
@@ -273,7 +314,7 @@ jobs:
       - name: Upload plate STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid4-plate-${{ env.SHORT_SHA }}
+          name: kbdkid4-part-plate-${{ env.SHORT_SHA }}
           path: plate/
           if-no-files-found: error
 
@@ -297,7 +338,7 @@ jobs:
       - name: Upload PCB replica STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid4-pcb-${{ env.SHORT_SHA }}
+          name: kbdkid4-test-${{ env.SHORT_SHA }}
           path: pcb/
           if-no-files-found: error
 
@@ -321,21 +362,21 @@ jobs:
       - name: Upload case STL
         uses: actions/upload-artifact@v4
         with:
-          name: kbdkid4-case-${{ env.SHORT_SHA }}
+          name: kbdkid4-part-case-${{ env.SHORT_SHA }}
           path: case/
           if-no-files-found: error
 
   kbdkid4:
     runs-on: ubuntu-latest
-    needs: [kbdkid4-tray, kbdkid4-plate, kbdkid4-pcb, kbdkid4-case]
+    needs: [kbdkid4-tray, kbdkid4-plate, kbdkid4-case]
     steps:
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
-      - name: Merge kbdkid4's STL into one artifact
+      - name: Merge kbdkid4's part STL into one artifact
         uses: actions/upload-artifact/merge@v4
         with:
           name: kbdkid4-${{ env.SHORT_SHA }}
-          pattern: kbdkid4-*-${{ env.SHORT_SHA }}
+          pattern: kbdkid4-part-*-${{ env.SHORT_SHA }}
           delete-merged: true
 
   solder-spool-axle:

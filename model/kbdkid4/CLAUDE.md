@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code working on kbdkid4's printed parts, in `model/kbdkid4/`. Read its [README.md](README.md) first (the parts, where the board comes from, the commands and the CI artifact), since this file does not repeat it. The workshop's layout, workflow and conventions are in the root [CLAUDE.md](../../CLAUDE.md).
+Guidance for Claude Code working on kbdkid4's printed parts, in `model/kbdkid4/`. Read its [README.md](README.md) first (the parts, where the board comes from, the commands and the CI artifacts), since this file does not repeat it. The workshop's layout, workflow and conventions are in the root [CLAUDE.md](../../CLAUDE.md).
 
 ## The kbdkid4 repository
 
