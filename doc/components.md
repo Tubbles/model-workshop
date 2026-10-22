@@ -367,6 +367,7 @@ Kailh Choc v1, kbdkid4's `KHA-PG1350` package. The user's caliper on a real swit
 
 - Confirmed (the user, 2026-10-20): the M2 pan head screws on hand have "roughly 1.5 mm high heads" (doc/log/2026-10-20.md), the socket test backing's screws (`layout.BACKING_SCREW_HEAD_HEIGHT_MM`).
 - Confirmed (measured, kbdkid4 commit 9c59d24, 2026-07-23): kbdkid4's screw heads are 3.77 across (`SCREW_HEAD_DIAMETER_MM` in `model/kbdkid4/scripts/export_plate.py`, `MOUNTING_SCREW_HEAD_DIAMETER_MM` in `model/kbdkid5/scripts/layout.py`).
+- On hand (the user, 2026-10-22): flat slotted head M2 screws with heads "1.42 mm high", 50 each of M2 x 4, M2 x 5 and M2 x 8, their heads' diameter not yet measured. Also a kit of 30 M2 x 6, 30 M2 x 8, 25 M2 x 10, 25 M2 x 12, 25 M2 x 16 and 20 M2 x 20, each in socket cap and in hex pan heads, with M2 washers and nuts, and Loctite "to lock the screws in if needed, for further vibration resistance".
 - Unconfirmed: those heads' height, which the nice!nano clamp's screw takes at an assumed figure (model/kbdkid5/DESIGN.md, nice!nano, doc/log/2026-10-17.md, `layout.NANO_CLAMP_SCREW_HEAD_HEIGHT_MM`).
 
 ## 11. Measured on kbdkid4's assembled board (2026-10-12)
