@@ -1,6 +1,6 @@
 # 016 Placement solver
 
-Status: todo
+Status: implemented
 
 The user, 2026-10-21: "And honestly we need a better tool for "jiggling" stuff in place, a subagent trying every possibility of a N dimensional problem is extremely wasteful. There has to be some algorithm we can leverage for that", and "Yes let's create that next, make sure to make it very generic so we can use it for any model in the workshop repo. Data oriented. Do deep research into the topic first so we get a robust tool".
 
@@ -24,4 +24,6 @@ Decided: the research is `work/research/placement-solver.md` (untracked), and th
 - Refactors are encouraged and need no asking: "Yes absolutely, no need to even ask permission for that? Refactors are encouraged". `check_layout.py`'s standoff and frame boss rules become records, `standoff_rules()` and `frame_boss_rules()`, that its checks and the solver's kbdkid5 script both read (section 5), in a commit of their own before the tool.
 - The plate's head holes against the switch cutouts become a `check_layout.py` rule at 0.5 (the user had no preference), so the solver sees it. Done: `check_plate_head_holes()`, its rules in `standoff_rules()`. The 0.5 was to be `plate_shape.py`'s `SUPPORTED_HOLE_THRESHOLD`, which is a fraction of a hole's volume rather than a distance, so the rule has its own `PLATE_HEAD_HOLE_FROM_CUTOUTS_MM`. DESIGN.md (Mounting) has what each moved standoff's hole keeps.
 
-Open: the tool itself. The research's section 4 has the solver families it recommends, section 7 the runs that validate them.
+Done: the tool, `tools/placement/` (the root README.md, The placement solver), with the research's solver families (section 4), and kbdkid5's problems for it, `model/kbdkid5/scripts/place.py` (kbdkid5's README.md, Placing parts), whose runs reproduce the research's five validations (section 7) and whose `test_place.py` holds them. The frame's backing heights now come from `layout.py` (`backing_top_z()` and the functions beside it) rather than from DESIGN.md's figures.
+
+Open: by `check_layout.py`'s rules the frame bosses' run finds one boss place more on each half than `FRAME_BOSS_CENTERS_MM` holds. DESIGN.md (Hand-wired frame, Bosses) describes both. Whether the frame takes them is the user's call. The solver has no frontier or lexicographic objectives yet, nor the research's slabs for a part free in plan and z at once: a z degree of freedom goes through SLSQP, and `free_heights()` answers it exactly at a plan pose.

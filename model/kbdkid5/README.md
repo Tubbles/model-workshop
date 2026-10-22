@@ -119,6 +119,24 @@ To try it, fit the board as in the tray, with an M2 x 4, or on the test bay an M
 
 CI uploads both halves, the tab, the retainer and the test bay as the `kbdkid5-tray-<short commit hash>` artifact: `kbdkid5_Tray_Left.stl`, `kbdkid5_Tray_Right.stl`, `kbdkid5_Nano_Clamp_Tab.stl`, `kbdkid5_Power_Switch_Retainer.stl` and `kbdkid5_Nano_Bay_Test.stl`.
 
+## Placing parts
+
+`scripts/place.py` asks the placement solver (the root [README.md](../../README.md), The placement solver) where a standoff or the hand-wired frame's bosses can go by the rules `check_layout.py` checks, and writes each run's report (`report.txt`, `report.json`), its problem (`problem.json`) and a picture per half to `tmp/place/<run>/`. From the repository root:
+
+    podman run --rm -v "$PWD":/work -w /work placement python3 model/kbdkid5/scripts/place.py <run>
+
+The runs, each one of the checks of the solver that work item 016 names:
+
+- `sixth-standoff`: the sixth standoff, from 0.5 west of the user's spot. It finds the spot itself, with DESIGN.md's figures for its bore and its merge (Mounting, and Tray, Merged standoff). With `--scan-rule` it holds the body clear of the ledge and the magnet slots instead, the rule the first scan used, and finds the spot taken by the joint block and the slot.
+- `north-east-standoff`: the north-east standoff (DESIGN.md, Mounting), where S140's socket gets its flat, and the declaration `layout.py` holds for it.
+- `head-over-strip`: a backing screw head over the west socket strip, and how far it must rise to clear the strip.
+- `frame-bosses`: the frame's bosses on both halves by DESIGN.md's rule (Hand-wired frame, Bosses), each against `layout.py`'s, then every check with them in place.
+- `check-pass`: every check with the two standoffs' answers in place.
+
+Its tests hold the solver's margins to `check_layout.py`'s and the runs to DESIGN.md's figures:
+
+    podman run --rm -v "$PWD":/work -w /work placement python3 model/kbdkid5/scripts/test_place.py
+
 ## Parts to buy
 
 For both halves:
