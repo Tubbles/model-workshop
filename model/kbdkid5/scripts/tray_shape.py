@@ -461,9 +461,11 @@ def add_backing_shelves(tray, corner_radius, right):
     """Fuse the shelves (backing_shelf_body()) and check them. They add
     their sharp pieces' volume less the notches' within 1%: the rounds
     of their face take off as much as they fill in the ledge's rounded
-    corners beside them, but for the round where the outer edge's shelf
-    starts. Each piece is solid in its middle below the top and open
-    over it, and each notch is open. Returns (tray, added volume)."""
+    corners beside them, but for the rounds where the outer edge's and
+    the north edges' shelves start, and a notch that runs into a round
+    takes off less than its own volume. Each piece is solid in its
+    middle below the top and open over it, and each notch is open.
+    Returns (tray, added volume)."""
     top = layout.BACKING_SHELF_TOP_Z_MM
     notches = layout.backing_shelf_notches(right)
     result = tray.fuse(backing_shelf_body(corner_radius, right))

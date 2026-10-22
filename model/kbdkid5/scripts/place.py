@@ -291,8 +291,18 @@ def standoff_problem(name, target, start=None, scan_rule=False):
 
 
 def frame_adapted(right, standoff_centers=None):
+    """Adapted from the half's frame boss rules, the standoffs at
+    standoff_centers (layout.py's unless given), less those against the
+    shelves under the backing: the shelves are notched for each head
+    wherever it stands (layout.backing_shelf_notches()), as far as the
+    ledge, which the heads keep their own rule from. check_layout.py's
+    shelves are notched for FRAME_BOSS_CENTERS_MM, so they would hold a
+    head to the notch cut for layout.py's boss instead (doc/work/022)."""
     centers = standoff_centers or layout.MOUNTING_DRILL_CENTERS_MM
-    return adapted([(context_name(right), check_layout.frame_boss_rules(centers, right))])
+    shelves = {label for label, _piece, _z_range in check_layout.shelf_pieces(right)}
+    records = [record for record in check_layout.frame_boss_rules(centers, right)
+               if record.obstacle not in shelves]
+    return adapted([(context_name(right), records)])
 
 
 def pair_rules():

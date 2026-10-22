@@ -135,22 +135,30 @@ DESIGN_SOCKET_BOTTOM_Z_MM = 7.48
 # and the tab pocket's clearance.
 DESIGN_LEAST_SOCKET_CLEARANCE_MM = 0.5
 # The shelves under the hand-wired frame's backing's edges (DESIGN.md,
-# "Tray", Shelves), the left half's: their face as modelled, sharp, from
-# the outer edge's shelf's start at the ledge's face to the thumb's
-# ledge, running as the outline does, the cavity on its left. Every
-# inward corner (a right turn) is rounded as the ledge's are, and each
-# end meets the ledge's face square.
+# "Tray", Shelves), the left half's: their face as modelled, sharp, in
+# two runs, from the outer edge's shelf's start at the ledge's face to
+# the thumb's ledge and from the north edges' start at the ledge's face
+# to column 3's north ledge, each running as the outline does, the
+# cavity on its left. Every inward corner (a right turn) is rounded as
+# the ledge's are, and each end meets the ledge's face square.
 DESIGN_SHELF_FACE_MM = (
     (0.6, 63.386), (3.6, 63.386), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
     (53.074, 10.744), (79.324, 10.744), (79.324, 8.363), (98.374, 8.363), (98.374, 5.981),
     (117.424, 5.981), (117.424, 3.6), (131.798, 3.6),
 )
+DESIGN_SHELF_NORTH_FACE_MM = (
+    (104.468, 77.267), (104.468, 74.267), (91.174, 74.267), (91.174, 76.648), (72.124, 76.648),
+    (72.124, 82.029),
+)
 DESIGN_SHELF_TOP_Z_MM = 6.0
 DESIGN_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
 DESIGN_SHELF_ROUND_MM = 2.13  # the ledge's inner face's, wherever the outline steps in
-# Per half, the notches for the backing's screw heads: (count, deep,
-# long).
-DESIGN_SHELF_NOTCHES = {False: (3, 0.102, 1.408), True: (0, None, None)}
+# Per half, the notches for the backing's screw heads, by kind: (count,
+# deep, long).
+DESIGN_SHELF_NOTCHES = {
+    False: ((3, 0.102, 1.408), (1, 1.223, 4.298), (1, 1.954, 4.880)),
+    True: ((1, 1.223, 4.298),),
+}
 # The parts' mounts (DESIGN.md, "Parts in the tray"), the left half's,
 # placed on either half by half_point(). The nice!nano's mounts follow
 # the board, so they are given from its edges, and the board from its
@@ -547,22 +555,24 @@ def measure_ledge(tray, right, figures):
 def shelf_segments():
     """(start, length, unit direction, unit normal toward the cavity,
     (inward at its start, at its end)) of each straight run of DESIGN.md's
-    shelf face, in the left half's frame. The face runs as the outline
-    does, so the cavity lies on its left, and a corner where it turns
-    right is an inward one, rounded. Its ends meet the ledge's face."""
-    points = DESIGN_SHELF_FACE_MM
-    inward = [False]
-    for before, corner, after in zip(points, points[1:], points[2:]):
-        cross = ((corner[0] - before[0]) * (after[1] - corner[1])
-                 - (corner[1] - before[1]) * (after[0] - corner[0]))
-        inward.append(cross < 0.0)
-    inward.append(False)
+    shelf face, both runs of it, in the left half's frame. The face runs
+    as the outline does, so the cavity lies on its left, and a corner
+    where it turns right is an inward one, rounded. Its ends meet the
+    ledge's face."""
     segments = []
-    for index, (start, end) in enumerate(zip(points, points[1:])):
-        length = math.dist(start, end)
-        direction = ((end[0] - start[0]) / length, (end[1] - start[1]) / length)
-        normal = (-direction[1], direction[0])
-        segments.append((start, length, direction, normal, (inward[index], inward[index + 1])))
+    for points in (DESIGN_SHELF_FACE_MM, DESIGN_SHELF_NORTH_FACE_MM):
+        inward = [False]
+        for before, corner, after in zip(points, points[1:], points[2:]):
+            cross = ((corner[0] - before[0]) * (after[1] - corner[1])
+                     - (corner[1] - before[1]) * (after[0] - corner[0]))
+            inward.append(cross < 0.0)
+        inward.append(False)
+        for index, (start, end) in enumerate(zip(points, points[1:])):
+            length = math.dist(start, end)
+            direction = ((end[0] - start[0]) / length, (end[1] - start[1]) / length)
+            normal = (-direction[1], direction[0])
+            segments.append((start, length, direction, normal,
+                             (inward[index], inward[index + 1])))
     return segments
 
 
@@ -628,10 +638,11 @@ def shelf_reach(tray, right, start, length, direction, normal):
 
 def measure_shelves(tray, right, figures):
     """Each straight run of the shelves' face: its plane DESIGN.md's, its
-    straight length (DESIGN.md's less the round at an inward end), its z
-    range (from the floor's top to the shelves' top), on the long runs
-    their reach in from the ledge's face, and the notches behind it for
-    the backing's screw heads."""
+    straight length (DESIGN.md's less the round at an inward end, or
+    less the notch that runs into that round), its z range (from the
+    floor's top to the shelves' top), on the long runs their reach in
+    from the ledge's face, and the notches behind it for the backing's
+    screw heads, of each kind as many as DESIGN.md has."""
     lines = []
     notches = []
     for start, length, direction, normal, inward_ends in shelf_segments():
@@ -641,7 +652,15 @@ def measure_shelves(tray, right, figures):
             raise SystemExit(f"error: no shelf face on the run from {start} along {direction}")
         low = min(along[0] for along, _z in pieces)
         high = max(along[1] for along, _z in pieces)
-        straight = length - DESIGN_SHELF_ROUND_MM * sum(inward_ends)
+        run_notches = notch_bottoms(faces, start, length, direction, normal)
+        straight_low = DESIGN_SHELF_ROUND_MM if inward_ends[0] else 0.0
+        straight_high = length - (DESIGN_SHELF_ROUND_MM if inward_ends[1] else 0.0)
+        for _depth, (notch_low, notch_high) in run_notches:
+            if notch_low < straight_low < notch_high:
+                straight_low = notch_high
+            if notch_low < straight_high < notch_high:
+                straight_high = notch_low
+        straight = straight_high - straight_low
         where = half_point(start, right)
         texts = [
             figures.check("straight", high - low, round(straight, 3), 2),
@@ -652,15 +671,15 @@ def measure_shelves(tray, right, figures):
         if straight > 2.0 * DESIGN_SHELF_ROUND_MM:
             reach = shelf_reach(tray, right, start, length, direction, normal)
             texts.append(figures.check("reach", reach, DESIGN_SHELF_REACH_MM, 2))
-        notches.extend(notch_bottoms(faces, start, length, direction, normal))
+        notches.extend(run_notches)
         lines.append(f"shelf:      from ({where[0]:.3f}, {where[1]:.3f}), {length:.3f} long as "
                      f"modelled: {', '.join(texts)}")
-    count, depth, notch_length = DESIGN_SHELF_NOTCHES[right]
-    texts = [figures.check("notches", len(notches), count, 0)]
-    if notches:
-        texts.append(figures.check("deep", max(each for each, _along in notches), depth, 3))
-        texts.append(figures.check("long", max(along[1] - along[0] for _depth, along in notches),
-                                   notch_length, 3))
+    kinds = DESIGN_SHELF_NOTCHES[right]
+    texts = [figures.check("notches", len(notches), sum(count for count, _deep, _long in kinds), 0)]
+    for count, depth, notch_length in kinds:
+        alike = [along for each, along in notches
+                 if abs(each - depth) < 5e-4 and abs(along[1] - along[0] - notch_length) < 5e-4]
+        texts.append(figures.check(f"{depth} deep and {notch_length} long", len(alike), count, 0))
     lines.append(f"shelf:      for the backing's screw heads, {', '.join(texts)}")
     return lines
 

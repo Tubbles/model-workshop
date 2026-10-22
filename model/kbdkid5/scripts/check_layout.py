@@ -344,13 +344,18 @@ DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
 # order: the post, the pegs, the blades, the NC pad's.
 DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
-# The shelves under the backing's edges (work item 020): their face from
-# the outer edge's shelf's start at the ledge's face to the thumb's
-# ledge, as modelled, sharp-cornered.
+# The shelves under the backing's edges (work items 020 and 022): their
+# face from the outer edge's shelf's start at the ledge's face to the
+# thumb's ledge, and the north edges' from their start at the ledge's
+# face to column 3's north ledge, as modelled, sharp-cornered.
 DESIGN_SHELF_FACE_MM = (
     (0.6, 63.386), (3.6, 63.386), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
     (53.074, 10.744), (79.324, 10.744), (79.324, 8.363), (98.374, 8.363), (98.374, 5.981),
     (117.424, 5.981), (117.424, 3.6), (131.798, 3.6),
+)
+DESIGN_SHELF_NORTH_FACE_MM = (
+    (104.468, 77.267), (104.468, 74.267), (91.174, 74.267), (91.174, 76.648), (72.124, 76.648),
+    (72.124, 82.029),
 )
 DESIGN_SHELF_TOP_Z_MM = 6.0
 DESIGN_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
@@ -359,6 +364,9 @@ DESIGN_SHELF_UNDER_BACKING_MM = 2.5  # in from the backing's edge
 # shelf's top rising as a top face or as an up-facing bottom.
 DESIGN_SHELF_UNDER_BACKING_PRINTED_MM = {"a top face": 0.333, "an up-facing bottom": 0.183}
 DESIGN_SHELF_OUTER_EDGE_START_Y_MM = 63.386  # 0.5 south of the power switch's body going in
+# 0.5 west of the right half's upper dowel boss's inner corner, on the
+# 0.001 step past it
+DESIGN_SHELF_NORTH_EDGE_START_X_MM = 104.468
 DESIGN_SHELF_FROM_HEADS_MM = 0.5
 DESIGN_SHELF_FROM_PARTS_MM = 0.5  # the parts and the tray's other bodies and voids
 DESIGN_SHELF_LEAST_FROM_PARTS_MM = 0.5  # on both halves, the power switch's body going in
@@ -4319,14 +4327,13 @@ def check_frame_backing(right=False):
 # (check_pry_slot()) too.
 
 
-def shelf_face_offset():
-    """How far layout.py's shelf face lies at most from DESIGN.md's
-    polyline, vertex by vertex from its first vertex on."""
+def shelf_face_offset(design_face):
+    """How far layout.py's shelf face lies at most from one of DESIGN.md's
+    polylines, vertex by vertex from its first vertex on."""
     polygon = layout.backing_shelf_polygon()
-    first = min(range(len(polygon)), key=lambda index: math.dist(polygon[index],
-                                                                 DESIGN_SHELF_FACE_MM[0]))
+    first = min(range(len(polygon)), key=lambda index: math.dist(polygon[index], design_face[0]))
     return max(math.dist(polygon[(first + offset) % len(polygon)], point)
-               for offset, point in enumerate(DESIGN_SHELF_FACE_MM))
+               for offset, point in enumerate(design_face))
 
 
 def shelf_across_figures():
@@ -4423,8 +4430,9 @@ def shelf_notch_text(notches):
 def check_backing_shelves(right=False):
     """The shelves under the backing's edges: their face, top and reach
     DESIGN.md's, their top under the backing's underside as printed
-    however it rises, the outer edge's shelf's start, and their
-    clearances (shelf_clearances()), the heads' at least DESIGN.md's."""
+    however it rises, the outer edge's and the north edges' starts, and
+    their clearances (shelf_clearances()), the heads' at least
+    DESIGN.md's."""
     broken = [f"the {label} is not convex" for label, _index, piece in layout.backing_shelf_pieces()
               if not is_convex(piece)]
     fail_on(broken, "the shelves' model is broken")
@@ -4432,9 +4440,13 @@ def check_backing_shelves(right=False):
     gaps = shelf_gaps_under_backing()
     start = layout.outline_edge_point(layout.BACKING_SHELF_OUTER_EDGE_INDEX,
                                       layout.backing_shelf_outer_edge_start(), 0.0)
+    north_start = layout.outline_edge_point(layout.BACKING_SHELF_NORTH_EDGE_INDICES[0],
+                                            layout.backing_shelf_north_edge_start(), 0.0)
     problems, heads, parts = shelf_clearances(right)
+    face_offset = max(shelf_face_offset(design_face)
+                      for design_face in (DESIGN_SHELF_FACE_MM, DESIGN_SHELF_NORTH_FACE_MM))
     figures = [
-        require_figure("face off DESIGN.md's at most", shelf_face_offset(), 0.0, 3),
+        require_figure("face off DESIGN.md's at most", face_offset, 0.0, 3),
         require_figure("top z", layout.BACKING_SHELF_TOP_Z_MM, DESIGN_SHELF_TOP_Z_MM, 1),
         require_figure_for_all("reach in from the ledge's face", reaches, DESIGN_SHELF_REACH_MM,
                                1),
@@ -4444,6 +4456,8 @@ def check_backing_shelves(right=False):
         for rise, stated in DESIGN_SHELF_UNDER_BACKING_PRINTED_MM.items()
     ] + [
         require_figure("the outer edge's from y", start[1], DESIGN_SHELF_OUTER_EDGE_START_Y_MM, 3),
+        require_figure("the north edges' from x", north_start[0],
+                       DESIGN_SHELF_NORTH_EDGE_START_X_MM, 3),
         require_figure("from the parts and the tray's other bodies and voids", parts.value,
                        DESIGN_SHELF_LEAST_FROM_PARTS_MM, 3),
     ]

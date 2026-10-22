@@ -3493,10 +3493,11 @@ def frame_wall_outer_polygon(key, right=False):
     return offset_polygon(outline, half_fit_gap(0.0, FRAME_POCKET_FIT_MM) + TRAY_WALL_MM)
 
 
-# The shelves under the backing's edges (work item 020, DESIGN.md, Tray,
-# Shelves): a step on the ledge's inner face along the south edge, all
-# its steps, and along the outer edge (x 0, the right half's east edge
-# once mirrored), on both halves, to catch the hand-wired frame's
+# The shelves under the backing's edges (work items 020 and 022,
+# DESIGN.md, Tray, Shelves): a step on the ledge's inner face along the
+# south edge, all its steps, along the outer edge (x 0, the right half's
+# east edge once mirrored) and along the north edges from the slant to
+# the column 3/4 step, on both halves, to catch the hand-wired frame's
 # backing where it sags. A shelf stands from the floor up to
 # BACKING_SHELF_TOP_Z_MM, solid like the ledge so it prints without
 # support, and reaches BACKING_SHELF_REACH_MM in from the ledge's face,
@@ -3506,13 +3507,21 @@ def frame_wall_outer_polygon(key, right=False):
 # down onto it and is never held up by it, which would lift the frame
 # off its standoffs (check_layout.py). It keeps FRAME_TRAY_CLEARANCE_MM
 # in plan from every backing screw head it would reach, the heads' own
-# rule from the tray, by a notch in its face (backing_shelf_notches()),
-# and the outer edge's shelf stops BACKING_SHELF_FROM_PARTS_MM short of
-# the power switch at that edge's north end
-# (backing_shelf_outer_edge_start()). The slant, where the magnet slots
-# open in the joint block's face, and the north edges, taken by the
-# parts, get none (doc/work/020-backing-shelves.md). The shelves' face
-# is sharp-cornered here. tray_shape.py rounds its inward corners as it
+# rule from the tray, by a notch in its face (backing_shelf_notches()).
+# The outer edge's shelf stops BACKING_SHELF_FROM_PARTS_MM short of the
+# power switch at that edge's north end
+# (backing_shelf_outer_edge_start()), and the north edges' starts that
+# far from the upper dowel boss, its fill and its hole at the slant's
+# north end (backing_shelf_north_edge_start()). The column 3/4 step's
+# shelf runs on to column 3's north ledge: a shelf continuing along
+# column 3's edge up to the reset button would leave its face there
+# shorter than the round at its end. The slant, where the magnet slots
+# open in the joint block's face, and the north edges west of the
+# column 3/4 step, taken by the reset button, the nice!nano, the PCB
+# connector's zone and the power switch, get none
+# (doc/work/020-backing-shelves.md,
+# doc/work/022-north-backing-shelves.md). The shelves' face is
+# sharp-cornered here. tray_shape.py rounds its inward corners as it
 # rounds the ledge's.
 BACKING_SHELF_TOP_Z_MM = 6.0
 BACKING_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
@@ -3523,7 +3532,14 @@ BACKING_SHELF_OUTER_EDGE_INDEX = len(OUTLINE_VERTICES_MM) - 1  # x 0, run from i
 BACKING_SHELF_SOUTH_EDGE_INDICES = tuple(
     range(OUTLINE_VERTICES_MM.index((SLANT_SOUTH_END_MM[0], 0.0)))
 )
-BACKING_SHELF_EDGE_INDICES = (BACKING_SHELF_OUTER_EDGE_INDEX,) + BACKING_SHELF_SOUTH_EDGE_INDICES
+# The north edges' runs and the steps between them, from the slant's
+# north end, the first run from partway along it, to the column 3/4 step
+# up to column 3's north edge's east end.
+BACKING_SHELF_NORTH_EDGE_INDICES = tuple(
+    range(SLANT_EDGE_INDEX + 1, OUTLINE_VERTICES_MM.index((75.724, NORTH_EDGE_Y_OF_COLUMN_3_MM)))
+)
+BACKING_SHELF_EDGE_INDICES = ((BACKING_SHELF_OUTER_EDGE_INDEX,) + BACKING_SHELF_SOUTH_EDGE_INDICES
+                              + BACKING_SHELF_NORTH_EDGE_INDICES)
 
 
 def backing_shelf_face_reach():
@@ -3535,7 +3551,8 @@ def backing_shelf_face_corners():
     """The outline moved in to the shelves' face along their edges and
     to the ledge's inner face (the joint block's along the slant)
     elsewhere, sharp-cornered: corner i where edges i - 1 and i meet, the
-    outer edge's shelf running on to the north edge."""
+    outer edge's shelf running on to the north edge and the north edges'
+    to the slant, short of which they start (backing_shelf_polygon())."""
     distances = list(outline_offset_distances(
         TRAY_GAP_MM - TRAY_LEDGE_WIDTH_MM, JOINT_FACE_OUTWARD_MM - JOINT_BLOCK_THICKNESS_MM))
     for index in BACKING_SHELF_EDGE_INDICES:
@@ -3572,20 +3589,66 @@ def backing_shelf_outer_edge_start():
     return outline_edge_coordinates((face_x, south - BACKING_SHELF_FROM_PARTS_MM), index)[0]
 
 
+def backing_shelf_north_edge_obstacles(right=False):
+    """What of the joint the north edges' shelf starts clear of on the
+    half: the upper dowel boss, its fill and its hole."""
+    along = max(DOWEL_PIN_ALONGS_MM)
+    return (dowel_boss_polygon(along, right), upper_boss_fill_polygon(right),
+            dowel_hole_polygon(along, right))
+
+
+def polygon_far_along(polygon, index, across_range):
+    """How far along outline edge `index` a convex polygon reaches
+    between the acrosses of across_range, or None where it does not
+    reach between them: the most along of its corners there and of its
+    sides where they cross the range's ends."""
+    points = [outline_edge_coordinates(point, index) for point in polygon]
+    alongs = [along for along, across in points if across_range[0] <= across <= across_range[1]]
+    for (start_along, start_across), (end_along, end_across) in zip(points,
+                                                                    points[1:] + points[:1]):
+        for bound in across_range:
+            if (start_across - bound) * (end_across - bound) < 0.0:
+                fraction = (bound - start_across) / (end_across - start_across)
+                alongs.append(start_along + fraction * (end_along - start_along))
+    return max(alongs, default=None)
+
+
+def backing_shelf_north_edge_start():
+    """How far along the first north edge, from the slant's north end,
+    its shelf starts: BACKING_SHELF_FROM_PARTS_MM past the farthest the
+    upper dowel boss, its fill and its hole reach within that of the
+    shelf's across, on either half, since both halves have the one face,
+    on the 0.001 step past it (step_past()), as this module states its
+    figures. The edge runs west, away from them."""
+    index = BACKING_SHELF_NORTH_EDGE_INDICES[0]
+    margin = BACKING_SHELF_FROM_PARTS_MM
+    across_range = (-backing_shelf_face_reach() - margin, -ledge_reach() + margin)
+    reaches = [polygon_far_along(polygon, index, across_range)
+               for right in (False, True) for polygon in backing_shelf_north_edge_obstacles(right)]
+    return step_past(max(reach for reach in reaches if reach is not None) + margin, up=True)
+
+
+def backing_shelf_run_starts():
+    """{outline edge index: along} of the shelves that start partway
+    along their first edge: the outer edge's and the north edges'."""
+    return {BACKING_SHELF_OUTER_EDGE_INDEX: backing_shelf_outer_edge_start(),
+            BACKING_SHELF_NORTH_EDGE_INDICES[0]: backing_shelf_north_edge_start()}
+
+
 def backing_shelf_pieces():
     """(label, outline edge index, counter-clockwise convex
     quadrilateral) of the shelf along each of its edges, before the
     notches: from the ledge's inner face to the shelves' face, the outer
-    edge's from where it starts."""
+    edge's and the north edges' from where they start."""
     count = len(OUTLINE_VERTICES_MM)
     ledge, face = ledge_inner_polygon(), backing_shelf_face_corners()
+    starts = backing_shelf_run_starts()
     pieces = []
     for index in BACKING_SHELF_EDGE_INDICES:
         start_ledge, start_face = ledge[index], face[index]
-        if index == BACKING_SHELF_OUTER_EDGE_INDEX:
-            along = backing_shelf_outer_edge_start()
-            start_ledge = outline_edge_point(index, along, -ledge_reach())
-            start_face = outline_edge_point(index, along, -backing_shelf_face_reach())
+        if index in starts:
+            start_ledge = outline_edge_point(index, starts[index], -ledge_reach())
+            start_face = outline_edge_point(index, starts[index], -backing_shelf_face_reach())
         end = (index + 1) % count
         pieces.append((f"shelf along outline edge {index}", index,
                        (start_ledge, ledge[end], face[end], start_face)))
@@ -3595,14 +3658,18 @@ def backing_shelf_pieces():
 def backing_shelf_polygon():
     """The shelves' face as tray_shape.py builds the shelves from it,
     sharp-cornered and counter-clockwise: backing_shelf_face_corners()
-    with the outer edge's shelf stepping back out to the ledge's inner
-    face where it starts."""
-    index = BACKING_SHELF_OUTER_EDGE_INDEX
-    along = backing_shelf_outer_edge_start()
-    step = (ledge_inner_polygon()[index], outline_edge_point(index, along, -ledge_reach()),
-            outline_edge_point(index, along, -backing_shelf_face_reach()))
-    face = backing_shelf_face_corners()
-    return face[:index] + step + face[index + 1:]
+    with the outer edge's and the north edges' shelves stepping back out
+    to the ledge's inner face where they start."""
+    ledge, face = ledge_inner_polygon(), backing_shelf_face_corners()
+    starts = backing_shelf_run_starts()
+    polygon = []
+    for index, corner in enumerate(face):
+        if index in starts:
+            polygon.extend((ledge[index], outline_edge_point(index, starts[index], -ledge_reach()),
+                            outline_edge_point(index, starts[index], -backing_shelf_face_reach())))
+        else:
+            polygon.append(corner)
+    return tuple(polygon)
 
 
 def step_past(value, up):
@@ -3612,28 +3679,65 @@ def step_past(value, up):
     return (math.floor(steps) + 1 if up else math.ceil(steps) - 1) / 1000.0
 
 
-def backing_shelf_notch(center, index, radius):
-    """The notch (a TrayCut) in the shelf along outline edge `index`
-    that clears the circle of the radius at center: over the part of the
-    circle past the shelves' face, across from LEDGE_CUT_OVERSHOOT_MM in
-    front of the face to the circle's far side, from the floor up
-    through the shelf's top. Its ends and its far side lie on the 0.001
-    steps past the circle's (step_past()), as this module states its
-    figures, so the circle clears the shelf with up to that to spare. A
-    ValueError where the circle reaches the ledge, which a notch in the
-    shelf cannot clear."""
-    along, across = outline_edge_coordinates(center, index)
-    face = -backing_shelf_face_reach()
-    if across + radius >= -ledge_reach():
+def segment_circle_crossings(start, end, center, radius):
+    """Where the segment from start to end crosses the circle."""
+    segment = (end[0] - start[0], end[1] - start[1])
+    offset = (start[0] - center[0], start[1] - center[1])
+    quadratic = segment[0] ** 2 + segment[1] ** 2
+    linear = 2.0 * (offset[0] * segment[0] + offset[1] * segment[1])
+    constant = offset[0] ** 2 + offset[1] ** 2 - radius**2
+    discriminant = linear**2 - 4.0 * quadratic * constant
+    if discriminant < 0.0:
+        return []
+    fractions = [(-linear + sign * math.sqrt(discriminant)) / (2.0 * quadratic)
+                 for sign in (-1.0, 1.0)]
+    return [(start[0] + fraction * segment[0], start[1] + fraction * segment[1])
+            for fraction in fractions if 0.0 <= fraction <= 1.0]
+
+
+def circle_in_polygon_points(center, radius, polygon, index):
+    """(along, across) in outline edge `index`'s frame of the points
+    that bound what of a counter-clockwise convex polygon lies in the
+    circle: the polygon's corners in it, its sides' crossings of it, and
+    the circle's farthest points along the edge either way and outward
+    that lie in the polygon."""
+    _start, direction, outward = outline_edge_frame(index)
+    count = len(polygon)
+    points = [corner for corner in polygon if math.dist(corner, center) <= radius]
+    for side in range(count):
+        points.extend(segment_circle_crossings(polygon[side], polygon[(side + 1) % count],
+                                               center, radius))
+    for unit in (direction, (-direction[0], -direction[1]), outward):
+        farthest = (center[0] + radius * unit[0], center[1] + radius * unit[1])
+        if inside_convex_polygon(farthest, polygon):
+            points.append(farthest)
+    return [outline_edge_coordinates(point, index) for point in points]
+
+
+def backing_shelf_notch(center, index, radius, piece):
+    """The notch (a TrayCut) that clears the circle of the radius at
+    center from the shelf piece along outline edge `index`, in that
+    edge's frame: over the along the circle and the piece share, across
+    from LEDGE_CUT_OVERSHOOT_MM in front of the shelves' face to the
+    farthest the circle reaches into the piece, from the floor up
+    through the shelf's top. Bounded by the piece rather than by the
+    face's line, it holds beside a corner of the face as in front of a
+    straight run: a circle that reaches two pieces there gets a notch in
+    each. Its ends and its far side lie on the 0.001 steps past the
+    circle's (step_past()), as this module states its figures, so the
+    circle clears the piece with up to that to spare. A ValueError where
+    the circle reaches the ledge, which a notch in the shelf cannot
+    clear."""
+    points = circle_in_polygon_points(center, radius, piece, index)
+    alongs = [along for along, _across in points]
+    far = max(across for _along, across in points)
+    if far >= -ledge_reach() - ON_BOUNDARY_MM:
         raise ValueError(f"the circle of {radius} at {center} reaches the ledge along outline "
                          f"edge {index}, which a notch in its shelf cannot clear")
-    face_past_center = face - across
-    half_length = (math.sqrt(radius**2 - face_past_center**2) if face_past_center > 0.0
-                   else radius)
     return TrayCut(f"shelf notch for the head at {center}", index,
-                   (step_past(along - half_length, up=False),
-                    step_past(along + half_length, up=True)),
-                   (face - LEDGE_CUT_OVERSHOOT_MM, step_past(across + radius, up=True)),
+                   (step_past(min(alongs), up=False), step_past(max(alongs), up=True)),
+                   (-backing_shelf_face_reach() - LEDGE_CUT_OVERSHOOT_MM,
+                    step_past(far, up=True)),
                    (0.0, BACKING_SHELF_TOP_Z_MM))
 
 
@@ -3647,5 +3751,5 @@ def backing_shelf_notches(right=False):
         for _label, index, piece in backing_shelf_pieces():
             distance, _nearest = nearest_polygon_point(center, piece)
             if distance < radius or inside_convex_polygon(center, piece):
-                notches.append(backing_shelf_notch(center, index, radius))
+                notches.append(backing_shelf_notch(center, index, radius, piece))
     return tuple(notches)
