@@ -11,6 +11,4 @@ Done:
 - The joined trays' check computes the slant's end and the mirror line from the exact corners, as the trays do (73b127f, after CI run 39645482478 failed on the rounded figures).
 - DESIGN.md (Outline, The joint, Plate and mocks) has the figures.
 
-Still open: print the plate, and the trays to go with it. A plate from 19eaff7 on fits only the trays from 433cbf9 on.
-
-Work item 019 took this outline back out (2026-10-22).
+Nothing is open: work item 019 took this outline back out (2026-10-22).

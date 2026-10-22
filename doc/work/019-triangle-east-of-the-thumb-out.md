@@ -11,6 +11,7 @@ Done:
 - The outline, the tray, the plate, the mocks and the frame are back on the outline from before 433cbf9, done by hand on today's code, the plate keeping what it gained since 19eaff7. DESIGN.md (Outline, The joint, Plate and mocks, Hand-wired frame) has the figures.
 - The dowel pins and the magnets are back at their places from before 017, 0.00015 further south along the slant than 017 had them: 017 added the rounded 19.251 to their alongs, while its south end lay 19.25085 from the thumb's corner.
 - The pin parking hole runs square through the thumb's east wall again, and the right half's S163 tab takes its notch and pocket again by the tab rule. The mirror line is back at x 66.199, so the right half's STL coordinates shift back.
-- The parking boss, back where it was, takes the left half's frame boss at (113.749, 13.477), which work item 016's solver had found while the parking boss stood further east. The solver finds no place by the thumb now, so the left half has 28 bosses, one M2 insert and screw fewer, and the thumb's socket has no boss near it again.
+- The parking boss, back where it was, takes the left half's frame boss at (113.749, 13.477), which work item 016's solver had found while the parking boss stood further east (DESIGN.md, Hand-wired frame, Bosses).
+- CI built the tray, the plate, the mocks and the frame (run 39748728369).
 
-Still open: the FreeCAD exports, which run in CI only.
+Still open: printing them.
