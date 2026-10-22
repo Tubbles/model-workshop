@@ -8,9 +8,11 @@ Every push runs the CI workflow, which exports every part in the FreeCAD image b
 
     docker build -t freecad-headless -f docker/freecad.Dockerfile docker
 
-## The placement solver's image
+## The placement solver
 
-The placement solver (work item 016, to come in `tools/placement/`) and the scripts that use it run locally, in an image of their own built from `docker/placement.Dockerfile`, which holds the solver's pinned Python libraries. Build it once from the repository root, and check that the libraries import:
+`tools/placement/` finds where a part can go so that it keeps its rules against what is around it (work item 016): nearest a target, with the most clearance or with the least move, in x, y and z and turning about z, several parts at once where they must keep apart. It reports the answer with every rule's margin there, which rules bind and why a spot is not free (where no pose keeps every rule, it says so and what breaks at the best one it found), and draws a picture of each context: the obstacles, the least margin as contours, the region where the part is free, the target and the answer. It is generic: a project's script hands it the problem as data, as kbdkid5's `model/kbdkid5/scripts/place.py` does ([model/kbdkid5/README.md](model/kbdkid5/README.md), Placing parts, has its runs).
+
+It and the scripts that use it run locally, in an image of their own built from `docker/placement.Dockerfile`, which holds the solver's pinned Python libraries. Build it once from the repository root, and check that the libraries import:
 
     podman build -t placement -f docker/placement.Dockerfile docker
     podman run --rm placement python3 -c "import matplotlib, numpy, PIL, scipy, shapely; print(numpy.__version__, scipy.__version__, shapely.__version__, matplotlib.__version__, PIL.__version__)"
@@ -18,6 +20,10 @@ The placement solver (work item 016, to come in `tools/placement/`) and the scri
 The second command prints `2.5.3 1.18.1 2.2.0 3.11.2 12.3.0`. A script runs with the repository mounted at `/work`, from the repository root, for example kbdkid5's layout check:
 
     podman run --rm -v "$PWD":/work -w /work placement python3 model/kbdkid5/scripts/check_layout.py
+
+The solver's own tests, on made up problems with known answers:
+
+    podman run --rm -v "$PWD":/work -w /work placement python3 -m unittest discover -s tools/placement/tests -t tools
 
 ## How the printer prints, and the parts
 
