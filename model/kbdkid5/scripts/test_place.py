@@ -253,7 +253,7 @@ class LayoutPointTest(unittest.TestCase):
 
 class FrameAndCheckPassTest(unittest.TestCase):
     def test_frame_bosses(self):
-        matched, with_extras = {}, {}
+        matched = {}
         for right, context in place.CONTEXTS:
             problem, report, _places = place.solve_frame_half(right)
             points = place.layout_points(problem, report)
@@ -268,11 +268,8 @@ class FrameAndCheckPassTest(unittest.TestCase):
                 place.print_frame_half(report, points, right, context)
             extras = tuple((round(float(x), 3), round(float(y), 3))
                            for x, y in EXTRA_BOSS.findall(printed.getvalue()))
-            self.assertEqual(len(extras), 1, context)
-            with_extras[right] = layout.frame_boss_centers(right) + extras
+            self.assertEqual(extras, (), context)
         self.assertEqual(place.check_pass({"FRAME_BOSS_CENTERS_MM": matched}), ([], []))
-        failures, _moved = place.check_pass({"FRAME_BOSS_CENTERS_MM": with_extras})
-        self.assertEqual(failures, [])
 
     def test_standoffs_pass_every_check(self):
         for index, target, start in ((5, place.SIXTH_STANDOFF_TARGET, place.SIXTH_STANDOFF_START),

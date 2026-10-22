@@ -334,7 +334,7 @@ DESIGN_NANO_ROOMS_INTO_STRIPS_MM = {
            ("over the P1.01/P1.02/P1.07 pads", "east"): (0.44, 2)},
 }
 # The hand-wired frame (work item 014).
-DESIGN_FRAME_BOSS_COUNT = {False: 28, True: 27}
+DESIGN_FRAME_BOSS_COUNT = {False: 29, True: 28}
 DESIGN_FRAME_BACKING_TOP_Z_MM = 7.233  # on the bosses' ends, 2.267 under the frame
 DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM = 6.383
 DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM = 4.883

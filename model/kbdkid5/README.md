@@ -146,5 +146,5 @@ For both halves:
 - 8 supermagnete S-08-03-N disc magnets for the joint, 2 S-04-02-N for the pin parking.
 - 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
 - M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
-- For the hand-wired frame, 55 M2 x 3 heat-set inserts and 55 M2 x 4 pan head screws (28 for the left half's backing, 27 for the right's).
+- For the hand-wired frame, 57 M2 x 3 heat-set inserts and 57 M2 x 4 pan head screws (29 for the left half's backing, 28 for the right's).
 - 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.

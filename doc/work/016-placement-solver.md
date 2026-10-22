@@ -26,4 +26,6 @@ Decided: the research is `work/research/placement-solver.md` (untracked), and th
 
 Done: the tool, `tools/placement/` (the root README.md, The placement solver), with the research's solver families (section 4), and kbdkid5's problems for it, `model/kbdkid5/scripts/place.py` (kbdkid5's README.md, Placing parts), whose runs reproduce the research's five validations (section 7) and whose `test_place.py` holds them. The frame's backing heights now come from `layout.py` (`backing_top_z()` and the functions beside it) rather than from DESIGN.md's figures.
 
-Open: by `check_layout.py`'s rules the frame bosses' run finds one boss place more on each half than `FRAME_BOSS_CENTERS_MM` holds. DESIGN.md (Hand-wired frame, Bosses) describes both. Whether the frame takes them is the user's call. The solver has no frontier or lexicographic objectives yet, nor the research's slabs for a part free in plan and z at once: a z degree of freedom goes through SLSQP, and `free_heights()` answers it exactly at a plan pose.
+The frame bosses' run found one boss place more on each half than `FRAME_BOSS_CENTERS_MM` held, and the frame now has both (DESIGN.md, Hand-wired frame, Bosses).
+
+Open: the solver has no frontier or lexicographic objectives yet, nor the research's slabs for a part free in plan and z at once: a z degree of freedom goes through SLSQP, and `free_heights()` answers it exactly at a plan pose.
