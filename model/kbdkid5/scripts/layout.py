@@ -1104,7 +1104,7 @@ RIGHT_SOCKET_STANDOFF_FLATS = ()
 # the left half S140's walls come 2.471 from the center of the standoff
 # at (75.724, 62.785), so a flat would stand 1.971 from it and leave 0.371
 # around the bore: that standoff keeps its socket's flats alone, and its
-# walls stand 0.080 beyond them (DESIGN.md, Hand-wired frame).
+# walls stand 0.080 beyond them (DESIGN.md, Tray, Frame pocket walls).
 FRAME_WALL_STANDOFF_FLATS = ()  # (standoff center, key)
 RIGHT_FRAME_WALL_STANDOFF_FLATS = (
     ((56.091, 23.460), "S122"),

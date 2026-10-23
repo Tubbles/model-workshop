@@ -11,11 +11,14 @@ footprint holes at the switch hole strip's cell 1 (the center post's
 socket's tab recesses in its underside (the ceiling) and its pocket
 walls at layout.FRAME_POCKET_FIT_MM below it. The walls stand whole on
 every pocket (work item 026: cut walls print with heavy blobbing and
-stringing). The tray gives way to them instead, keeping
-layout.FRAME_TRAY_CLEARANCE_MM in plan from their outer face wherever
-it stands within their heights (layout.py's cuts for the frame's walls,
-held by check_layout.py's check_frame_walls()), and the build fails
-where anything of it, or of the parts in it, comes nearer. The
+stringing) but those layout.frame_walls_cut_back() lists, which are cut
+back that clearance from their one body that cannot give way (S140's
+on the left half, from its standoff, as the user kept them). The tray
+gives way to them instead, keeping layout.FRAME_TRAY_CLEARANCE_MM in
+plan from their outer face wherever it stands within their heights
+(layout.py's cuts for the frame's walls, held by check_layout.py's
+check_frame_walls()), and the build fails where anything of it, or of
+the parts in it, comes nearer, that one body apart. The
 footprint holes run on through the walls, as on the strips. Under the
 ceiling stand the bosses at layout.frame_boss_centers()
 (socket_test_shape.py's bosses: 5.8 across, ending boss_end_depth()

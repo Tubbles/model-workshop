@@ -19,8 +19,10 @@ invocation):
 
 Either part is checked for one valid solid of the volume its plan
 faces give and written as one closed mesh. The frame's pocket walls
-are whole, and the export fails where the tray comes nearer them than
-layout.FRAME_TRAY_CLEARANCE_MM (frame_shape.py). The backing is also checked
+are whole but those layout.frame_walls_cut_back() lists (S140's on the
+left half, cut back from its standoff), and the export fails where the
+tray comes nearer them than layout.FRAME_TRAY_CLEARANCE_MM, that body
+apart (frame_shape.py). The backing is also checked
 stacked under the frame: nothing overlapping, the backing touching only
 the bosses' ends, every pad 0.1 under its socket's bottom.
 """
