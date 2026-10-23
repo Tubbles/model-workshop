@@ -1293,8 +1293,11 @@ def frame_wall_edge_cuts(key, right, index):
     if near_wall is not None:
         reach = max(across for _along, across in clipped_to_band(coordinates, wall_band))
         across_range = (ledge_cut_across_range()[0], reach + clearance)
-        cuts.append(TrayCut(f"{key} wall pocket", index, near_wall, across_range,
-                            ledge_relief_z_range(), True))
+        # Like the tab pockets, it runs the clearance on above the walls'
+        # top, so the wall over it keeps the clearance from their top
+        # edge too.
+        z_range = (ledge_relief_z_range()[0], PCB_UNDERSIDE_Z_MM + clearance)
+        cuts.append(TrayCut(f"{key} wall pocket", index, near_wall, across_range, z_range, True))
     return cuts
 
 

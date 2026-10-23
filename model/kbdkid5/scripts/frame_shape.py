@@ -65,6 +65,9 @@ PAD_CELL_INDEX = 0
 # so the walls it gives the tray's cuts lie up to about 0.0005 off the
 # walls' true arcs.
 WALL_TRAY_TOLERANCE_MM = 0.001
+# A circle as a polygon around it, for the keep-out of a standoff the
+# walls are still cut back from.
+CIRCLE_SEGMENTS = 96
 VOLUME_RELATIVE_TOLERANCE = cells.VOLUME_RELATIVE_TOLERANCE
 
 
@@ -130,7 +133,38 @@ def flattened_standoff_face(center, flats, right):
         return circle
     beyond = [cells.plan_face(half_polygon(beyond_flat_polygon(center, flat), right))
               for flat in flats]
-    return circle.cut(Part.makeCompound(beyond))
+    return circle.cut(Part.makeCompound(beyond)).Faces[0]
+
+
+def flattened_standoff_polygon(center, flats):
+    """A standoff's band in plan with its flats, as a convex polygon
+    around the circle, in the left half's frame."""
+    radius = layout.STANDOFF_DIAMETER_MM / 2.0 / math.cos(math.pi / CIRCLE_SEGMENTS)
+    polygon = tuple(
+        (center[0] + radius * math.cos(2.0 * math.pi * index / CIRCLE_SEGMENTS),
+         center[1] + radius * math.sin(2.0 * math.pi * index / CIRCLE_SEGMENTS))
+        for index in range(CIRCLE_SEGMENTS)
+    )
+    for flat in flats:
+        limit = flat.plane_distance + check_layout.dot(center, flat.toward)
+        polygon = check_layout.clip_to_half_plane(polygon, flat.toward, limit)
+    return polygon
+
+
+def cut_back_keepouts(key, right):
+    """The plan faces on the given half that a key's walls are still cut
+    back by (layout.frame_walls_cut_back()): each body's convex polygon
+    grown by layout.FRAME_TRAY_CLEARANCE_MM."""
+    bodies = {body for cut_key, body in layout.frame_walls_cut_back(right) if cut_key == key}
+    polygons = [polygon for label, polygon, _z_range in check_layout.frame_wall_tray_pieces(right)
+                if label in bodies]
+    polygons.extend(flattened_standoff_polygon(center, flats)
+                    for label, center, _z_range, flats
+                    in check_layout.frame_wall_standoff_bands(right) if label in bodies)
+    return [cells.plan_face(half_polygon(layout.offset_polygon(polygon,
+                                                               layout.FRAME_TRAY_CLEARANCE_MM),
+                                         right))
+            for polygon in polygons]
 
 
 def wall_tray_obstacles(right):
@@ -153,12 +187,14 @@ def boxes_within(first, second, distance):
             and first.YMin - distance <= second.YMax and second.YMin - distance <= first.YMax)
 
 
-def wall_plan(key_center):
+def wall_plan(key_center, keepouts=()):
     """A socket's pocket walls in plan: the strips' ring at the frame's
-    fit less the tab slots and the key's footprint holes."""
+    fit less the tab slots, the key's footprint holes and any keep-outs
+    it is still cut back by (cut_back_keepouts())."""
     ring = cells.wall_ring(key_center, layout.FRAME_POCKET_FIT_MM)
     cutters = [cells.plan_face(cutter) for cutter in cells.wall_cutters(key_center)]
     cutters.extend(cells.circle_face(center, radius) for center, radius in key_holes(key_center))
+    cutters.extend(keepouts)
     return ring.cut(Part.makeCompound(cutters)).Faces
 
 
@@ -176,13 +212,6 @@ def walls_too_near_the_tray(key, faces, obstacles):
     ]
 
 
-def cut_back_from(faces, obstacle):
-    """Walls' plan faces cut back to layout.FRAME_TRAY_CLEARANCE_MM from
-    an obstacle's plan face."""
-    keepout = obstacle.makeOffset2D(layout.FRAME_TRAY_CLEARANCE_MM)
-    return Part.makeCompound(faces).cut(keepout).Faces
-
-
 def all_wall_plans(right):
     """{key: its walls' plan faces}, whole but where
     layout.frame_walls_cut_back() still cuts them back from a body of the
@@ -190,11 +219,8 @@ def all_wall_plans(right):
     than layout.FRAME_TRAY_CLEARANCE_MM."""
     obstacles = wall_tray_obstacles(right)
     cut_back = layout.frame_walls_cut_back(right)
-    plans = {key: wall_plan(center) for key, center in half_key_centers(right).items()}
-    for key, body in cut_back:
-        for label, face in obstacles:
-            if label == body:
-                plans[key] = cut_back_from(plans[key], face)
+    plans = {key: wall_plan(center, cut_back_keepouts(key, right))
+             for key, center in half_key_centers(right).items()}
     problems = [problem for key, faces in plans.items()
                 for problem in walls_too_near_the_tray(
                     key, faces, [(label, face) for label, face in obstacles

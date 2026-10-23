@@ -4506,8 +4506,9 @@ def check_frame_backing(right=False):
 
 # The frame's pocket walls, whole on every pocket of both halves (work
 # item 026): whatever of the tray, or of the parts in it, stands within
-# the walls' heights keeps layout.FRAME_TRAY_CLEARANCE_MM in plan from
-# their outer face (layout.frame_wall_outer_polygon()), the tray giving
+# the walls' heights, or within layout.FRAME_TRAY_CLEARANCE_MM above or
+# below them, keeps layout.FRAME_TRAY_CLEARANCE_MM in plan from their
+# outer face (layout.frame_wall_outer_polygon()), the tray giving
 # way by the cuts layout.py makes for them, so a later change to the
 # tray cannot cut a wall again. frame_shape.py builds the walls whole
 # and fails where these pieces come nearer.
@@ -4518,6 +4519,16 @@ def frame_walls_z_range():
     place: the socket's height under its underside."""
     return (layout.PCB_UNDERSIDE_Z_MM - layout.HOTSWAP_SOCKET_BODY_HEIGHT_MM,
             layout.PCB_UNDERSIDE_Z_MM)
+
+
+def frame_walls_reach_z_range():
+    """The walls' heights grown by layout.FRAME_TRAY_CLEARANCE_MM: a body
+    beyond them keeps the clearance from the walls whatever it does in
+    plan, one that meets them only at their top or bottom does not
+    (the wall over a wall pocket ending at the walls' top, CI run
+    39971231975)."""
+    low, high = frame_walls_z_range()
+    return (low - layout.FRAME_TRAY_CLEARANCE_MM, high + layout.FRAME_TRAY_CLEARANCE_MM)
 
 
 def notched_dowel_bosses(right=False):
@@ -4531,7 +4542,8 @@ def notched_dowel_bosses(right=False):
 
 def frame_wall_tray_pieces(right=False):
     """(label, convex polygon, z range) of what stands within the frame's
-    pocket walls' heights on the given half but the standoffs
+    pocket walls' heights, grown by the clearance
+    (frame_walls_reach_z_range()), on the given half but the standoffs
     (frame_wall_standoff_bands()): the ledge and the joint block as cut,
     the wall as pocketed, the dowel bosses as notched and their fills,
     the parking boss, the mount bodies, the nice!nano clamp's tab and
@@ -4544,15 +4556,16 @@ def frame_wall_tray_pieces(right=False):
     pieces.extend((describe_mount(box), box_polygon(box), box.z_range) for box in boxes)
     pieces.extend((describe_envelope(envelope), box_polygon(envelope), envelope.z_range)
                   for envelope in layout.part_envelopes() if envelope.part != "PCB connector")
-    walls = frame_walls_z_range()
+    walls = frame_walls_reach_z_range()
     return [piece for piece in pieces if ranges_overlap(piece[2], walls)]
 
 
 def frame_wall_standoff_bands(right=False):
     """(label, center, z range, flats) of the given half's standoffs'
-    height bands within the frame's pocket walls' heights, with the
-    flats layout.py cuts into each (standoff_bands())."""
-    walls = frame_walls_z_range()
+    height bands within the frame's pocket walls' heights, grown by the
+    clearance (frame_walls_reach_z_range()), with the flats layout.py
+    cuts into each (standoff_bands())."""
+    walls = frame_walls_reach_z_range()
     return [(f"standoff at {center}", center, z_range, flats)
             for center in layout.MOUNTING_DRILL_CENTERS_MM
             for z_range, flats in standoff_bands(center, right)
