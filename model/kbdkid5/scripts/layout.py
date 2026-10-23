@@ -1111,9 +1111,10 @@ RIGHT_FRAME_WALL_STANDOFF_FLATS = (
 )
 # The frame's pocket walls still cut back to FRAME_TRAY_CLEARANCE_MM
 # from a body of the tray that cannot give way without breaking one of
-# its minimums, as before work item 026, until the user settles each:
+# its minimums, as before work item 026, where the user kept the cut:
 # (key, the body's label in check_layout.frame_wall_tray_pieces() or
-# frame_wall_standoff_bands()). S140's by the standoff, above.
+# frame_wall_standoff_bands()). S140's by the standoff, above (the
+# user, 2026-10-23, over moving the standoff or thinning its flat).
 FRAME_WALLS_CUT_BACK = (("S140", "standoff at (75.724, 62.785)"),)
 RIGHT_FRAME_WALLS_CUT_BACK = ()
 

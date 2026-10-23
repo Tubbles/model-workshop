@@ -142,7 +142,7 @@ def main():
               f"{sum(figures.values()):.3f} mm2 in plan, the tray at least "
               f"{layout.FRAME_TRAY_CLEARANCE_MM} from them")
         for key, body in cut_back:
-            print(f"            {key}'s cut back from the {body} (work item 026, open), "
+            print(f"            {key}'s cut back from the {body} (work item 026, kept by the user), "
                   f"{figures[key]:.3f} mm2 left")
     else:
         backing, expected = shape.build_backing(right)
