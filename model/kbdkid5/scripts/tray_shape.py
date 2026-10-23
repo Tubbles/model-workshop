@@ -25,10 +25,11 @@ fills that close the crevices beside them. Then the cuts, all exactly as
 layout.py gives them: the ledge cut-aways layout.py declares for the
 parts in the tray, the west socket strip's pocket in the column 1/2
 step's ledge,
-the sockets' notches, pockets and reliefs, and the standoffs' flats.
-Every cut but the sockets' wall pockets is clipped to the cavity so it
-never reaches the wall, and a cut that finds nothing left to remove (a
-tab's relief inside its notch) is skipped. Then the parts' mounts
+the sockets' notches, pockets and reliefs, those for the hand-wired
+frame's pocket walls (work item 026), and the standoffs' flats, the
+walls' among them. Every cut but the wall pockets is clipped to the
+cavity so it never reaches the wall, and a cut that finds nothing left
+to remove (a tab's relief inside its notch) is skipped. Then the parts' mounts
 (work item 004), layout.py's boxes in its order: the power switch's
 cradle with its retainer's socket, the reset button's back wall, side
 walls and front stop, then the nice!nano's north block with the sill
@@ -42,7 +43,9 @@ north wall, the reset pin hole through the north wall, the nice!nano's
 pry slot through the clamp's block and foot and the clamp block's
 insert bore. Then the round reliefs, open at the top, that layout.py
 cuts into the bosses and the nice!nano's raised walls under the
-switches' center posts and side pegs (work item 023). Then
+switches' center posts and side pegs (work item 023). Then the notches
+the dowel bosses take for the frame's pocket walls, after the reliefs,
+which may have opened part of one already. Then
 the magnet slots, open toward the cavity (but the south 2.165 of the
 one at 48.26 along the slant, which the sixth standoff walls off), with
 the wall cut back over them, the flat-topped teardrop pin holes (the
@@ -66,7 +69,7 @@ to import from the export scripts and probes.
 
 import itertools
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import FreeCAD as App
 import Part
@@ -1559,17 +1562,22 @@ def cut_mount_voids(tray, fits):
 def cut_post_relief(tray, relief):
     """(tray, removed volume) after a relief for a switch's post or peg
     (a layout.PostRelief, work item 023): a cylinder from its bottom up
-    through its body's top into the open cavity. It crosses one face of
-    its body, so it removes the circle's segment beyond that face over
-    its height, and the body stays solid under it and beyond it."""
+    through its body's top into the open cavity. It removes the part of
+    its circle inside its body's plan over its height: the circle's
+    segment beyond the face it crosses, or less where it crosses a
+    corner (the nice!nano's raised east wall's, which gives way to the
+    frame's pocket walls, work item 026). The body stays solid under it
+    and beyond it."""
     radius = relief.diameter / 2.0
     bottom, top = relief.z_range
     x, y = relief.center
     cutter = Part.makeCylinder(radius, top + CUT_EXTRA_MM - bottom, App.Vector(x, y, bottom), UP)
     result = tray.cut(cutter)
     require_one_valid_solid(result, f"the {relief.label}")
+    circle = Part.Face(Part.Wire(Part.makeCircle(radius, App.Vector(x, y, 0.0))))
+    in_body = circle.common(Part.Face(layout_polygon_wire(relief.body_polygon, 0.0))).Area
+    expected = in_body * (top - bottom)
     face, toward = layout.toward_polygon(relief.center, relief.body_polygon)
-    expected = circular_segment_area(radius, face) * (top - bottom)
     require_volume(f"the {relief.label}", tray.Volume - result.Volume, expected, 1e-6)
     toward = App.Vector(toward[0], toward[1], 0.0)
     middle = App.Vector(x, y, (bottom + top) / 2.0).add(toward * ((face + radius) / 2.0))
@@ -1580,6 +1588,74 @@ def cut_post_relief(tray, relief):
     ):
         if is_solid_at(result, point) != want_solid:
             raise SystemExit(f"error: the {relief.label} is not {what}")
+    return result, tray.Volume - result.Volume
+
+
+def notch_boss_ranges(notch, right):
+    """The along and outward ranges of the dowel boss a notch for the
+    frame's pocket walls is kept to."""
+    for along in layout.DOWEL_PIN_ALONGS_MM:
+        along_range, outward_range = layout.dowel_boss_ranges(along, right)
+        if along_range[0] <= notch.along_range[0] and notch.along_range[1] <= along_range[1]:
+            return along_range, outward_range
+    raise SystemExit(f"error: the {notch.label} lies in no dowel boss")
+
+
+def run_past_shared_ends(cut_range, body_range):
+    """A cut's range run on by CUT_EXTRA_MM past each end it shares with
+    its body's."""
+    low, high = cut_range
+    return (low - CUT_EXTRA_MM if abs(low - body_range[0]) < 1e-9 else low,
+            high + CUT_EXTRA_MM if abs(high - body_range[1]) < 1e-9 else high)
+
+
+def boss_notch_cutter(notch, right):
+    """A dowel boss's notch for the frame's pocket walls as a cutter:
+    its box run on past the faces it shares with its boss and through
+    the boss's top."""
+    along_range, outward_range = notch_boss_ranges(notch, right)
+    grown = replace(notch, along_range=run_past_shared_ends(notch.along_range, along_range),
+                    across_range=run_past_shared_ends(notch.across_range, outward_range))
+    bottom, top = notch.z_range
+    if abs(top - layout.DOWEL_BOSS_TOP_Z_MM) < 1e-9:
+        top += CUT_EXTRA_MM
+    return plan_prism(layout.tray_cut_polygon(grown), bottom, top)
+
+
+def check_boss_notch(before, after, notch):
+    """The notch opened the boss in its middle, left it wherever it was
+    beyond the notch's sides, and did not reach below its bottom."""
+    (low, high), (inner, outer) = notch.along_range, notch.across_range
+    bottom, top = notch.z_range
+    along, across, z = (low + high) / 2.0, (inner + outer) / 2.0, (bottom + top) / 2.0
+    if is_solid_at(after, edge_probe(notch, along, across, z)):
+        raise SystemExit(f"error: the {notch.label} did not open the boss")
+    for beside in ((low - PROBE_OFFSET_MM, across), (high + PROBE_OFFSET_MM, across),
+                   (along, inner - PROBE_OFFSET_MM), (along, outer + PROBE_OFFSET_MM)):
+        probe = edge_probe(notch, *beside, z)
+        if is_solid_at(before, probe) and not is_solid_at(after, probe):
+            raise SystemExit(f"error: the {notch.label} cut the boss beyond its sides")
+    if not is_solid_at(after, edge_probe(notch, along, across, bottom - PROBE_OFFSET_MM)):
+        raise SystemExit(f"error: the {notch.label} reaches too low")
+
+
+def cut_boss_notch(tray, notch, right):
+    """(tray, removed volume) after a dowel boss's notch for the frame's
+    pocket walls (layout.frame_wall_boss_notches(), work item 026), or
+    (tray, None) when nothing is left in its box. It removes what is left
+    of the boss in its box and nothing beyond it."""
+    cutter = boss_notch_cutter(notch, right)
+    in_box = tray.common(plan_prism(layout.tray_cut_polygon(notch), *notch.z_range)).Volume
+    removable = tray.common(cutter).Volume
+    if removable - in_box > NOTHING_LEFT_MM3:
+        raise SystemExit(f"error: the {notch.label} would remove {removable:.4f} mm3, "
+                         f"{removable - in_box:.4f} mm3 of it outside its box")
+    if removable < NOTHING_LEFT_MM3:
+        return tray, None
+    result = tray.cut(cutter)
+    require_one_valid_solid(result, f"the {notch.label}")
+    require_volume(f"the {notch.label}", tray.Volume - result.Volume, removable, 0.02)
+    check_boss_notch(tray, result, notch)
     return result, tray.Volume - result.Volume
 
 
@@ -1633,6 +1709,12 @@ def build_tray(right=False, pin_hole_diameter=None, fits=None):
     for relief in layout.switch_post_reliefs(right, fits):
         tray, removed = cut_post_relief(tray, relief)
         cuts.append((relief.label, removed))
+    for notch in layout.frame_wall_boss_notches(right):
+        tray, removed = cut_boss_notch(tray, notch, right)
+        if removed is None:
+            skipped.append(notch.label)
+        else:
+            cuts.append((notch.label, removed))
     for along in layout.MAGNET_ALONGS_MM:
         tray = cut_magnet_slot(tray, along)
     for along in layout.DOWEL_PIN_ALONGS_MM:

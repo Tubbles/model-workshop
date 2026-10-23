@@ -1043,11 +1043,24 @@ RIGHT_SOCKET_TAB_NOTCH_KEYS = ("S163",)
 # LEDGE_RELIEF_MARGIN_BELOW_MM. A stub shorter than
 # LEDGE_RELIEF_SHORTEST_STUB_MM left at an edge's end goes too: the cut
 # then runs past the corner by the ledge's width and the gap.
+#
+# The hand-wired frame's pocket walls take the same rule from their
+# outer face (frame_wall_outer_polygon()), FRAME_TRAY_CLEARANCE_MM from
+# it (work item 026): the relief runs over the extent along the edge of
+# the part of that face within the clearance of the ledge's inner face,
+# plus the clearance at both ends, at the same depth, which lies under
+# the walls (frame_wall_tray_cuts()). Where that face then lies closer
+# than the clearance to the wall's inner face, as the bottom row's do,
+# the wall's inner face gets a pocket over the extent of the part
+# within the clearance of it, plus the clearance at both ends, deep
+# enough to leave the clearance, over the relief's heights, as the tab
+# rule pockets the wall for a tab tip. The face is not convex, so its
+# extent is that of its outline clipped to the band (clipped_to_band()).
 LEDGE_RELIEF_CLEARANCE_MM = 0.5
 LEDGE_RELIEF_MARGIN_BELOW_MM = 0.5
 LEDGE_RELIEF_SHORTEST_STUB_MM = 1.0
-# Column 0's tabs (inside their notches), and the bottom row's lobes
-# beside the south ledge.
+# Column 0's tabs (inside their notches) and walls, and the bottom row's
+# lobes and walls beside the south ledge.
 SOCKET_LEDGE_RELIEF_KEYS = (
     "S100",
     "S101",
@@ -1060,8 +1073,8 @@ SOCKET_LEDGE_RELIEF_KEYS = (
     "S153",
     "S163",
 )
-# On the right half the bottom row's lobes, and the thumb's tab (inside
-# its notch).
+# On the right half the bottom row's lobes and walls, and the thumb's
+# tab (inside its notch) and walls.
 RIGHT_SOCKET_LEDGE_RELIEF_KEYS = ("S103", "S113", "S123", "S133", "S143", "S153", "S163")
 
 # Standoff flats: wherever a socket polygon comes within
@@ -1082,6 +1095,27 @@ SOCKET_STANDOFF_FLATS = (  # (standoff center, key)
 )
 # No right half socket comes within the clearance of a standoff.
 RIGHT_SOCKET_STANDOFF_FLATS = ()
+# The hand-wired frame's pocket walls take the flat rule too (work item
+# 026): a standoff that comes within FRAME_TRAY_CLEARANCE_MM of a key's
+# walls' outer face gets a flat facing the face's nearest point, that
+# clearance short of it, over the socket flats' heights
+# (frame_wall_standoff_flats()), declared here as theirs are. It must
+# leave STANDOFF_RELIEF_MINIMUM_WALL_MM around the bore like theirs. On
+# the left half S140's walls come 2.471 from the center of the standoff
+# at (75.724, 62.785), so a flat would stand 1.971 from it and leave 0.371
+# around the bore: that standoff keeps its socket's flats alone, and its
+# walls stand 0.080 beyond them (DESIGN.md, Hand-wired frame).
+FRAME_WALL_STANDOFF_FLATS = ()  # (standoff center, key)
+RIGHT_FRAME_WALL_STANDOFF_FLATS = (
+    ((56.091, 23.460), "S122"),
+)
+# The frame's pocket walls still cut back to FRAME_TRAY_CLEARANCE_MM
+# from a body of the tray that cannot give way without breaking one of
+# its minimums, as before work item 026, until the user settles each:
+# (key, the body's label in check_layout.frame_wall_tray_pieces() or
+# frame_wall_standoff_bands()). S140's by the standoff, above.
+FRAME_WALLS_CUT_BACK = (("S140", "standoff at (75.724, 62.785)"),)
+RIGHT_FRAME_WALLS_CUT_BACK = ()
 
 
 def socket_tab_notch_keys(right=False):
@@ -1097,10 +1131,23 @@ def socket_standoff_flat_declarations(right=False):
     return RIGHT_SOCKET_STANDOFF_FLATS if right else SOCKET_STANDOFF_FLATS
 
 
+def frame_walls_cut_back(right=False):
+    """(key, body label) of the given half's pocket walls still cut back
+    from the tray (FRAME_WALLS_CUT_BACK)."""
+    return RIGHT_FRAME_WALLS_CUT_BACK if right else FRAME_WALLS_CUT_BACK
+
+
+def frame_wall_standoff_flat_declarations(right=False):
+    """(standoff center, key) of the given half's flats for the frame's
+    pocket walls."""
+    return RIGHT_FRAME_WALL_STANDOFF_FLATS if right else FRAME_WALL_STANDOFF_FLATS
+
+
 @dataclass(frozen=True)
 class TrayCut:
     """A box cut out of the ledge (or a shelf's notch,
-    backing_shelf_notches()), and with cuts_wall out of the wall's
+    backing_shelf_notches(), or a dowel boss's notch,
+    frame_wall_boss_notches()), and with cuts_wall out of the wall's
     inner face too: in plan the rectangle over along_range and
     across_range in outline edge edge_index's frame
     (tray_cut_polygon()), over z_range."""
@@ -1116,9 +1163,10 @@ class TrayCut:
 @dataclass(frozen=True)
 class StandoffFlat:
     """A vertical flat on the standoff at standoff_center, square to the
-    unit vector `toward` the socket's nearest point (socket_distance
-    away, negative with the center inside the socket), plane_distance
-    from the center, over z_range."""
+    unit vector `toward` the nearest point of the socket it is cut for,
+    or of a frame pocket's walls' outer face (socket_distance away,
+    negative with the center inside the socket), plane_distance from the
+    center, over z_range."""
 
     label: str
     standoff_center: tuple
@@ -1177,6 +1225,26 @@ def socket_tab_cuts(key, right=False):
     return tuple(cuts)
 
 
+def ledge_relief_z_range():
+    """A relief's heights: from the socket's reach below the PCB plus
+    LEDGE_RELIEF_MARGIN_BELOW_MM up to the ledge top."""
+    bottom = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_REACH_MM - LEDGE_RELIEF_MARGIN_BELOW_MM
+    return (bottom, PCB_UNDERSIDE_Z_MM)
+
+
+def ledge_relief_over(label, index, low, high):
+    """The relief along outline edge `index` from low to high along it,
+    through the ledge's full width, run on past the corner where it
+    would leave a stub at the edge's end."""
+    length = outline_edge_length(index)
+    past_corner = TRAY_LEDGE_WIDTH_MM + TRAY_GAP_MM
+    if low < LEDGE_RELIEF_SHORTEST_STUB_MM:
+        low = -past_corner
+    if length - high < LEDGE_RELIEF_SHORTEST_STUB_MM:
+        high = length + past_corner
+    return TrayCut(label, index, (low, high), ledge_cut_across_range(), ledge_relief_z_range())
+
+
 def ledge_relief(label, polygon, index):
     """The relief (a TrayCut, in a tuple) along outline edge `index` for
     a socket polygon, or none when the polygon is not alongside that
@@ -1191,26 +1259,70 @@ def ledge_relief(label, polygon, index):
         return ()  # clear of this edge's ledge
     if min(acrosses) > TRAY_GAP_MM or high < 0.0 or low > length:
         return ()  # not alongside this edge
-    past_corner = TRAY_LEDGE_WIDTH_MM + TRAY_GAP_MM
-    if low < LEDGE_RELIEF_SHORTEST_STUB_MM:
-        low = -past_corner
-    if length - high < LEDGE_RELIEF_SHORTEST_STUB_MM:
-        high = length + past_corner
-    bottom = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_REACH_MM - LEDGE_RELIEF_MARGIN_BELOW_MM
-    z_range = (bottom, PCB_UNDERSIDE_Z_MM)
-    return (TrayCut(label, index, (low, high), ledge_cut_across_range(), z_range),)
+    return (ledge_relief_over(label, index, low, high),)
+
+
+def edge_extent_within(coordinates, across_band, clearance, index):
+    """(low, high) along outline edge `index` of the part of a polygon,
+    its corners' (along, across) in the edge's frame, that lies across
+    within across_band, grown by clearance at both ends, or None where
+    no part of it lies there or it is not alongside the edge."""
+    alongs = [along for along, _across in clipped_to_band(coordinates, across_band)]
+    if not alongs:
+        return None
+    low, high = min(alongs) - clearance, max(alongs) + clearance
+    if high < 0.0 or low > outline_edge_length(index):
+        return None
+    return low, high
+
+
+def frame_wall_edge_cuts(key, right, index):
+    """The relief and the wall pocket (TrayCut) the rule cuts along
+    outline edge `index` for a key's frame pocket walls on the given
+    half: either, both or neither."""
+    clearance = FRAME_TRAY_CLEARANCE_MM
+    coordinates = [outline_edge_coordinates(point, index)
+                   for point in frame_wall_outer_polygon(key, right)]
+    cuts = []
+    near_ledge = edge_extent_within(coordinates, (-(ledge_reach() + clearance), TRAY_GAP_MM),
+                                    clearance, index)
+    if near_ledge is not None:
+        cuts.append(ledge_relief_over(f"{key} wall relief", index, *near_ledge))
+    wall_band = (TRAY_GAP_MM - clearance, TRAY_GAP_MM)
+    near_wall = edge_extent_within(coordinates, wall_band, clearance, index)
+    if near_wall is not None:
+        reach = max(across for _along, across in clipped_to_band(coordinates, wall_band))
+        across_range = (ledge_cut_across_range()[0], reach + clearance)
+        cuts.append(TrayCut(f"{key} wall pocket", index, near_wall, across_range,
+                            ledge_relief_z_range(), True))
+    return cuts
+
+
+def frame_wall_tray_cuts(key, right=False):
+    """The reliefs and wall pockets the rule cuts for a key's frame
+    pocket walls on the given half, along every outline edge but the
+    slant, each edge's relief before its pocket."""
+    return tuple(
+        cut
+        for index in range(len(OUTLINE_VERTICES_MM))
+        if index != SLANT_EDGE_INDEX
+        for cut in frame_wall_edge_cuts(key, right, index)
+    )
 
 
 def socket_ledge_reliefs(key, right=False):
     """The reliefs the rule cuts for a key's socket on the given half,
-    one per socket polygon and outline edge it lies alongside."""
-    return tuple(
+    one per socket polygon and outline edge it lies alongside, then those
+    and the wall pockets it cuts for the key's frame pocket walls
+    (frame_wall_tray_cuts())."""
+    sockets = tuple(
         relief
         for polygon in socket_polygons_on_half(key, right)
         for index in range(len(OUTLINE_VERTICES_MM))
         if index != SLANT_EDGE_INDEX
         for relief in ledge_relief(f"{key} socket relief", polygon, index)
     )
+    return sockets + frame_wall_tray_cuts(key, right)
 
 
 # A point this close to a polygon's boundary lies on it.
@@ -1262,14 +1374,21 @@ def toward_polygon(point, polygon):
     return distance, toward
 
 
+def standoff_flat_z_range():
+    """A flat's heights: from the socket's reach plus
+    STANDOFF_RELIEF_CLEARANCE_MM below the PCB (never below the floor)
+    up to the standoff top."""
+    reach_below_pcb = HOTSWAP_SOCKET_REACH_MM + STANDOFF_RELIEF_CLEARANCE_MM
+    return (max(PCB_UNDERSIDE_Z_MM - reach_below_pcb, 0.0), STANDOFF_HEIGHT_MM)
+
+
 def socket_standoff_flats(standoff_center, key, right=False):
     """The flats the rule cuts into a standoff for a key's socket on the
     given half, one per socket polygon within
     STANDOFF_RELIEF_CLEARANCE_MM of it. A center on a polygon's boundary
     or inside it gets the flat the same rule gives by the signed distance
     (toward_polygon()), which cuts through the bore."""
-    reach_below_pcb = HOTSWAP_SOCKET_REACH_MM + STANDOFF_RELIEF_CLEARANCE_MM
-    z_range = (max(PCB_UNDERSIDE_Z_MM - reach_below_pcb, 0.0), STANDOFF_HEIGHT_MM)
+    z_range = standoff_flat_z_range()
     flats = []
     for polygon in socket_polygons_on_half(key, right):
         distance, toward = toward_polygon(standoff_center, polygon)
@@ -1284,9 +1403,25 @@ def socket_standoff_flats(standoff_center, key, right=False):
     return tuple(flats)
 
 
+def frame_wall_standoff_flats(standoff_center, key, right=False):
+    """The flat the rule cuts into a standoff for a key's frame pocket
+    walls on the given half, in a tuple, or none where their outer face
+    keeps FRAME_TRAY_CLEARANCE_MM from the standoff. The center lies
+    outside that face."""
+    wall = frame_wall_outer_polygon(key, right)
+    distance, nearest = nearest_polygon_point(standoff_center, wall)
+    plane_distance = distance - FRAME_TRAY_CLEARANCE_MM
+    if plane_distance >= STANDOFF_DIAMETER_MM / 2.0:
+        return ()
+    toward = ((nearest[0] - standoff_center[0]) / distance,
+              (nearest[1] - standoff_center[1]) / distance)
+    return (StandoffFlat(f"{key} wall flat", standoff_center, toward, plane_distance, distance,
+                         standoff_flat_z_range()),)
+
+
 def all_socket_tray_cuts(right=False):
-    """Every notch, pocket and relief the given half's sockets get, the
-    tab cuts first."""
+    """Every notch, pocket and relief the given half's sockets and their
+    frame pocket walls get, the tab cuts first."""
     tab_cuts = tuple(
         cut for key in socket_tab_notch_keys(right) for cut in socket_tab_cuts(key, right)
     )
@@ -1297,11 +1432,19 @@ def all_socket_tray_cuts(right=False):
 
 
 def all_socket_standoff_flats(right=False):
-    return tuple(
+    """Every flat the given half's standoffs get, the sockets' first,
+    then the frame pocket walls'."""
+    sockets = tuple(
         flat
         for center, key in socket_standoff_flat_declarations(right)
         for flat in socket_standoff_flats(center, key, right)
     )
+    walls = tuple(
+        flat
+        for center, key in frame_wall_standoff_flat_declarations(right)
+        for flat in frame_wall_standoff_flats(center, key, right)
+    )
+    return sockets + walls
 
 
 def ledge_cutaway_edge_index(cutaway):
@@ -1589,6 +1732,62 @@ def upper_boss_fill_polygon(right=False):
     )
 
 
+# The dowel bosses keep the ledge's clearance from every socket by their
+# places (DESIGN.md, "The joint"). Where a frame pocket's walls' outer
+# face comes within FRAME_TRAY_CLEARANCE_MM of a boss (work item 026),
+# as S150's does on the right half beside the upper boss's south side
+# and inner end, the boss is notched over the ledge reliefs' heights,
+# which lie under the walls: by the box, in the slant's frame, around
+# the part of that face within the clearance of the boss's box, grown by
+# the clearance and kept to the boss (frame_wall_boss_notches()). A
+# notch keeps JOINT_LEAST_PLASTIC_BETWEEN_VOIDS_MM from the joint's holes
+# and slots as the post reliefs do (check_layout.py).
+
+
+def dowel_boss_ranges(along, right=False):
+    """(along range, outward range) of the half's dowel boss at along, in
+    the slant's frame."""
+    return (centered_range(along, DOWEL_BOSS_DIAMETER_MM),
+            (JOINT_FACE_OUTWARD_MM - dowel_boss_reach(right), JOINT_FACE_OUTWARD_MM))
+
+
+def box_notch(pairs, along_range, across_range, clearance):
+    """(along range, across range) of the notch a box over along_range
+    and across_range takes for a polygon whose corners' (along, across)
+    are pairs, or None where no part of it lies within the box grown by
+    the clearance: the box around that part, grown by the clearance and
+    kept to the box."""
+    near = clipped_to_band(pairs, grown_range(across_range, clearance))
+    near = clipped_to_band([(across, along) for along, across in near],
+                           grown_range(along_range, clearance))
+    if not near:
+        return None
+    acrosses = [across for across, _along in near]
+    alongs = [along for _across, along in near]
+    return ((max(min(alongs) - clearance, along_range[0]),
+             min(max(alongs) + clearance, along_range[1])),
+            (max(min(acrosses) - clearance, across_range[0]),
+             min(max(acrosses) + clearance, across_range[1])))
+
+
+def frame_wall_boss_notches(right=False):
+    """The notches (TrayCut along the slant, kept to their boss) the
+    given half's dowel bosses take for the frame's pocket walls, one per
+    boss and key whose walls' outer face comes within
+    FRAME_TRAY_CLEARANCE_MM of it."""
+    notches = []
+    for along in DOWEL_PIN_ALONGS_MM:
+        along_range, outward_range = dowel_boss_ranges(along, right)
+        for key in KEY_CENTERS_MM:
+            pairs = [outline_edge_coordinates(point, SLANT_EDGE_INDEX)
+                     for point in frame_wall_outer_polygon(key, right)]
+            notch = box_notch(pairs, along_range, outward_range, FRAME_TRAY_CLEARANCE_MM)
+            if notch is not None:
+                notches.append(TrayCut(f"{key} wall notch in the dowel boss at {along} along the "
+                                       "slant", SLANT_EDGE_INDEX, *notch, ledge_relief_z_range()))
+    return tuple(notches)
+
+
 # Pin parking: in split mode each half carries one pin in a teardrop
 # hole through the thumb key's short east wall (the outline's east
 # edge, x 132.398 up to the slant), running along -x at y 13.1 and
@@ -1808,6 +2007,32 @@ def nearest_polygon_point(point, polygon):
     ]
     nearest = min(candidates, key=lambda candidate: math.dist(point, candidate))
     return math.dist(point, nearest), nearest
+
+
+def clipped_to_side(pairs, limit, keep):
+    """The corners of a polygon, given as (first, second) pairs, clipped
+    to where keep * (second - limit) is not negative."""
+    clipped = []
+    count = len(pairs)
+    for index in range(count):
+        start, end = pairs[index], pairs[(index + 1) % count]
+        start_value = keep * (start[1] - limit)
+        end_value = keep * (end[1] - limit)
+        if start_value >= 0.0:
+            clipped.append(start)
+        if start_value * end_value < 0.0:
+            fraction = start_value / (start_value - end_value)
+            clipped.append((start[0] + fraction * (end[0] - start[0]), limit))
+    return clipped
+
+
+def clipped_to_band(pairs, band):
+    """The corners of a polygon, given as (first, second) pairs, clipped
+    to where its second coordinate lies within band, by Sutherland and
+    Hodgman's clipping: the region's corners, which for a polygon that is
+    not convex come with sides along band's ends, so they give its
+    extent. Empty where none of it lies there."""
+    return clipped_to_side(clipped_to_side(pairs, band[0], 1.0), band[1], -1.0)
 
 
 def tray_cavity_polygon():
@@ -2445,12 +2670,14 @@ def nano_west_wall_boxes(fits=DEFAULT_MOUNT_FITS):
 # underside, the frame's, over every stretch where it keeps the ledge's
 # clearance from the sockets in plan (LEDGE_RELIEF_CLEARANCE_MM) from
 # every socket of either half, each socket's pieces taken as their
-# bounding boxes, so that with column 2's ledge cut away over the
-# nice!nano the walls carry the PCB or the frame beside the bay. A
-# stretch shorter than NANO_RAISED_WALL_SHORTEST_MM is left at the
-# wall's height: it would stand as a pillar, carrying little, with a
-# cutout of its own in the frame's backing. The strips' pockets stay
-# open above, so their wires still come in from over them.
+# bounding boxes, and FRAME_TRAY_CLEARANCE_MM in plan from the frame's
+# pocket walls' outer face of either half (work item 026), so that with
+# column 2's ledge cut away over the nice!nano the walls carry the PCB
+# or the frame beside the bay. A stretch shorter than
+# NANO_RAISED_WALL_SHORTEST_MM is left at the wall's height: it would
+# stand as a pillar, carrying little, with a cutout of its own in the
+# frame's backing. The strips' pockets stay open above, so their wires
+# still come in from over them.
 NANO_RAISED_WALL_SHORTEST_MM = 2.0
 
 
@@ -2467,11 +2694,26 @@ def socket_y_ranges_beside(x_range, clearance):
     return sorted(blocked)
 
 
+def frame_wall_y_ranges_beside(x_range, clearance):
+    """The y ranges, grown by clearance, of the parts of the frame's
+    pocket walls' outer face of either half that lie within clearance of
+    x_range across x."""
+    blocked = []
+    for right in (False, True):
+        for key in KEY_CENTERS_MM:
+            pairs = [(y, x) for x, y in frame_wall_outer_polygon(key, right)]
+            ys = [y for y, _x in clipped_to_band(pairs, grown_range(x_range, clearance))]
+            if ys:
+                blocked.append((min(ys) - clearance, max(ys) + clearance))
+    return sorted(blocked)
+
+
 def nano_raised_wall_boxes(fits=DEFAULT_MOUNT_FITS):
     top = nano_east_wall_top_z()
     boxes = []
     for wall in (nano_west_wall_boxes(fits)[0], nano_east_wall_boxes(fits)[0]):
-        blocked = socket_y_ranges_beside(wall.x_range, LEDGE_RELIEF_CLEARANCE_MM)
+        blocked = (socket_y_ranges_beside(wall.x_range, LEDGE_RELIEF_CLEARANCE_MM)
+                   + frame_wall_y_ranges_beside(wall.x_range, FRAME_TRAY_CLEARANCE_MM))
         stretches = [(low, high) for low, high in ranges_less(wall.y_range, blocked)
                      if high - low >= NANO_RAISED_WALL_SHORTEST_MM]
         boxes.extend(MountBox(f"{wall.label}'s raised piece {index + 1}", "nice!nano",
@@ -3370,11 +3612,22 @@ def backing_screw_heads_bottom_z(socket_bottom_z=None):
 # backing and the backing's screw heads keep FRAME_TRAY_CLEARANCE_MM in
 # plan from whatever of the tray stands within their heights, as
 # modelled (the ledge's 0.5 from the sockets, 0.1 as printed with both
-# faces swelling): frame_shape.py cuts the walls back where they would
-# come closer, the bosses are placed clear of it, and the backing is cut
-# out around it.
+# faces swelling): the walls stand whole, so the tray gives way to them
+# (work item 026: the ledge's reliefs and the wall's pockets,
+# frame_wall_tray_cuts(), the standoffs' flats,
+# frame_wall_standoff_flats(), the dowel bosses' notches,
+# frame_wall_boss_notches(), and the nice!nano's raised walls,
+# nano_raised_wall_boxes()), the bosses are placed clear of it, and the
+# backing is cut out around it.
 FRAME_POCKET_FIT_MM = -0.15
 FRAME_TRAY_CLEARANCE_MM = 0.5
+
+
+def frame_wall_reach():
+    """How far the frame's pocket walls' outer face lies outside the
+    socket: the pocket's gap at FRAME_POCKET_FIT_MM and the wall."""
+    return half_fit_gap(0.0, FRAME_POCKET_FIT_MM) + TRAY_WALL_MM
+
 
 # The bosses, the strips' (socket_test_shape.py), at FRAME_BOSS_CENTERS_MM
 # per half, which a search placed by these rules as modelled (DESIGN.md,
@@ -3576,7 +3829,7 @@ def frame_wall_outer_polygon(key, right=False):
     if right:
         points = [mirror_for_right_half(point) for point in points]
     outline = counter_clockwise(points)
-    return offset_polygon(outline, half_fit_gap(0.0, FRAME_POCKET_FIT_MM) + TRAY_WALL_MM)
+    return offset_polygon(outline, frame_wall_reach())
 
 
 # The shelves under the backing's edges (work items 020 and 022,

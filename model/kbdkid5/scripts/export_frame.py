@@ -18,7 +18,9 @@ invocation):
         [insert_length=<mm>]
 
 Either part is checked for one valid solid of the volume its plan
-faces give and written as one closed mesh. The backing is also checked
+faces give and written as one closed mesh. The frame's pocket walls
+are whole, and the export fails where the tray comes nearer them than
+layout.FRAME_TRAY_CLEARANCE_MM (frame_shape.py). The backing is also checked
 stacked under the frame: nothing overlapping, the backing touching only
 the bosses' ends, every pad 0.1 under its socket's bottom.
 """
@@ -132,14 +134,16 @@ def main():
     if arguments.kind == "frame":
         frame, expected, figures = shape.build_frame(right, arguments.insert_length)
         part = shape.turned_for_printing(frame)
-        trimmed = {key: values for key, values in figures.items() if values[2] > 1e-6}
         print(f"frame:      {half} half, {len(figures)} sockets at fit "
               f"{layout.FRAME_POCKET_FIT_MM}, {len(shape.boss_centers(right))} bosses, volume "
               f"{frame.Volume:.3f} mm3 (plan {expected:.3f} mm3)")
-        print("walls:      cut back from the tray at " + ", ".join(
-            f"{key} ({values[2]:.2f} mm2)" for key, values in sorted(trimmed.items())))
-        dropped = sum(values[1] for values in figures.values())
-        print(f"            specks dropped: {dropped:.4f} mm2 in plan")
+        cut_back = layout.frame_walls_cut_back(right)
+        print(f"walls:      whole around {len(figures) - len(cut_back)} of {len(figures)} sockets, "
+              f"{sum(figures.values()):.3f} mm2 in plan, the tray at least "
+              f"{layout.FRAME_TRAY_CLEARANCE_MM} from them")
+        for key, body in cut_back:
+            print(f"            {key}'s cut back from the {body} (work item 026, open), "
+                  f"{figures[key]:.3f} mm2 left")
     else:
         backing, expected = shape.build_backing(right)
         frame, _, _ = shape.build_frame(right, arguments.insert_length)

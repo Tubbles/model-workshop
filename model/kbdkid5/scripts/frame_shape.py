@@ -9,13 +9,15 @@ footprint holes at the switch hole strip's cell 1 (the center post's
 3.42 and the side pegs' 1.90 as modelled, the blades' 3.2, the NC pad's
 1.2 grown by pull_in), and, from socket_test_shape.py's cells, each
 socket's tab recesses in its underside (the ceiling) and its pocket
-walls at layout.FRAME_POCKET_FIT_MM below it. Wherever the tray stands
-within the walls' heights (the ledge as cut for the sockets, the cavity
-wall, the standoffs as flattened, the joint's bosses and fills, the
-parking boss, the parts and mounts) the walls are cut back to
-layout.FRAME_TRAY_CLEARANCE_MM from it; check_layout.py's tray pieces
-give it. The footprint holes run on through the walls, as on the
-strips. Under the ceiling stand the bosses at layout.frame_boss_centers()
+walls at layout.FRAME_POCKET_FIT_MM below it. The walls stand whole on
+every pocket (work item 026: cut walls print with heavy blobbing and
+stringing). The tray gives way to them instead, keeping
+layout.FRAME_TRAY_CLEARANCE_MM in plan from their outer face wherever
+it stands within their heights (layout.py's cuts for the frame's walls,
+held by check_layout.py's check_frame_walls()), and the build fails
+where anything of it, or of the parts in it, comes nearer. The
+footprint holes run on through the walls, as on the strips. Under the
+ceiling stand the bosses at layout.frame_boss_centers()
 (socket_test_shape.py's bosses: 5.8 across, ending boss_end_depth()
 below the ceiling, bored for an M2 heat-set insert), which the backing
 screws up to.
@@ -58,11 +60,11 @@ PULL_IN_MM = pcb_shape.DEFAULT_PULL_IN_MM
 SWITCH_HOLE_CELL_INDEX = 0
 # The pads' figure across the third backing strip: cell 1's.
 PAD_CELL_INDEX = 0
-# A circle as a polygon around it, for the standoffs' flats.
-CIRCLE_SEGMENTS = 96
-# A piece of wall left smaller than this in plan by the tray's cuts is
-# dropped rather than printed as a speck.
-SMALLEST_WALL_PIECE_MM2 = 0.05
+# How much nearer than layout.FRAME_TRAY_CLEARANCE_MM the tray may come
+# to the walls as built: layout.py steps the socket's arcs by 3 degrees,
+# so the walls it gives the tray's cuts lie up to about 0.0005 off the
+# walls' true arcs.
+WALL_TRAY_TOLERANCE_MM = 0.001
 VOLUME_RELATIVE_TOLERANCE = cells.VOLUME_RELATIVE_TOLERANCE
 
 
@@ -105,89 +107,104 @@ def boss_centers(right):
     return [half_point(center, right) for center in layout.frame_boss_centers(right)]
 
 
-def overlaps(first, second):
-    return first[0] < second[1] - 1e-9 and second[0] < first[1] - 1e-9
+def beyond_flat_polygon(center, flat):
+    """A square beyond a standoff flat's plane that covers the rest of
+    the standoff, in the left half's frame."""
+    reach = layout.STANDOFF_DIAMETER_MM
+    toward = flat.toward
+    along = (-toward[1], toward[0])
+
+    def point(out, side):
+        return (center[0] + toward[0] * out + along[0] * side,
+                center[1] + toward[1] * out + along[1] * side)
+
+    return [point(flat.plane_distance, -reach), point(flat.plane_distance, reach),
+            point(reach, reach), point(reach, -reach)]
 
 
-def wall_z_range():
-    """The walls' heights in the tray, the frame in the PCB's place."""
-    return (layout.PCB_UNDERSIDE_Z_MM - cells.wall_depth(), layout.PCB_UNDERSIDE_Z_MM)
-
-
-def flattened_standoff(center, flats):
-    """A standoff's band in plan with its flats, as a polygon around
-    the circle."""
-    radius = layout.STANDOFF_DIAMETER_MM / 2.0 / math.cos(math.pi / CIRCLE_SEGMENTS)
-    polygon = tuple(
-        (center[0] + radius * math.cos(2.0 * math.pi * index / CIRCLE_SEGMENTS),
-         center[1] + radius * math.sin(2.0 * math.pi * index / CIRCLE_SEGMENTS))
-        for index in range(CIRCLE_SEGMENTS)
-    )
-    for flat in flats:
-        limit = flat.plane_distance + check_layout.dot(center, flat.toward)
-        polygon = check_layout.clip_to_half_plane(polygon, flat.toward, limit)
-    return polygon
+def flattened_standoff_face(center, flats, right):
+    """A standoff's band in plan on the given half with its flats: the
+    circle less what lies beyond each flat's plane."""
+    circle = cells.circle_face(half_point(center, right), layout.STANDOFF_DIAMETER_MM / 2.0)
+    if not flats:
+        return circle
+    beyond = [cells.plan_face(half_polygon(beyond_flat_polygon(center, flat), right))
+              for flat in flats]
+    return circle.cut(Part.makeCompound(beyond))
 
 
 def wall_tray_obstacles(right):
-    """(label, counter-clockwise convex polygon) in the left half's
-    frame of what of the tray stands within the walls' heights."""
-    walls = wall_z_range()
-    pieces = (check_layout.ledge_pieces(right) + check_layout.wall_pieces(right)
-              + check_layout.dowel_bosses(right) + check_layout.boss_fills(right))
-    pieces.append(("parking boss", layout.parking_boss_polygon(), layout.parking_boss_z_range()))
-    boxes = list(layout.mount_bodies()) + list(layout.nano_clamp_part_boxes())
-    pieces.extend((f"{box.part} {box.label}", layout.plan_corners(box), box.z_range)
-                  for box in boxes)
-    pieces.extend((f"{envelope.part} {envelope.piece}", layout.plan_corners(envelope),
-                   envelope.z_range)
-                  for envelope in layout.part_envelopes() if envelope.part != "PCB connector")
-    for center in layout.MOUNTING_DRILL_CENTERS_MM:
-        for z_range, flats in check_layout.standoff_bands(center, right):
-            pieces.append((f"standoff at {center}", flattened_standoff(center, flats), z_range))
-    return [(label, layout.counter_clockwise(polygon)) for label, polygon, z_range in pieces
-            if overlaps(z_range, walls)]
+    """(label, plan face) on the given half of what of the tray, and of
+    the parts in it, stands within the walls' heights:
+    check_layout.frame_wall_tray_pieces() and the standoffs' bands as
+    flattened (check_layout.frame_wall_standoff_bands())."""
+    obstacles = [(label, cells.plan_face(half_polygon(polygon, right)))
+                 for label, polygon, _z_range in check_layout.frame_wall_tray_pieces(right)]
+    obstacles.extend((label, flattened_standoff_face(center, flats, right))
+                     for label, center, _z_range, flats
+                     in check_layout.frame_wall_standoff_bands(right))
+    return obstacles
 
 
-def wall_keepout_faces(right):
-    """The tray's obstacles grown by layout.FRAME_TRAY_CLEARANCE_MM, on
-    the given half, as plan faces."""
-    return [
-        cells.plan_face(half_polygon(layout.offset_polygon(polygon, layout.FRAME_TRAY_CLEARANCE_MM),
-                                     right))
-        for _label, polygon in wall_tray_obstacles(right)
-    ]
+def boxes_within(first, second, distance):
+    """Whether two bounding boxes come within distance of each other in
+    plan."""
+    return (first.XMin - distance <= second.XMax and second.XMin - distance <= first.XMax
+            and first.YMin - distance <= second.YMax and second.YMin - distance <= first.YMax)
 
 
-def boxes_meet(first, second):
-    return (first.XMin <= second.XMax and second.XMin <= first.XMax
-            and first.YMin <= second.YMax and second.YMin <= first.YMax)
-
-
-def wall_plan(key_center, keepouts):
+def wall_plan(key_center):
     """A socket's pocket walls in plan: the strips' ring at the frame's
-    fit less the tab slots, the key's footprint holes and the tray's
-    keep-outs, without pieces under SMALLEST_WALL_PIECE_MM2. Returns
-    (faces, dropped area)."""
+    fit less the tab slots and the key's footprint holes."""
     ring = cells.wall_ring(key_center, layout.FRAME_POCKET_FIT_MM)
     cutters = [cells.plan_face(cutter) for cutter in cells.wall_cutters(key_center)]
     cutters.extend(cells.circle_face(center, radius) for center, radius in key_holes(key_center))
-    cutters.extend(face for face in keepouts if boxes_meet(face.BoundBox, ring.BoundBox))
-    cut = ring.cut(Part.makeCompound(cutters))
-    kept = [face for face in cut.Faces if face.Area >= SMALLEST_WALL_PIECE_MM2]
-    dropped = sum(face.Area for face in cut.Faces if face.Area < SMALLEST_WALL_PIECE_MM2)
-    return kept, dropped
+    return ring.cut(Part.makeCompound(cutters)).Faces
+
+
+def walls_too_near_the_tray(key, faces, obstacles):
+    """Where a socket's walls come nearer an obstacle than
+    layout.FRAME_TRAY_CLEARANCE_MM, as messages."""
+    walls = Part.makeCompound(faces)
+    minimum = layout.FRAME_TRAY_CLEARANCE_MM - WALL_TRAY_TOLERANCE_MM
+    return [
+        f"{key}'s walls and the {label}: {distance:.4f}"
+        for label, face in obstacles
+        if boxes_within(walls.BoundBox, face.BoundBox, minimum)
+        for distance in (walls.distToShape(face)[0],)
+        if distance < minimum
+    ]
+
+
+def cut_back_from(faces, obstacle):
+    """Walls' plan faces cut back to layout.FRAME_TRAY_CLEARANCE_MM from
+    an obstacle's plan face."""
+    keepout = obstacle.makeOffset2D(layout.FRAME_TRAY_CLEARANCE_MM)
+    return Part.makeCompound(faces).cut(keepout).Faces
 
 
 def all_wall_plans(right):
-    """{key: (faces, dropped area, area the tray's keep-outs took)}."""
-    keepouts = wall_keepout_faces(right)
-    plans = {}
-    for key, center in half_key_centers(right).items():
-        faces, dropped = wall_plan(center, keepouts)
-        untrimmed, _ = wall_plan(center, [])
-        area = sum(face.Area for face in faces)
-        plans[key] = (faces, dropped, sum(face.Area for face in untrimmed) - area - dropped)
+    """{key: its walls' plan faces}, whole but where
+    layout.frame_walls_cut_back() still cuts them back from a body of the
+    tray, after checking that nothing else of the tray comes nearer them
+    than layout.FRAME_TRAY_CLEARANCE_MM."""
+    obstacles = wall_tray_obstacles(right)
+    cut_back = layout.frame_walls_cut_back(right)
+    plans = {key: wall_plan(center) for key, center in half_key_centers(right).items()}
+    for key, body in cut_back:
+        for label, face in obstacles:
+            if label == body:
+                plans[key] = cut_back_from(plans[key], face)
+    problems = [problem for key, faces in plans.items()
+                for problem in walls_too_near_the_tray(
+                    key, faces, [(label, face) for label, face in obstacles
+                                 if (key, label) not in cut_back])]
+    if problems:
+        raise SystemExit(
+            f"error: the tray comes nearer the pocket walls than "
+            f"{layout.FRAME_TRAY_CLEARANCE_MM}, the walls standing whole (work item 026): "
+            + "; ".join(problems)
+        )
     return plans
 
 
@@ -207,8 +224,8 @@ def tab_recess_polygons(right):
 
 
 def build_frame(right, insert_length=None):
-    """(frame, its expected volume, {key: (wall area, dropped area,
-    trimmed area)}), checked to be one valid solid of that volume."""
+    """(frame, its expected volume, {key: wall area in plan}), checked
+    to be one valid solid of that volume."""
     insert_length = cells.longest_insert_length() if insert_length is None else insert_length
     if not 0.0 < insert_length <= cells.longest_insert_length() + 1e-9:
         raise SystemExit(
@@ -227,7 +244,7 @@ def build_frame(right, insert_length=None):
 
     depth = cells.wall_depth()
     plans = all_wall_plans(right)
-    walls = [cells.face_prism(wall_face, depth) for faces, _, _ in plans.values()
+    walls = [cells.face_prism(wall_face, depth) for faces in plans.values()
              for wall_face in faces]
     centers = boss_centers(right)
     bosses = cells.build_bosses(cells.boss_end_depth(), centers)
@@ -238,7 +255,8 @@ def build_frame(right, insert_length=None):
     require_one_valid_solid(frame, "boring the bosses")
 
     recess_area = sum(face.common(cells.plan_face(recess)).Area for recess in recesses)
-    wall_area = sum(sum(wall_face.Area for wall_face in faces) for faces, _, _ in plans.values())
+    figures = {key: sum(wall_face.Area for wall_face in faces) for key, faces in plans.items()}
+    wall_area = sum(figures.values())
     boss_area = math.pi * (cells.BOSS_DIAMETER_MM / 2.0) ** 2
     bore_area = math.pi * (cells.INSERT_BORE_DIAMETER_MM / 2.0) ** 2
     expected = (
@@ -252,8 +270,6 @@ def build_frame(right, insert_length=None):
         raise SystemExit(
             f"error: the frame's volume is {frame.Volume:.4f} mm3, its plan gives {expected:.4f} mm3"
         )
-    figures = {key: (sum(wall_face.Area for wall_face in faces), dropped, trimmed)
-               for key, (faces, dropped, trimmed) in plans.items()}
     return frame.Solids[0], expected, figures
 
 

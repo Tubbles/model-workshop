@@ -229,8 +229,8 @@ DESIGN_NANO_EAST_WALL_TOP_Z_MM = 5.2
 DESIGN_NANO_WEST_WALL_X_MM = (36.124, 38.224)
 DESIGN_NANO_WEST_WALL_Y_MM = (43.278, 65.3)
 DESIGN_NANO_RAISED_WALLS_Y_MM = {
-    "west": ((49.710, 59.837),),
-    "east": ((43.278, 47.931), (53.581, 66.981), (72.631, 79.648)),
+    "west": ((49.710, 59.110),),
+    "east": ((43.278, 47.003), (54.503, 66.053), (73.553, 79.648)),
 }
 DESIGN_NANO_RAISED_WALL_TOP_Z_MM = 9.5
 DESIGN_NANO_NORTH_BLOCK_X_MM = (38.024, 57.224)  # the ledge cut-away's
@@ -367,6 +367,20 @@ DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
 # order: the post, the pegs, the blades, the NC pad's.
 DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
+# The frame's pocket walls, whole (work item 026): their outer face out
+# of the socket, their heights in the tray, the wall's pockets beside the
+# bottom row's walls, the walls' standoff flats per half as (key,
+# standoff, the walls' outer face from its center, the plastic the flat
+# leaves around the bore) and the dowel bosses' notches per half as (key,
+# the boss along the slant, into the boss's south side, along it from
+# its inner end), with the least plastic a notch keeps from the joint's
+# voids.
+DESIGN_FRAME_WALL_REACH_MM = 0.925
+DESIGN_FRAME_WALLS_Z_MM = (7.7, 9.5)
+DESIGN_FRAME_WALL_POCKET_DEPTH_MM = 0.04
+DESIGN_FRAME_WALL_FLATS = {False: (), True: (("S122", (56.091, 23.460), 3.149, 1.049),)}
+DESIGN_FRAME_WALL_BOSS_NOTCHES = {False: (), True: (("S150", 59.0, 0.177, 1.335),)}
+DESIGN_FRAME_WALL_NOTCH_FROM_JOINT_VOIDS_MM = 1.073
 # The shelves under the backing's edges (work items 020 and 022): their
 # face from the outer edge's shelf's start at the ledge's face to the
 # thumb's ledge, and the north edges' from their start at the ledge's
@@ -4490,6 +4504,232 @@ def check_frame_backing(right=False):
             f"{tray_room}, {strips} cutouts over the nice!nano's strips")
 
 
+# The frame's pocket walls, whole on every pocket of both halves (work
+# item 026): whatever of the tray, or of the parts in it, stands within
+# the walls' heights keeps layout.FRAME_TRAY_CLEARANCE_MM in plan from
+# their outer face (layout.frame_wall_outer_polygon()), the tray giving
+# way by the cuts layout.py makes for them, so a later change to the
+# tray cannot cut a wall again. frame_shape.py builds the walls whole
+# and fails where these pieces come nearer.
+
+
+def frame_walls_z_range():
+    """The pocket walls' heights in the tray, the frame in the PCB's
+    place: the socket's height under its underside."""
+    return (layout.PCB_UNDERSIDE_Z_MM - layout.HOTSWAP_SOCKET_BODY_HEIGHT_MM,
+            layout.PCB_UNDERSIDE_Z_MM)
+
+
+def notched_dowel_bosses(right=False):
+    """(label, convex polygon, z range) of the half's dowel bosses as
+    notched for the frame's pocket walls
+    (layout.frame_wall_boss_notches())."""
+    notches = layout.frame_wall_boss_notches(right)
+    return [piece for label, polygon, z_range in dowel_bosses(right)
+            for piece in cut_piece(label, polygon, z_range, notches)]
+
+
+def frame_wall_tray_pieces(right=False):
+    """(label, convex polygon, z range) of what stands within the frame's
+    pocket walls' heights on the given half but the standoffs
+    (frame_wall_standoff_bands()): the ledge and the joint block as cut,
+    the wall as pocketed, the dowel bosses as notched and their fills,
+    the parking boss, the mount bodies, the nice!nano clamp's tab and
+    screw head, and the parts but the PCB connector's zone, which the
+    frame does not have."""
+    pieces = ledge_pieces(right) + wall_pieces(right) + notched_dowel_bosses(right)
+    pieces += boss_fills(right)
+    pieces.append(("parking boss", layout.parking_boss_polygon(), layout.parking_boss_z_range()))
+    boxes = list(layout.mount_bodies()) + list(layout.nano_clamp_part_boxes())
+    pieces.extend((describe_mount(box), box_polygon(box), box.z_range) for box in boxes)
+    pieces.extend((describe_envelope(envelope), box_polygon(envelope), envelope.z_range)
+                  for envelope in layout.part_envelopes() if envelope.part != "PCB connector")
+    walls = frame_walls_z_range()
+    return [piece for piece in pieces if ranges_overlap(piece[2], walls)]
+
+
+def frame_wall_standoff_bands(right=False):
+    """(label, center, z range, flats) of the given half's standoffs'
+    height bands within the frame's pocket walls' heights, with the
+    flats layout.py cuts into each (standoff_bands())."""
+    walls = frame_walls_z_range()
+    return [(f"standoff at {center}", center, z_range, flats)
+            for center in layout.MOUNTING_DRILL_CENTERS_MM
+            for z_range, flats in standoff_bands(center, right)
+            if ranges_overlap(z_range, walls)]
+
+
+def bounding_gap(first_polygon, second_polygon):
+    """The widest gap between two polygons' bounding boxes, along x or
+    along y, which their clearance is at least."""
+    (first_x, first_y) = layout.bounding_ranges(first_polygon)
+    (second_x, second_y) = layout.bounding_ranges(second_polygon)
+    return max(second_x[0] - first_x[1], first_x[0] - second_x[1],
+               second_y[0] - first_y[1], first_y[0] - second_y[1])
+
+
+def outline_clearance(outline, convex_polygon):
+    """The clearance between a simple polygon that need not be convex and
+    a convex one: their boundaries' distance, or where they overlap the
+    negative of how far the corners of either reach into the other (0
+    where only their sides cross)."""
+    reaching = [point_boundary_distance(corner, convex_polygon) for corner in outline
+                if point_in_polygon(corner, convex_polygon)]
+    reaching += [point_boundary_distance(corner, outline) for corner in convex_polygon
+                 if point_in_polygon(corner, outline)]
+    crossing = any(segments_cross(*first, *second)
+                   for first in edges(outline) for second in edges(convex_polygon))
+    if reaching or crossing:
+        return -max(reaching, default=0.0)
+    return boundary_distance(outline, convex_polygon)
+
+
+def describe_band(label, z_range, flats):
+    count = len(flats)
+    with_flats = f" with {count} flat{'s' if count > 1 else ''}" if flats else ""
+    return describe_piece(label, z_range) + with_flats
+
+
+def frame_wall_clearances(right=False):
+    """(problems, tightest, cut back) of every pocket wall's outer face
+    on the given half against frame_wall_tray_pieces() and the
+    standoffs' bands as flattened (standoff_clearance()'s bound, which
+    holds for a polygon that is not convex too, the center outside it),
+    the pieces whose bounding boxes lie further than a millimetre past
+    the clearance from the wall's left out. The walls still cut back
+    from a body (layout.frame_walls_cut_back()) are measured against it
+    apart, in cut back."""
+    minimum = layout.FRAME_TRAY_CLEARANCE_MM
+    pieces = frame_wall_tray_pieces(right)
+    bands = frame_wall_standoff_bands(right)
+    cut_back_pairs = set(layout.frame_walls_cut_back(right))
+    problems, tightest, cut_back = [], Tightest(), []
+    for key in layout.KEY_CENTERS_MM:
+        wall = layout.frame_wall_outer_polygon(key, right)
+        measured = [(label, describe_piece(label, z_range), outline_clearance(wall, polygon))
+                    for label, polygon, z_range in pieces
+                    if bounding_gap(wall, polygon) < minimum + 1.0]
+        measured.extend((label, describe_band(label, z_range, flats),
+                         standoff_clearance(center, flats, wall))
+                        for label, center, z_range, flats in bands)
+        for label, piece, clearance in measured:
+            where = f"{key}'s walls and the {piece}"
+            if (key, label) in cut_back_pairs:
+                cut_back.append(f"{key}'s walls from the {label}, {clearance:.3f} from it")
+                continue
+            tightest.update(clearance, where)
+            if clearance < minimum - TOLERANCE_MM:
+                problems.append(f"{where}: {clearance:.3f}, less than {minimum}")
+    return problems, tightest, cut_back
+
+
+def frame_wall_flat_figures(right=False):
+    """(problems, figures) of the walls' standoff flats layout.py
+    declares on the given half: DESIGN.md's, each cut by the rule,
+    leaving the bore its plastic, at DESIGN.md's figures."""
+    declared = layout.frame_wall_standoff_flat_declarations(right)
+    stated = DESIGN_FRAME_WALL_FLATS[right]
+    problems = []
+    if {(key, center) for center, key in declared} != {(key, center) for key, center, *_ in stated}:
+        problems.append(f"walls' standoff flats {sorted(declared)} in layout.py, "
+                        f"{[entry[:2] for entry in stated]} in DESIGN.md")
+    figures = []
+    for key, center, stated_distance, stated_plastic in stated:
+        flats = layout.frame_wall_standoff_flats(center, key, right)
+        if not flats:
+            problems.append(f"{key}'s walls are not near enough the standoff at {center} for a flat")
+            continue
+        plastic = flat_plastic(flats[0])
+        if plastic < layout.STANDOFF_RELIEF_MINIMUM_WALL_MM - TOLERANCE_MM:
+            problems.append(f"the {flats[0].label} on the standoff at {center} leaves "
+                            f"{plastic:.3f} around the bore, less than "
+                            f"{layout.STANDOFF_RELIEF_MINIMUM_WALL_MM}")
+        figures.append(require_figure(f"{key}'s walls from the center of the standoff at {center}",
+                                      flats[0].socket_distance, stated_distance, 3))
+        figures.append(require_figure("plastic left by its flat", plastic, stated_plastic, 3))
+    return problems, figures
+
+
+def boss_notch_void_plastic(notches, right):
+    """The least plastic between the notches and the joint's holes and
+    slots, as the larger of their gap in plan and their gap in height, as
+    the post reliefs keep it (post_relief_void_plastic())."""
+    tightest = Tightest()
+    for notch in notches:
+        polygon = layout.tray_cut_polygon(notch)
+        for label, void, z_range in joint_voids(right):
+            plan = convex_separation(polygon, void)
+            height = max(z_range[0] - notch.z_range[1], notch.z_range[0] - z_range[1])
+            tightest.update(max(plan, height), f"the {notch.label} and the {label}")
+    return tightest
+
+
+def frame_wall_notch_figures(right=False):
+    """(problems, figures) of the dowel bosses' notches for the walls on
+    the given half: DESIGN.md's, as large, and keeping the joint's
+    plastic between voids from its holes and slots."""
+    notches = layout.frame_wall_boss_notches(right)
+    stated = DESIGN_FRAME_WALL_BOSS_NOTCHES[right]
+    labels = {f"{key} wall notch in the dowel boss at {along} along the slant"
+              for key, along, *_ in stated}
+    problems = []
+    if {notch.label for notch in notches} != labels:
+        problems.append(f"notches {sorted(notch.label for notch in notches)} in layout.py, "
+                        f"{sorted(labels)} in DESIGN.md")
+    by_label = {notch.label: notch for notch in notches}
+    figures = []
+    for key, along, into, along_side in stated:
+        notch = by_label.get(f"{key} wall notch in the dowel boss at {along} along the slant")
+        if notch is None:
+            continue
+        figures.append(require_figure(f"{key}'s notch into its boss's side",
+                                      notch.along_range[1] - notch.along_range[0], into, 3))
+        figures.append(require_figure("along it", notch.across_range[1] - notch.across_range[0],
+                                      along_side, 3))
+    if notches:
+        voids = boss_notch_void_plastic(notches, right)
+        minimum = layout.JOINT_LEAST_PLASTIC_BETWEEN_VOIDS_MM
+        if voids.value < minimum - TOLERANCE_MM:
+            problems.append(f"{voids.where} leave {voids.value:.3f} of plastic, less than {minimum}")
+        figures.append(require_figure("from the joint's voids", voids.value,
+                                      DESIGN_FRAME_WALL_NOTCH_FROM_JOINT_VOIDS_MM, 3))
+    return problems, figures
+
+
+def frame_wall_figures(right=False):
+    """The walls' reach and heights and the wall's pockets' depth
+    against DESIGN.md's."""
+    low, high = frame_walls_z_range()
+    pockets = [cut for cut in layout.all_socket_tray_cuts(right) if "wall pocket" in cut.label]
+    return [
+        require_figure("outer face out of the socket", layout.frame_wall_reach(),
+                       DESIGN_FRAME_WALL_REACH_MM, 3),
+        require_figure("from z", low, DESIGN_FRAME_WALLS_Z_MM[0], 2),
+        require_figure("to", high, DESIGN_FRAME_WALLS_Z_MM[1], 2),
+        require_figure_for_all(f"{len(pockets)} wall pockets",
+                               [cut.across_range[1] - layout.TRAY_GAP_MM for cut in pockets],
+                               DESIGN_FRAME_WALL_POCKET_DEPTH_MM, 2),
+    ]
+
+
+def check_frame_walls(right=False):
+    """Every pocket wall of the frame clear of the tray and the parts by
+    layout.FRAME_TRAY_CLEARANCE_MM in plan where their heights meet
+    (frame_wall_clearances()), and the cuts the tray takes for them
+    DESIGN.md's (frame_wall_figures(), frame_wall_flat_figures(),
+    frame_wall_notch_figures())."""
+    problems, tightest, cut_back = frame_wall_clearances(right)
+    flat_problems, flat_figures = frame_wall_flat_figures(right)
+    notch_problems, notch_figures = frame_wall_notch_figures(right)
+    figures = frame_wall_figures(right) + flat_figures + notch_figures
+    fail_on(problems + flat_problems + notch_problems + failed(figures),
+            f"{half_label(right)}the frame's pocket walls not clear of the tray")
+    still = (f"; still cut back, the body unable to give way (work item 026): "
+             f"{', '.join(cut_back)}" if cut_back else "")
+    return (f"walls:     {half_label(right)}{joined(figures)}; every pocket's walls clear of the "
+            f"tray by {tightest}{still}")
+
+
 # The shelves under the backing's edges (work item 020): their face
 # DESIGN.md's, their top under the backing as printed, and clear of the
 # backing's screw heads by the heads' gathered rule and of the parts and
@@ -4715,6 +4955,8 @@ CHECKS = (
     on_right_half(check_frame_backing),
     check_backing_shelves,
     on_right_half(check_backing_shelves),
+    check_frame_walls,
+    on_right_half(check_frame_walls),
 )
 
 

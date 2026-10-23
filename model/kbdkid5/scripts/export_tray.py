@@ -22,7 +22,8 @@ them, the flat top, the lead-in),
 the magnet slots, the parking hole, the reliefs under the switches'
 center posts and side pegs (across at the mouth, the bottom, open over
 the post's or peg's place), the sockets' clearance from the
-tray as built, and the mounts: the USB shell's channel and the USB
+tray as built, the hand-wired frame's pocket walls' clearance from it
+(work item 026), and the mounts: the USB shell's channel and the USB
 window, the nice!nano's north block with the bar over the shell, the
 screw clamp (its block and foot, the insert bore, and its tab,
 tray_shape.py's, seated on the block, overlapping nothing of the
@@ -70,6 +71,7 @@ import FreeCAD as App
 import Part
 
 import layout
+import socket_test_shape as cells
 from freecad_common import check_closed_mesh, export_stl, run_and_exit, script_arguments
 from tray_shape import UP, build_clamp_tab, build_tray, mirror_for_right_half
 
@@ -137,14 +139,20 @@ DESIGN_PARKING_BOSS_BEHIND_HOLE_MM = 1.5
 # 023), at the same places on both halves in the left half's frame:
 # (what, the post's or peg's center, its footprint hole across, the way
 # into the body the relief is cut into, the relief across). "slant" is
-# the slant's direction north. The posts and pegs end at z 8.1.
+# the slant's direction north, ("corner", point) the way toward that
+# corner of the body: the raised east wall's pieces give way to the
+# frame's pocket walls of S131 and S130 (work item 026), so their pegs'
+# reliefs cross the pieces' south east corners. The posts and pegs end
+# at z 8.1.
 DESIGN_POST_RELIEFS = (
     ("S163's post in the parking boss", (123.349, 9.207), 3.4, (0.0, 1.0), 4.8),
     ("S163's peg in the parking boss", (117.849, 9.207), 1.9, (0.0, 1.0), 3.3),
     ("S163's peg in the parking boss", (128.849, 9.207), 1.9, (0.0, 1.0), 3.3),
     ("S150's peg in the upper dowel boss", (109.799, 68.739), 1.9, "slant", 3.3),
-    ("S131's peg in the nice!nano's raised east wall", (60.699, 54.451), 1.9, (-1.0, 0.0), 3.3),
-    ("S130's peg in the nice!nano's raised east wall", (60.699, 73.501), 1.9, (-1.0, 0.0), 3.3),
+    ("S131's peg in the nice!nano's raised east wall", (60.699, 54.451), 1.9,
+     ("corner", (59.124, 54.503)), 3.3),
+    ("S130's peg in the nice!nano's raised east wall", (60.699, 73.501), 1.9,
+     ("corner", (59.124, 73.553)), 3.3),
 )
 DESIGN_POST_RELIEF_BOTTOM_Z_MM = 7.4
 DESIGN_POST_ENDS_Z_MM = 8.1
@@ -152,6 +160,16 @@ DESIGN_SOCKET_BOTTOM_Z_MM = 7.48
 # The least any socket keeps from the tray as cut: the ledge relief's
 # and the tab pocket's clearance.
 DESIGN_LEAST_SOCKET_CLEARANCE_MM = 0.5
+# The hand-wired frame's pocket walls, whole (work item 026): their
+# outer face out of the socket, their heights in the tray, the frame in
+# the PCB's place, and the least the tray as cut keeps from them. It
+# may come up to FRAME_WALL_ARC_TOLERANCE_MM nearer: layout.py cuts the
+# tray for the walls with the socket's arcs in steps of 3 degrees, and
+# the walls here have the true arcs.
+DESIGN_FRAME_WALL_REACH_MM = 0.925
+DESIGN_FRAME_WALLS_Z_MM = (7.7, 9.5)
+DESIGN_FRAME_WALL_CLEARANCE_MM = 0.5
+FRAME_WALL_ARC_TOLERANCE_MM = 0.001
 # The shelves under the hand-wired frame's backing's edges (DESIGN.md,
 # "Tray", Shelves), the left half's: their face as modelled, sharp, in
 # two runs, from the outer edge's shelf's start at the ledge's face to
@@ -216,8 +234,8 @@ DESIGN_NANO_WEST_WALL_OUTER_X_MM = 36.124
 DESIGN_NANO_EAST_WALL_TOP_Z_MM = 5.2
 DESIGN_NANO_WALLS_NORTH_Y_MM = {"west": 65.3, "east": 79.648}
 DESIGN_NANO_RAISED_WALLS_Y_MM = {
-    "west": ((49.710, 59.837),),
-    "east": ((43.278, 47.931), (53.581, 66.981), (72.631, 79.648)),
+    "west": ((49.710, 59.110),),
+    "east": ((43.278, 47.003), (54.503, 66.053), (73.553, 79.648)),
 }
 DESIGN_NANO_RAISED_WALL_TOP_Z_MM = 9.5
 # The seat under the board and the socket strips' pockets over its top
@@ -1071,6 +1089,18 @@ def measure_parking_hole(tray, right, figures):
     return f"parking:    {', '.join(texts)}"
 
 
+def relief_way_in(right, center, into):
+    """The unit way from a relief's center into its body on the given
+    half (DESIGN_POST_RELIEFS)."""
+    if into == "slant":
+        return design_slant_frame(right)[1]
+    if into[0] == "corner":
+        plan, corner = half_point(center, right), half_point(into[1], right)
+        length = math.dist(plan, corner)
+        return ((corner[0] - plan[0]) / length, (corner[1] - plan[1]) / length)
+    return half_vector(into, right)
+
+
 def measure_post_relief(tray, right, relief, figures):
     """A relief under a switch's post or peg (DESIGN_POST_RELIEFS): across
     at its mouth, twice the run from its center the way into its body to
@@ -1079,7 +1109,7 @@ def measure_post_relief(tray, right, relief, figures):
     and open over the post's or peg's place, its hole's edge farthest into
     the body, from no higher than the bottom up past the rim."""
     what, center, hole, into, diameter = relief
-    way = vector(design_slant_frame(right)[1] if into == "slant" else half_vector(into, right))
+    way = vector(relief_way_in(right, center, into))
     plan = half_point(center, right)
     end = DESIGN_POST_ENDS_Z_MM
     _back, radius = run_through(tray, vector(plan, DESIGN_LEDGE_TOP_Z_MM - 0.25), way, False)
@@ -1156,6 +1186,46 @@ def measure_socket_clearance(tray, right, figures):
         f"sockets:    {count} socket polygons of {len(layout.KEY_CENTERS_MM)} keys (z "
         f"{DESIGN_SOCKET_BOTTOM_Z_MM} to {DESIGN_LEDGE_TOP_Z_MM}) against the tray as cut: "
         f"{text}, at {closest[1]}'s"
+    )
+
+
+def frame_wall_prism(key_center):
+    """A frame pocket's walls' outer face as a prism over their heights:
+    the socket's outline moved out by DESIGN_FRAME_WALL_REACH_MM, its
+    corners extended, as frame_shape.py builds it."""
+    bottom, top = DESIGN_FRAME_WALLS_Z_MM
+    prism = cells.pocket_face(key_center, DESIGN_FRAME_WALL_REACH_MM).extrude(UP * (top - bottom))
+    prism.translate(UP * bottom)
+    return prism
+
+
+def measure_frame_wall_clearance(tray, right, figures):
+    """Every pocket's walls of the hand-wired frame on the half (on the
+    right half the left one's at the mirrored key center, as
+    half_sockets()) against the exported tray: the walls stand whole, so
+    the tray gives way to them."""
+    closest = (math.inf, "nothing")
+    cut_back = {key for key, _body in layout.frame_walls_cut_back(right)}
+    for name, center in layout.KEY_CENTERS_MM.items():
+        if name in cut_back:
+            continue
+        placed = layout.mirror_for_right_half(center) if right else center
+        distance = frame_wall_prism(placed).distToShape(tray)[0]
+        if distance < closest[0]:
+            closest = (distance, name)
+    if closest[0] < DESIGN_FRAME_WALL_CLEARANCE_MM - FRAME_WALL_ARC_TOLERANCE_MM:
+        raise SystemExit(
+            f"error: {closest[1]}'s frame pocket walls come {closest[0]:.4f} from the tray, "
+            f"DESIGN.md keeps {DESIGN_FRAME_WALL_CLEARANCE_MM}"
+        )
+    text = figures.check("least clearance", closest[0], DESIGN_FRAME_WALL_CLEARANCE_MM, 1)
+    bottom, top = DESIGN_FRAME_WALLS_Z_MM
+    left_out = f", {', '.join(sorted(cut_back))}'s left out, still cut back" if cut_back else ""
+    return (
+        f"frame:      the hand-wired frame's pocket walls of "
+        f"{len(layout.KEY_CENTERS_MM) - len(cut_back)} keys ({DESIGN_FRAME_WALL_REACH_MM} out of "
+        f"the socket, z {bottom} to {top}) against the tray as cut: {text} ({closest[0]:.4f}), "
+        f"at {closest[1]}'s{left_out}"
     )
 
 
@@ -1809,6 +1879,7 @@ def measure(tray, right, pin_hole_radius, design, mount_design, fits):
     lines.extend(measure_post_relief(tray, right, relief, figures)
                  for relief in DESIGN_POST_RELIEFS)
     lines.append(measure_socket_clearance(tray, right, figures))
+    lines.append(measure_frame_wall_clearance(tray, right, figures))
     lines.extend(measure_mounts(tray, right, mount_design, fits, figures))
     for line in lines:
         print(line)
