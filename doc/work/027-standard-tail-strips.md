@@ -1,6 +1,6 @@
 # 027 The nice!nano's standard tail socket strips
 
-Status: todo
+Status: done, the layout unchanged
 
 The user, 2026-10-24, calipering their nice!nano with its socket strips soldered: the tails "From the boards bottom I calipered the tails to roughly 1.6 mm", the strips' tops over the board's top "Roughly 4.23 mm. The board is roughly 1.6 mm high", then: "Ok I see now that I've picked the wrong strips. Its not easy to swap these unfortunately". Those are Mill-Max's series 310 standard solder tail strips (doc/components.md, section 8), where the bay is built for the 315-43-112-41-003000: tops 2.413 over the board, tails 0.813 under it.
 
@@ -17,3 +17,5 @@ Ways to fit them, offered 2026-10-24 (probes in `tmp/strips310/`, untracked). Al
 3. Everything over the floor raised 1.157. Pads and bay stay whole, the tray grows from 14.6 to 15.757 tall.
 
 Parked: the user, the same day, "I think I found a way to desolder the strips, but let's put a pin in that". With the 315-43-112-41-003000 strips the layout fits as it is.
+
+Done: the user swaps the strips, "I pick up the enameled wire and a desoldering iron from electronic, solder the correct strips" (doc/log/2026-10-24.md), so the layout keeps the 315-43-112-41-003000's figures.

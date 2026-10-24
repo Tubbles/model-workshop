@@ -148,4 +148,5 @@ For both halves:
 - 2 hardened ISO 8734 (or DIN 6325 m6) 4 x 16 dowel pins in plain steel, not stainless (DESIGN.md, Pin parking, says why).
 - M2 heat-set inserts and screws as on kbdkid4, and per half an M2 x 3 heat-set insert and an M2 x 4 screw for the nice!nano's clamp.
 - For the hand-wired frame, 45 M2 x 3 heat-set inserts and 45 M2 x 4 screws (22 for the left half's backing, 23 for the right's), their heads flat underneath and at most 4.0 across and 1.5 tall.
-- 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano, and solid 24 or 26 AWG wire to plug into them.
+- 4 Mill-Max 315-43-112-41-003000 socket strips (12 pins), two per nice!nano. Not Mill-Max's series 310 standard tail strips, which stand too tall for the bay and the backing (doc/components.md, section 8).
+- For the hand-wired frame's wiring: enamelled 0.40 copper wire for the rows and columns (Electrokit 41004114, solderable through the enamel), Ethernet cable cores for the leads down to the nice!nano, and clipped diode leads soldered to their ends as the pins that plug into the strips.
