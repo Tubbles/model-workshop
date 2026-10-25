@@ -27,30 +27,16 @@ for the freecadcmd quirks that shape the invocation):
 
 and writes camera-arm.stl, camera-arm-spacer.stl, camera-arm-shim.stl,
 camera-arm-case-back.stl and camera-arm-case-front.stl there, each
-lying on z = 0 the way it prints, without support. The spacer and shim
+lying on z = 0 the way it prints. The spacer and shim
 files hold one rail each, for one slot. It also prints the fits, the
 clearances to the printer, the Pi and the cable, and what part of the
 bed the camera sees over the Y travel.
 
-Print orientations. The spacer and shim rails stand on an end, their
-profile in the layer plane, as the Pi mount prints. The arm cannot
-print that way in one piece: standing on its base's back end, its post
-would have to rise forward at 45 degrees to reach the camera and runs
-into the Pi case first; standing on its base's front end, the bar
-reaches past that end, below the bed. It prints tilted 45 degrees
-about x instead, up in the print being up and forward on the printer,
-standing on the back face of a foot that reaches back over the spacers
-(and the T-rails' lower back edges). Every face then points down by 45
-degrees at most: the T-rails' sides are vertical walls, their
-undersides and the base's underside 45 degree overhangs, so their
-profile is not in the layer plane. The face check (downward_faces)
-does not see a part that starts in the air, so the shape keeps every
-lowest point on the bed or on material under it: the foot also runs
-under the post's part beside the rail, the post fills in behind the
-case's back face, and the bar's -u end sits in the post. The bar's
-lower front edge beyond the post is the steepest overhang left: an
-edge about 50 degrees off vertical between two faces about 33 degrees
-off it.
+Print orientations. The arm prints on its back: the base's back end on
+the bed, the T-rails standing on it with their profile in the layer
+plane, as the Pi mount prints them, and the post hanging over the bed
+on the slicer's supports (the user prints it with supports). The
+spacer rails lie on their undersides, the shims stand on an end.
 
 Assembly: take off the rail's end cap, slide in the two spacer rails,
 the arm, the Pi mount and the shims that fill the slots to the rail's
@@ -330,10 +316,7 @@ EAR_SCREW_DRIVER_DIAMETER_MM = 5.0  # the shaft that must pass the front shell's
 # thick behind the case's back face, from BAR_DROP_MM below the ears'
 # centers to BAR_RISE_MM above them, from BAR_REACH_BEYOND_EARS_MM
 # beyond the +u ear to BAR_REACH_INTO_POST_MM beyond the -u one, which
-# puts its -u end inside the post. In the arm's print, up is toward +u,
-# +v and -w, so a bar only behind the ears would hang under whatever
-# carries it; this one grows out of the post instead (see the print
-# orientations in the module docstring).
+# puts its -u end inside the post.
 BAR_REACH_BEYOND_EARS_MM = 4.0
 BAR_REACH_INTO_POST_MM = 9.0
 BAR_RISE_MM = 4.0
@@ -350,19 +333,13 @@ BAR_INSERT_DEPTH_MM = 5.5
 # POST_X_MM: left of POST_SPLIT_X_MM it stops at POST_LEFT_TOP_MM, under
 # the camera's socket and out of its view, except behind the case's
 # back face, where it runs up to POST_TOP_MM as it does right of the
-# split, past the bar's -u end. Below the bed top a foot reaches back
-# from the post over the spacer rails, to FOOT_BACK_MM on the arm's
-# print bed (see arm_print) and FOOT_TOP_MM up the post, under the
-# head's reach: from the rail's top face across the rail, and from the
-# base plate's height beside it, under the post's part past the rail.
+# split, past the bar's -u end.
 POST_CASE_GAP_MM = 2.1  # PI_CASE_CLEARANCE_MM and 0.1 to spare
 POST_FRONT_MM = 101.5
 POST_X_MM = (-20.0, 36.0)
 POST_SPLIT_X_MM = 18.0
 POST_LEFT_TOP_MM = 95.0
 POST_TOP_MM = 140.0
-FOOT_BACK_MM = 30.0
-FOOT_TOP_MM = 57.0
 
 # Checks.
 OVERHANG_NORMAL_LIMIT = -0.7072  # a face pointing down more than 45 degrees
@@ -844,12 +821,6 @@ def post_back():
     return HEAD_REACH_MM + HEAD_CLEARANCE_MM
 
 
-def arm_print_bed_line():
-    """Distance plus height along the arm's print bed plane, which runs
-    through the T-rails' lower back edges at 45 degrees."""
-    return arm_base_range()[0] - t_rail_depth()
-
-
 def post_front_profile():
     """The post's front face from the base's top: POST_CASE_GAP_MM in
     front of the Pi case's rearmost corner, then leaning forward along
@@ -875,18 +846,9 @@ def post_profile(top):
     return [(back, ARM_BASE_PLATE_HEIGHT_MM)] + post_front_profile() + [(POST_FRONT_MM, top), (back, top)]
 
 
-def foot_profile(bottom):
-    """From that height under the post's back face up it to FOOT_TOP_MM,
-    back down to FOOT_BACK_MM on the print bed plane, along that plane
-    down to the bottom again."""
-    bed = arm_print_bed_line()
-    back = post_back()
-    return [(bed - bottom, bottom), (back, bottom), (back, FOOT_TOP_MM), (FOOT_BACK_MM, bed - FOOT_BACK_MM)]
-
-
 def build_arm():
-    """Base plate and T-rails, the foot, the post and the bar, in the
-    printer frame."""
+    """Base plate and T-rails, the post and the bar, in the printer
+    frame."""
     base = arm_base_range()
     rail_width = (-RAIL_HALF_WIDTH_MM, RAIL_HALF_WIDTH_MM)
     left = (POST_X_MM[0], POST_SPLIT_X_MM)
@@ -894,10 +856,6 @@ def build_arm():
     from_case = case_matrix()
     plate = box_between(rail_width, rail_y_range(base), (0.0, ARM_BASE_PLATE_HEIGHT_MM))
     rails = [t_rail(slot_x, base) for slot_x in RAIL_SLOT_CENTERS_X_MM]
-    feet = [
-        side_profile_prism(foot_profile(0.0), rail_width),
-        side_profile_prism(foot_profile(ARM_BASE_PLATE_HEIGHT_MM), (RAIL_HALF_WIDTH_MM, POST_X_MM[1])),
-    ]
     behind_case = behind_case_in_case_frame().transformed(from_case)
     posts = [
         side_profile_prism(post_profile(POST_LEFT_TOP_MM), left),
@@ -905,7 +863,7 @@ def build_arm():
         side_profile_prism(post_profile(POST_TOP_MM), right),
     ]
     bar, bar_bores = bar_in_case_frame()
-    arm = plate.fuse(rails + feet + posts + [bar.transformed(from_case)])
+    arm = plate.fuse(rails + posts + [bar.transformed(from_case)])
     return single_solid(arm.cut(Part.makeCompound([bore.transformed(from_case) for bore in bar_bores])))
 
 
@@ -1197,15 +1155,10 @@ def coverage_by_travel(lens, axes, occluders):
 
 # Print orientations.
 
-def arm_print(shape):
-    """Tilted 45 degrees about x: up in the print is up and forward on
-    the printer, the foot's back face on the bed."""
-    half = math.sqrt(0.5)
-    return shape.transformed(App.Matrix(1, 0, 0, 0, 0, half, half, 0, 0, -half, half, 0, 0, 0, 0, 1))
-
-
-def rail_part_print(shape):
-    """Standing on an end, the rail's profile in the layer plane."""
+def standing_on_back_end(shape):
+    """Up in the print is forward on the printer: a part stands on its
+    end toward the upright, a rail's profile in the layer plane. The
+    arm prints this way, on its back, and the shim."""
     return shape.transformed(App.Matrix(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1))
 
 
@@ -1270,8 +1223,8 @@ def post_report(arm_box):
             f"{POST_CASE_GAP_MM} mm off the Pi case's back from {lean_bottom:.1f} to {lean_top:.1f} mm up "
             f"({lower_front:.1f} below that); x {POST_X_MM[0]:.0f} to {POST_SPLIT_X_MM:.0f} up to "
             f"{POST_LEFT_TOP_MM:.0f} mm (behind the case's back face up to {POST_TOP_MM:.0f}), x "
-            f"{POST_SPLIT_X_MM:.0f} to {POST_X_MM[1]:.0f} up to {POST_TOP_MM:.0f}; the foot back to "
-            f"{FOOT_BACK_MM:.0f}; the arm spans x {arm_box.XMin:.1f} to {arm_box.XMax:.1f}")
+            f"{POST_SPLIT_X_MM:.0f} to {POST_X_MM[1]:.0f} up to {POST_TOP_MM:.0f}; the arm spans x "
+            f"{arm_box.XMin:.1f} to {arm_box.XMax:.1f}")
 
 
 def main():
@@ -1319,9 +1272,9 @@ def main():
                          f"needs {CABLE_CLEARANCE_MM}")
 
     prints = {
-        "arm": on_bed_origin(arm_print(arm)),
-        "spacer": on_bed_origin(rail_part_print(spacer)),
-        "shim": on_bed_origin(rail_part_print(shim)),
+        "arm": on_bed_origin(standing_on_back_end(arm)),
+        "spacer": on_bed_origin(spacer),  # lying on its underside, as it sits in the slot
+        "shim": on_bed_origin(standing_on_back_end(shim)),
         "case_back": on_bed_origin(case_back_print(case_back)),
         "case_front": on_bed_origin(case_front_print(case_front)),
     }
