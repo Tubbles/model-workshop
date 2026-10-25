@@ -11,6 +11,10 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 - The `kbdkid4-pcb` job (`.github/workflows/ci.yml`) uploads `kbdkid4-test-<short commit hash>` itself since work item 025, so by CLAUDE.md's Starting a project it would be named `kbdkid4-test`. Not renamed in 025, since a job's name is its check's name.
 - A CI step that checks the workflow's artifact layout, as 025's local check did (`tmp/025/check_ci.py`, untracked): each export job uploads once, at its end, its STLs all parts or all tests, and each merge pattern matches its own group's intermediates only. A job that mixes the two or a pattern that matches too much would then fail on the push rather than show up in a download. Not done since 025 asked for the split only.
 
+## Camera arm
+
+- The downward face check (`downward_faces()`, `model/camera-arm/scripts/export_camera_arm.py`) reads planar faces only, so curved overhangs go unlisted: the ceilings of the bar's two insert bores face down about 57 degrees (work item 029's review). A check over the exported mesh's triangles would cover them. Not done in 029, whose arm prints on supports.
+
 ## Placement solver
 
 - **The least broken pose from a stationary start.** `least_broken_alone()` (`tools/placement/solver.py`) runs SLSQP from one start, and a start where the least margin's slopes cancel stays there: a body in a 2 by 2 block with its target at the block's middle is reported at (0, 0) breaking by 2.5, where (0.5, 0) breaks by 2.0 (round 8's review, `tmp/review_round8/probe_least_broken.py`, untracked). A few spread starts would find the better pose. Left out of the first version (2026-10-22): the pose only explains a failure, and it is wrong only in how much it breaks.

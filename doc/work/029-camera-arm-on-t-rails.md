@@ -1,0 +1,18 @@
+# 029 The camera arm on T-rails, in front of the upright
+
+Status: implemented
+
+The user, 2026-10-25, after printing the first arm: "Ok I've printed the camera arm but it has multiple issues, the biggest of which is its angled along the wrong diagonal. Looking at the printer from above, I can put the arm in the NE and SW corners and the camera will point in the right direction. However I want it in the SE corner, so the camera mount needs to rotate. Make sure also that the cable doesn't snag into the arm. Furthermore, the skids that go down into the extrusion groves are way to small, check the grove size and resize accordingly. [...] Lastly, I have no screws that fit". Then: "let's shrink the height of the arm by 1/3 and re-angle the camera so it looks at the bed center. Actually on that side the extrusion cover/end cap is loose so we can easily slide it in as well, and skip the nuts and screws altogether. Look at https://www.printables.com/model/277420-ender-3-v2-rpi-4-hyperpixel4-mount-and-case [...] I think we should use the same T shape and slide the camera arm in", in the order "end cap, rpi, arm, distance, upright, that way the extruder doesn't run the risk of blocking the camera view or even slamming into the camera". On the spacers: "I want the spacers to not be connected, just two rails that slides along and reaches the bottom corner of the top chamfer of the extrusion top face", stopping at the upright's bolt, "Instead of me measuring, can't you do the calculation?". On printing: "I think its better to lay down the camera arm on its back, that way the rail T shapes gets painted vertically. I'll print using supports which works well so the back can hover above the print bed, no worries there. Also can you lay down the rail distance spacers".
+
+## Done
+
+- The arm slides into the rail's two top slots on the T profile of the user's Pi mount, sliced from its `case_mount.stl`. The T-nut and every M3 part are gone.
+- Two separate spacer rails, 62.5 long, flush with the slot's mouth chamfer's bottom corner (Creality's 4040 profile.step), and 1 mm shims of the same profile. The rail stack and the bolt's place are in the README (Assembly, Where the numbers come from) and the script's docstring.
+- The lens at two thirds of the first arm's height (122.9 above the rail, 61.9 over the bed), aimed at the bed's center at mid travel. The post rises between the print head's 80 mm reach (3 clear) and the Pi case (2.1 clear), and a bar carries the camera forward over the Pi case, 4.5 off the cable's corridor.
+- The arm prints on its back with supports, the spacers lying on their undersides (8a8eb48). The first version printed tilted 45 degrees on a foot (a6921f6), dropped at the user's ask.
+- The lower lens sees less of the bed in frame: 58 % of the print area on average over the Y travel, against the first arm's 86 % (over its 220 area), and with the gantry and the upright in the way 46 %, against 42 % (a6921f6's and 8a8eb48's CI logs).
+
+## Open
+
+- The print: whether the arm's T-rails slide in snugly, where the spacers stop (the arm's base should stand about 55 in front of the upright), how many shims fit.
+- Unmeasured on the V2, from the Ender-3's CAD: the bed's height above the rail (61.0), the nozzle's line (43.7 in front of the upright) and the bed's right edge (7.3 short of the rail's inner side), which set the aim, and the slot's chamfer depth (1.8). Whether the 80 mm head reach is from the upright's front face is unconfirmed, taken from the front face. Where the camera's ribbon enters the Pi case.
