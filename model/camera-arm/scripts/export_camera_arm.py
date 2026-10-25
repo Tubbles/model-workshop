@@ -39,10 +39,15 @@ on the slicer's supports (the user prints it with supports). The
 spacer rails lie on their undersides, the shims stand on an end.
 
 Assembly: take off the rail's end cap, slide in the two spacer rails,
-the arm, the Pi mount and the shims that fill the slots to the rail's
-end, and put the cap back on. Close the case around the board and
-screw it to the arm through the ears from the front, where a straight
-driver up to 5 mm across passes the front shell.
+the arm, the Pi mount with the Pi case already hung on it, and the
+shims that fill the slots to the rail's end, and put the cap back on.
+The Pi case hangs on the mount's keyholes and comes off by sliding
+about 12 mm up the mount's slope, straight toward the post's leaning
+face, which stands 2.1 mm off it: with the arm in place, the Pi case
+neither goes on nor comes off, so the mount slides out with it. Close
+the camera's case around the board and screw it to the arm through
+the ears from the front, where a straight driver up to 5 mm across
+passes the front shell.
 
 Sources (downloads kept under work/research/):
 
@@ -1290,7 +1295,7 @@ def main():
         contact_area, over_contact = bed_contact(shape)
         print(f"{part + ':':12s}{box.XLength:.1f} x {box.YLength:.1f} x {box.ZLength:.1f} mm as printed, "
               f"{shape.Volume / 1000.0:.1f} cm3, {contact_area / 100.0:.1f} cm2 on the bed with the center of "
-              f"mass {'over' if over_contact else 'outside'} it, downward faces past 45 degrees: "
+              f"mass {'over' if over_contact else 'outside'} it, planar faces facing down past 45 degrees: "
               f"{overhang_report(shape)}, wrote {stl_file} ({mesh.CountFacets} facets)")
 
     print(f"case:       {BOARD_WIDTH_MM + 2 * outer_offset():.1f} x {BOARD_HEIGHT_MM + 2 * outer_offset():.1f} x "
