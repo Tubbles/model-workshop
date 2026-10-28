@@ -14,4 +14,4 @@ The user, 2026-10-28, on work item 031's arm: "the printer head does not reach o
 
 ## Open
 
-- The print (camera-arm-fc9711b): the run flat on the rail, the Pi case on and off its keyholes past the riser, whether the camera wobbles when the bed moves, and a snapshot to judge the aim.
+- The print, now of 033's arm (camera-arm-e032dd8): the run flat on the rail, the Pi case on and off its keyholes past the riser, whether the camera wobbles when the bed moves, and a snapshot to judge the aim.

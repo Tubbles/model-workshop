@@ -1124,8 +1124,8 @@ def trimmed_stretches(points, directions):
 
 def arm_sections(directions):
     """The section axes, the 14 mm side's and then the 15 mm side's, of
-    the run, the short plumb stretch between the bend up and the bend back
-    at the run's corner, the leaning leg, the plumb riser, the bar from
+    the run, the bend back's start at the end of the bend up (the two
+    arcs meet, with no straight between them), the leaning leg, the plumb riser, the bar from
     the bend forward's end to the loft and the bar under the case. The
     run's lie along y and z, carried through the bend up, about y, the
     bends into and out of the lean, about x, and the bend forward, about x

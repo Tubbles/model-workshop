@@ -14,6 +14,7 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 ## Camera arm
 
 - The downward face check (`downward_faces()`, `model/camera-arm/scripts/export_camera_arm.py`) reads planar faces only, so curved overhangs go unlisted: the ceilings of the bar's two insert bores face down about 57 degrees (work item 029's review). A check over the exported mesh's triangles would cover them. Not done in 029, whose arm prints on supports.
+- The camera bar's loft (`bent_bar()`) still meets the bend forward and the bar under the case at zero radius, kinking 17.4 and 14.2 degrees (work item 033's review), the path's only corners without an arc. Arcs there need room the 4 mm loft lacks: an S curve for its 1.2 mm step in x at 8.5 mm radius takes about 6.3 mm, so the riser's x or the loft's length would have to give, and the twist would move into a two profile sweep.
 
 ## Placement solver
 
