@@ -13,8 +13,7 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 
 ## Camera arm
 
-- The downward face check (`downward_faces()`, `model/camera-arm/scripts/export_camera_arm.py`) reads planar faces only, so curved overhangs go unlisted: the ceilings of the bar's two insert bores face down about 57 degrees (work item 029's review). A check over the exported mesh's triangles would cover them. Not done in 029, whose arm prints on supports. Since 030 the riser's twisted back face is a B-spline too, about 15 x 62 mm facing the bed in the print, unlisted.
-- The Pi case slid 12 mm up its mount's face, off its keyholes, is only measured against the arm (`pi_case_slid_off()`, printed as the last `clearance:` line, 2.13 in 0422d3d), not checked, though the README's assembly relies on it going on and off with the arm in place. A check failing below `PI_CASE_CLEARANCE_MM` would hold that (work item 030's review).
+- The downward face check (`downward_faces()`, `model/camera-arm/scripts/export_camera_arm.py`) reads planar faces only, so curved overhangs go unlisted: the ceilings of the bar's two insert bores face down about 57 degrees (work item 029's review). A check over the exported mesh's triangles would cover them. Not done in 029, whose arm prints on supports. Since 031 the upper leg's twisted faces are B-splines too, its back face, about 15 x 24 mm, facing the bed in the print, unlisted.
 
 ## Placement solver
 

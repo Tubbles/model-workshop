@@ -14,6 +14,6 @@ The user, 2026-10-28, after printing 029's arm (8a8eb48): "I printed the arm now
 
 ## Open
 
-- The print: whether the run sits flat on the rail, the riser's gap to the Pi case (2.1) and the arm's to the print head, whether the camera wobbles when the bed moves, and a snapshot to judge the aim.
-- The arm reaches 17.8 mm past the Pi case's east edge, since its riser and the bar stand east of the camera's case. Whether that is acceptable is the user's call.
+- The print, now of 031's arm, which superseded 45bbac5's before it was printed.
+- The arm reached 17.8 mm past the Pi case's east edge, since its riser and the bar stood east of the camera's case. The user had it pulled in: work item 031.
 - 029's open measurements still stand: the bed's height, the nozzle's line and the bed's right edge from the Ender-3's CAD, the head reach's reference face, the ribbon's way into the Pi case.

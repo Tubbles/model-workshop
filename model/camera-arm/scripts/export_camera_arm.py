@@ -51,11 +51,12 @@ hover above the print bed, no worries there"). The spacer rails lie on
 their undersides, the shims stand on an end.
 
 Assembly: take off the rail's end cap, slide in the two spacer rails,
-the arm, the Pi mount and the shims that fill the slots to the rail's
-end, and put the cap back on. The Pi case hangs on the mount's keyholes
-and comes off by sliding up the mount's slope, which runs straight
-toward the riser's back leg: the export prints how far of the 11.2 mm
-its keyholes need it slides before it comes within 2 mm of the arm.
+the arm, the Pi mount with the Pi case already hung on its keyholes and
+the shims that fill the slots to the rail's end, and put the cap back
+on. The keyholes need the case to slide 11.2 mm up the mount's slope,
+which runs straight toward the riser's back leg, so with the arm in
+place the case neither goes on nor comes off: the export prints how far
+of the 11.2 mm it slides before it comes within 2 mm of the arm.
 Close the camera's case around the board and screw it
 to the arm through the ears from the front, where a straight driver up
 to 5 mm across passes the front shell.
@@ -1007,10 +1008,12 @@ def bar_corner_u():
 
 def upper_leg_foot_for(lens, axes):
     """The upper leg's foot, the lens there and the case's u, v, w along
-    these axes: down the case's v from the bar's corner until the leg's
-    section, its 14 mm side along u and its 15 mm side along w, lies
-    below the shells' lowest point, so the plumb leg under it and the
-    bend between them stay below the case."""
+    these axes: down the case's v from the bar's corner until a section
+    with its 14 mm side along u and its 15 mm side along w would lie
+    below the shells' lowest point. The section built there is the plumb
+    leg's carried through the bend, whose top corner comes 0.08 mm
+    higher (0cad1b7), clear of the shells since they end west of the
+    leg."""
     u_axis, v_axis, w_axis = axes
     half_height, half_thickness = arm_section_half_extents()
     corner = bar_center_point_for(lens, axes, bar_corner_u_for(lens, axes))
