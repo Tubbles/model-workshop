@@ -14,16 +14,18 @@ length.
 The arm is one bar of constant section, 14 x 15 mm, bent along a path
 (the user, 2026-10-28: "I want a consistent arm cross area and size
 (except where it tapers down to the extrusion foot) that snakes as
-needed"). It runs east from the rail low behind the Pi case, rises
-behind the Pi case with its east face on the Pi case's east edge (the
-user: "Pull it back in so the outer wall aligns with the Pi's outer
-wall"), climbs the camera case's back plane and turns into the bar
-behind the camera case. Its run is the foot, so the T-rails under it
-are as long as the run is deep (the user: "make it extend to the outer
-bound of the arm projected down, no more"). The bar carries the case
-as far east as that allows (the user: "closer to the outer eastward
-edge of the pi"), looking from the front and to the right at one fixed
-angle, at a point 5 cm in front of the bed's center.
+needed"). It runs east from the rail low behind the Pi case, leans
+back and rises plumb behind where the Pi case slides to come off its
+keyholes, and turns forward into the bar, which reaches north past the
+camera case to it and carries the case behind its back. The riser's
+east face and the bar's back edge under the case lie on the Pi case's
+east edge (the user: "Pull it back in so the outer wall aligns with
+the Pi's outer wall"), which puts the camera as far east as that
+allows (the user: "closer to the outer eastward edge of the pi"). Its
+run is the foot, so the T-rails under it are as long as the run is
+deep (the user: "make it extend to the outer bound of the arm
+projected down, no more"). The camera looks from the front and to the
+right at one fixed angle, at a point 5 cm in front of the bed's center.
 The case is two shells around the camera board, closed by four M2
 screws through the board's holes into heat-set inserts in the back
 shell, and fixed to the arm by two M2 screws through ears on the back
@@ -42,22 +44,21 @@ files hold one rail each, for one slot. It also prints the fits, the
 clearances to the printer, the Pi and the cable, and what part of the
 bed the camera sees over the Y travel.
 
-Print orientations. The arm prints on its back: its rearmost point, at
-the riser's waist, on the bed, the run's back face over it with the
-T-rails standing on that face, their profile in the layer plane, as
-the Pi mount prints them, and the whole arm on the slicer's supports
+Print orientations. The arm prints on its back: the riser's back face
+on the bed, the run's back face over it with the T-rails standing on
+that face, their profile in the layer plane, as the Pi mount prints
+them, and the rest of the arm on the slicer's supports
 (the user: "I'll print using supports which works well so the back can
 hover above the print bed, no worries there"). The spacer rails lie on
 their undersides, the shims stand on an end.
 
 Assembly: take off the rail's end cap, slide in the two spacer rails,
-the arm, the Pi mount with the Pi case already hung on its keyholes and
-the shims that fill the slots to the rail's end, and put the cap back
-on. The keyholes need the case to slide 11.2 mm up the mount's slope,
-which runs straight toward the riser's back leg, so with the arm in
-place the case neither goes on nor comes off: the export prints how far
-of the 11.2 mm it slides before it comes within 2 mm of the arm.
-Close the camera's case around the board and screw it
+the arm, the Pi mount and the shims that fill the slots to the rail's
+end, and put the cap back on. The Pi case hangs on the mount's keyholes
+and goes on and comes off by sliding 11.2 mm up the mount's slope,
+toward the riser, which stands 2 mm behind the case at the slide's end:
+the case goes on and comes off with the arm in place, and the export
+checks that gap. Close the camera's case around the board and screw it
 to the arm through the ears from the front, where a straight driver up
 to 5 mm across passes the front shell.
 
@@ -123,9 +124,9 @@ Sources (downloads kept under work/research/):
   point about 92 mm in front of it (the STLs give 91.1) and its left
   side in line with the rail's left side, the print head's reach (fan
   casing included) 80 mm in front of the upright (taken as from its
-  front face, unconfirmed), over the whole rail and past its outer
-  side, its lowest point (nozzle excluded) about 1 cm over the Pi
-  case's top.
+  front face, unconfirmed), over the whole rail and no more than 10 mm
+  past its outer side, its lowest point (nozzle excluded) about 1 cm
+  over the Pi case's top.
 
 Assumed without a source, to be measured on the real parts: the board
 1.0 mm thick, the case's room for components 3.0 mm in front of the
@@ -134,8 +135,7 @@ the ribbon 16 mm wide (15 contacts at 1 mm pitch); the sock's end
 about 8 to 10 mm across round, or flattened around the flat ribbon. The
 spacer rails' stop at the upright's bolts (see above): if they stop
 elsewhere, the arm and the Pi mount shift along the rail by the
-difference, and a shift toward the upright eats into the arm's 3 mm
-to the print head's reach.
+difference.
 
 Frames: the printer frame has x to the right (seen from the front), y
 toward the back and z up, its origin on the right rail's top face, on
@@ -147,14 +147,14 @@ as (distance in front of the upright, height) pairs extruded across x.
 The arm's path is given the same way, as (x, distance in front of the
 upright, height). The case frame has u along the board's 25 mm side, v
 along its 23.862 mm side from the connector edge, w through the board
-toward the lens, the board's back face at w = 0. The bar's section
-lies along the case's v and w. It is carried back to the upper leg's
-top by parallel transport, each bend turning it about the cross
-product of its two directions by the angle between them, while the
-run's section lies along y and z, flat on the rail and against the Pi
-mount, and is carried up through the riser's legs, where its 15 mm
-side lies along x, to the upper leg's foot. The upper leg twists
-between the two.
+toward the lens, the board's back face at w = 0. The run's section
+lies along y and z, flat on the rail and against the Pi mount, and is
+carried by parallel transport, each bend turning it about the cross
+product of its two directions by the angle between them, up the riser,
+where its 15 mm side lies along x, and through the bend forward into
+the bar. Under the case the bar's section lies along the case's v and
+w. North of the case the bar is lofted from the bend's section to the
+case's, which takes up the twist and the step in x between them.
 """
 
 import math
@@ -229,13 +229,16 @@ BUILD_VOLUME_MM = (220.0, 220.0, 250.0)  # for the arm's own print
 
 # The user's figures along the rail, in front of the upright's front
 # face. The print head's reach, fan casing included, runs over the
-# whole rail and past its outer side by an amount the user did not
-# give: HEAD_REACH_RIGHT_X_MM reaches past everything of the arm. Its
-# lowest point (nozzle excluded) is about 1 cm over the Pi case's top,
-# about 71 mm up; the keep-out starts lower, at the bed top.
+# whole rail and HEAD_REACH_PAST_RAIL_MM past its outer side (the user,
+# 2026-10-28: "the printer head does not reach out pass the extrusion
+# east side more than 10 mm"), well west of the riser and the bar, so
+# it shapes nothing of the arm. Its lowest point (nozzle excluded) is
+# about 1 cm over the Pi case's top, about 71 mm up; the keep-out
+# starts lower, at the bed top.
 RAIL_FREE_TOP_FACE_MM = (136.0, 137.0)  # to the rail's front end
 HEAD_REACH_MM = 80.0
-HEAD_REACH_RIGHT_X_MM = 150.0
+HEAD_REACH_PAST_RAIL_MM = 10.0
+HEAD_REACH_RIGHT_X_MM = RAIL_HALF_WIDTH_MM + HEAD_REACH_PAST_RAIL_MM
 HEAD_CLEARANCE_MM = 3.0
 
 # The Pi mount and its case, from the Printables 277420 STLs placed by
@@ -257,10 +260,9 @@ PI_CASE_CLEARANCE_MM = 2.0
 # hole of radius 5.3, its center 31.9 mm up the face from its low front
 # end, and a 6.5 mm wide slot down the face to an end whose center is
 # 20.7 up. The pegs hang at the slot's end and lift off at the hole's
-# center. The farthest slide that keeps PI_CASE_CLEARANCE_MM to the arm
-# is found in PI_CASE_SLIDE_BISECTION_STEPS halvings.
+# center. The case slid this far stays PI_CASE_CLEARANCE_MM off the arm,
+# so it goes on and comes off with the arm in place.
 PI_CASE_SLIDE_OFF_MM = 11.2
-PI_CASE_SLIDE_BISECTION_STEPS = 14
 
 # The rail parts: the arm's foot and the spacer and shim rails share
 # the T-rail profile of the user's Pi mount (case_mount.stl, sliced),
@@ -295,13 +297,14 @@ M2_HEAD_COUNTERBORE_DEPTH_MM = 2.0
 # A little bit south of the center when viewed from above. Say 5 cm"),
 # the image's long side horizontal. Its x puts the camera as far east
 # (the user: "move the camera mount away from the bed, closer to the
-# outer eastward edge of the pi") as the arm allows with the riser's
-# east face on the Pi case's east edge (the user, 2026-10-28: "I don't
-# want it "past the pi case", the pi case already extends far to the
-# right, making the square footprint of the printer wider. This camera
-# will make it even wider. Pull it back in so the outer wall aligns
-# with the Pi's outer wall"), found in LENS_X_ITERATIONS rounds, since
-# the yaw and with it the bar's corner change with x. Its height
+# outer eastward edge of the pi") as the arm allows: the bar's bottom
+# back edge under the case, the bar's easternmost point there, on the
+# Pi case's east edge, in line with the riser's east face (the user,
+# 2026-10-28: "I don't want it "past the pi case", the pi case already
+# extends far to the right, making the square footprint of the printer
+# wider. This camera will make it even wider. Pull it back in so the
+# outer wall aligns with the Pi's outer wall"), found in
+# LENS_X_ITERATIONS rounds, since the yaw changes with x. Its height
 # is the second arm's, less half the second arm's height from the
 # case's lowest point down to the screen's top (the user: "lower the
 # height of the camera mount by half of the difference between the
@@ -365,8 +368,8 @@ EAR_SCREW_DRIVER_DIAMETER_MM = 5.0  # the shaft that must pass the front shell's
 # ear screws in inserts BAR_INSERT_DEPTH_MM deep: BAR_THICKNESS_MM
 # thick behind the case's back face, from BAR_DROP_MM below the ears'
 # centers to BAR_RISE_MM above them, to BAR_REACH_BEYOND_EARS_MM beyond
-# the +u ear. Its section is the whole arm's: by the -u ear the bar
-# turns down into the arm's upper leg.
+# the +u ear. Its section is the whole arm's: north of the -u ear it
+# reaches on to the bend down into the riser.
 BAR_REACH_BEYOND_EARS_MM = 4.0
 BAR_RISE_MM = 4.0
 BAR_DROP_MM = 10.0
@@ -376,18 +379,17 @@ BAR_INSERT_DEPTH_MM = 5.5
 # The arm's path, in the printer frame. Its run lies on the rail's top
 # face against the Pi mount's back end, from the left T-rail's head edge
 # east to the riser. The run's corner bends up and then back, so the
-# riser's three legs keep their 15 mm side along x, in one plane behind
-# the Pi case with their east face on its east edge: the first leans
-# back to a waist at the height of the Pi case's rearmost corner, the
-# second runs parallel to the Pi case's back face with its back face
-# HEAD_CLEARANCE_MM off the head reach's lower front edge, the third
-# stands plumb. The upper leg rises from there along the case's v, in
-# the case's back plane, from below the shells' lowest point to the
-# bar's corner, which stands HEAD_CLEARANCE_MM off the head's reach. A
-# plumb leg all the way up would cut into the case's lower back, which
-# leans out toward the riser, and the upper leg leans in as it rises,
-# so the bar's back edge ends up west of the riser's east face.
+# riser keeps its 15 mm side along x, in one plane behind the Pi case
+# with its east face on the Pi case's east edge: it leans back to a
+# waist at the height of the Pi case's rearmost corner, then stands
+# plumb, its front face PI_CASE_CLEARANCE_MM behind the rearmost corner
+# of the Pi case slid off its keyholes, up to the bar's height. There
+# it bends forward along -y, which keeps its 15 mm side along x, into
+# the bar. The bar is lofted from that bend's section to the case's at
+# the case's north end, which takes up the camera's pitch and the step
+# in x between the riser's center and the bar's under the case.
 PLUMB = (0.0, 0.0, 1.0)
+FORWARD = (0.0, -1.0, 0.0)
 
 # Checks.
 OVERHANG_NORMAL_LIMIT = -0.7072  # a face pointing down more than 45 degrees
@@ -623,22 +625,24 @@ def lens_height():
     return second_arm_lens()[2] - lens_drop()
 
 
-def riser_east_for(lens):
-    """The riser's east face with the lens there: the upper leg's foot's
-    x, where the riser's legs stand, plus half their 15 mm side, which
-    lies along x."""
+def bar_east_for(lens):
+    """The bar's easternmost point under the case with the lens there:
+    its bottom back edge at the case's north end, since the bar runs
+    west as it runs south along u."""
     axes = case_axes_for(*yaw_and_pitch_toward(lens, camera_target()))
-    return upper_leg_foot_for(lens, axes)[0] + arm_section_half_extents()[1]
+    north_end = bar_center_point_for(lens, axes, bar_north_u())
+    return max(corner[0] for corner in section_corners(north_end, axes[1:]))
 
 
 def lens_x():
-    """The lens x that puts the riser's east face on the Pi case's east
-    edge, by fixed point iteration from the second arm's x."""
+    """The lens x that puts the bar's easternmost point under the case on
+    the Pi case's east edge, by fixed point iteration from the second
+    arm's x."""
     y = y_in_front_of_upright(LENS_IN_FRONT_OF_UPRIGHT_MM)
     height = lens_height()
     x = SECOND_ARM_LENS_X_MM
     for _ in range(LENS_X_ITERATIONS):
-        x -= riser_east_for((x, y, height)) - PI_CASE_X_MM[1]
+        x -= bar_east_for((x, y, height)) - PI_CASE_X_MM[1]
     return x
 
 
@@ -985,86 +989,41 @@ def bar_center_point(u):
     return bar_center_point_for(lens_position(), case_axes(), u)
 
 
-def bar_corner_u_for(lens, axes):
-    """The case frame u at which the bar's corner stands HEAD_CLEARANCE_MM
-    off the head's reach, the lens there and the case's u, v, w along
-    these axes. The upper leg ends there with its section's 14 mm side
-    along -u and its 15 mm side along w, and the bend about w turns the
-    -u side toward v: its reach toward the back peaks on the way, at the
-    hypotenuse of its u and v reaches, which the upper leg's end alone
-    falls short of by about 0.0003 mm. The upper leg comes forward as it
-    goes down and the riser below stands further forward, so nothing
-    else of the arm comes nearer the reach above its lower front edge."""
-    u_axis, v_axis, w_axis = axes
-    half_height, half_thickness = arm_section_half_extents()
-    back_reach = half_height * math.hypot(u_axis[1], v_axis[1]) + half_thickness * abs(w_axis[1])
-    at_zero = distance_in_front_of_upright(bar_center_point_for(lens, axes, 0.0)[1])
-    return (at_zero - back_reach - HEAD_REACH_MM - HEAD_CLEARANCE_MM) / u_axis[1]
+def bar_north_u():
+    """The case frame u of the case's north end, the -u ear's outer edge,
+    where the bar's section turns from the case's to the riser's."""
+    return min(u_range[0] for u_range, _, _ in shells_box_ranges())
 
 
-def bar_corner_u():
-    return bar_corner_u_for(lens_position(), case_axes())
+def riser_x():
+    """The riser's center line x: its 15 mm side lies along x, its east
+    face on the Pi case's east edge."""
+    return PI_CASE_X_MM[1] - arm_section_half_extents()[1]
 
 
-def upper_leg_foot_for(lens, axes):
-    """The upper leg's foot, the lens there and the case's u, v, w along
-    these axes: down the case's v from the bar's corner until a section
-    with its 14 mm side along u and its 15 mm side along w would lie
-    below the shells' lowest point. The section built there is the plumb
-    leg's carried through the bend, whose top corner comes 0.08 mm
-    higher (0cad1b7), clear of the shells since they end west of the
-    leg."""
-    u_axis, v_axis, w_axis = axes
-    half_height, half_thickness = arm_section_half_extents()
-    corner = bar_center_point_for(lens, axes, bar_corner_u_for(lens, axes))
-    lowest = shells_extreme(lens, camera_target(), 2, min)
-    height = lowest - half_height * abs(u_axis[2]) - half_thickness * abs(w_axis[2])
-    return add(corner, scale(v_axis, (height - corner[2]) / v_axis[2]))
-
-
-def head_reach_lower_front_edge():
-    """The head reach's lower front edge as (distance in front of the upright, height)."""
-    reach = head_reach_box()
-    return distance_in_front_of_upright(reach[1][0]), reach[2][0]
-
-
-def back_leg_line():
-    """The riser's back leg's center line as a (distance in front of the
-    upright, height) point and unit direction: parallel to the Pi case's
-    back face, from its rearmost corner up to its top, with the leg's
-    back face HEAD_CLEARANCE_MM in front of the head reach's lower front
-    edge."""
-    (rear_d, rear_h), (top_d, top_h) = PI_CASE_SIDE_PROFILE_MM[0], PI_CASE_SIDE_PROFILE_MM[1]
-    direction = normalized((top_d - rear_d, top_h - rear_h))
-    offset = HEAD_CLEARANCE_MM + arm_section_half_extents()[0]
-    edge_d, edge_h = head_reach_lower_front_edge()
-    return (edge_d + offset * direction[1], edge_h - offset * direction[0]), direction
-
-
-def back_leg_point(index, value):
-    """The point of the back leg's center line whose distance (index 0)
-    or height (index 1) has that value."""
-    point, direction = back_leg_line()
-    return add(point, scale(direction, (value - point[index]) / direction[index]))
+def riser_distance():
+    """The riser's center line in front of the upright: its front face
+    PI_CASE_CLEARANCE_MM behind the rearmost corner of the Pi case slid
+    off its keyholes."""
+    rearmost = min(distance for distance, _ in pi_case_slid_profile(PI_CASE_SLIDE_OFF_MM))
+    return rearmost - PI_CASE_CLEARANCE_MM - arm_section_half_extents()[0]
 
 
 def arm_path():
     """The arm's center line from the foot up: the run's west end, at the
     left T-rail's head edge, the run's corner, the riser's waist at the
-    height of the Pi case's rearmost corner, the back leg's top, under
-    the upper leg's foot, the upper leg's foot, the bar's corner and the
-    bar's end. The run lies on the rail, in the middle of the foot, and
-    the riser's legs at the upper leg's foot's x."""
+    height of the Pi case's rearmost corner, the bar's corner on the
+    riser at the bar's height, the bar's north end at the case and the
+    bar's end. The run lies on the rail, in the middle of the foot."""
     half_thickness = arm_section_half_extents()[1]
     run_y = y_in_front_of_upright(sum(arm_base_range()) / 2.0)
+    riser_y = y_in_front_of_upright(riser_distance())
     west_x = RAIL_SLOT_CENTERS_X_MM[0] - T_RAIL_HALF_PROFILE_MM[2][0]
-    foot = upper_leg_foot_for(lens_position(), case_axes())
-    waist_d, waist_h = back_leg_point(1, PI_CASE_SIDE_PROFILE_MM[0][1])
-    knee_h = back_leg_point(0, distance_in_front_of_upright(foot[1]))[1]
+    north_end = bar_center_point(bar_north_u())
     return [
-        (west_x, run_y, half_thickness), (foot[0], run_y, half_thickness),
-        (foot[0], y_in_front_of_upright(waist_d), waist_h), (foot[0], foot[1], knee_h), foot,
-        bar_center_point(bar_corner_u()), bar_center_point(EAR_CENTERS_U_MM[1] + BAR_REACH_BEYOND_EARS_MM),
+        (west_x, run_y, half_thickness), (riser_x(), run_y, half_thickness),
+        (riser_x(), riser_y, PI_CASE_SIDE_PROFILE_MM[0][1]), (riser_x(), riser_y, north_end[2]), north_end,
+        bar_center_point(EAR_CENTERS_U_MM[1] + BAR_REACH_BEYOND_EARS_MM),
     ]
 
 
@@ -1097,29 +1056,28 @@ def carried_through_bend(axes, incoming, outgoing):
 def arm_sections(directions):
     """The section axes, the 14 mm side's and then the 15 mm side's, of
     the run, the run's corner between its bend up and its bend back, the
-    riser's three legs, the upper leg's foot and top and the bar. The
-    run's lie along y and z, carried up through the run's corner and the
-    riser's legs, which turn about x alone, to the upper leg's foot. The
-    bar's are the case's v and w, carried back to the upper leg's top."""
-    run_direction, lean_direction, back_direction, plumb_direction, upper_direction, bar_direction = directions
+    leaning leg, the plumb riser, the bar's corner after the bend forward
+    and the bar under the case. The run's lie along y and z, carried up
+    through the run's corner and the riser, which turn about x alone, and
+    through the bend forward, about x too. The bar's under the case are
+    the case's v and w."""
+    run_direction, lean_direction, plumb_direction, _, _ = directions
     run = ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
     standing = carried_through_bend(run, run_direction, PLUMB)
     lean = carried_through_bend(standing, PLUMB, lean_direction)
-    back = carried_through_bend(lean, lean_direction, back_direction)
-    plumb = carried_through_bend(back, back_direction, plumb_direction)
-    upper_foot = carried_through_bend(plumb, plumb_direction, upper_direction)
+    plumb = carried_through_bend(lean, lean_direction, plumb_direction)
+    turned = carried_through_bend(plumb, plumb_direction, FORWARD)
     _, v_axis, w_axis = case_axes()
-    bar = (v_axis, w_axis)
-    upper_top = carried_through_bend(bar, bar_direction, upper_direction)
-    return run, standing, lean, back, plumb, upper_foot, upper_top, bar
+    return run, standing, lean, plumb, turned, (v_axis, w_axis)
 
 
-def upper_leg_twist_degrees():
-    """How far the upper leg's section turns about the leg from its foot
-    to its top."""
-    directions = path_directions(arm_path())
-    _, _, _, _, _, foot, top, _ = arm_sections(directions)
-    return math.degrees(math.atan2(dot(cross(foot[0], top[0]), directions[4]), dot(foot[0], top[0])))
+def bar_twist_degrees():
+    """How far the bar's section turns about the loft north of the case,
+    from the bend forward to the case's north end."""
+    path = arm_path()
+    directions = path_directions(path)
+    _, _, _, _, turned, bar = arm_sections(directions)
+    return math.degrees(math.atan2(dot(cross(turned[0], bar[0]), directions[3]), dot(turned[0], bar[0])))
 
 
 def section_corners(center, axes):
@@ -1164,26 +1122,26 @@ def bend_solids(corner, incoming, outgoing, axes):
 
 def bent_bar():
     """The arm's bar of constant section along its whole path: the run,
-    the riser's three legs, the upper leg lofted between its twisted
-    ends, the bar and the bends between them, two at the run's corner."""
+    the leaning leg, the plumb riser, the bar lofted north of the case
+    between its twisted ends, the bar under the case and the bends, two
+    at the run's corner, one at the waist and one forward into the bar."""
     path = arm_path()
     directions = path_directions(path)
-    run, standing, lean, back, plumb, upper_foot, upper_top, bar = arm_sections(directions)
-    west_end, run_corner, waist, knee, foot, bar_corner, bar_end = path
-    run_direction, lean_direction, back_direction, plumb_direction, upper_direction, bar_direction = directions
-    upper = Part.makeLoft([
-        polygon_wire(section_corners(foot, upper_foot)), polygon_wire(section_corners(bar_corner, upper_top)),
+    run, standing, lean, plumb, turned, bar = arm_sections(directions)
+    west_end, run_corner, waist, bar_corner, north_end, bar_end = path
+    run_direction, lean_direction, plumb_direction, _, _ = directions
+    loft = Part.makeLoft([
+        polygon_wire(section_corners(bar_corner, turned)), polygon_wire(section_corners(north_end, bar)),
     ], True, True)
     stretches = [
         prism_from_polygon(section_corners(start, axes), subtract(end, start))
-        for start, end, axes in ((west_end, run_corner, run), (run_corner, waist, lean), (waist, knee, back),
-                                 (knee, foot, plumb), (bar_corner, bar_end, bar))
-    ] + [upper]
+        for start, end, axes in ((west_end, run_corner, run), (run_corner, waist, lean), (waist, bar_corner, plumb),
+                                 (north_end, bar_end, bar))
+    ] + [loft]
     bends = [
         bend_solids(*bend) for bend in (
             (run_corner, run_direction, PLUMB, run), (run_corner, PLUMB, lean_direction, standing),
-            (waist, lean_direction, back_direction, lean), (knee, back_direction, plumb_direction, back),
-            (foot, plumb_direction, upper_direction, plumb), (bar_corner, upper_direction, bar_direction, upper_top),
+            (waist, lean_direction, plumb_direction, lean), (bar_corner, plumb_direction, FORWARD, plumb),
         )
     ]
     return stretches[0].fuse(stretches[1:] + [half for halves in bends for half in halves])
@@ -1388,25 +1346,11 @@ def pi_case_slid_profile(slide):
     return [(d + (high_d - low_d) * share, h + (high_h - low_h) * share) for d, h in PI_CASE_SIDE_PROFILE_MM]
 
 
-def pi_case_slide_distance(arm, slide):
-    """The distance from the arm to the Pi case slid that far up its mount's face."""
-    return arm.distToShape(side_profile_prism(pi_case_slid_profile(slide), PI_CASE_X_MM))[0]
-
-
-def farthest_pi_case_slide(arm):
-    """How far, up to PI_CASE_SLIDE_OFF_MM, the Pi case slides up its
-    mount's face and stays PI_CASE_CLEARANCE_MM off the arm, by
-    bisection (the gap only shrinks as it slides)."""
-    if pi_case_slide_distance(arm, PI_CASE_SLIDE_OFF_MM) >= PI_CASE_CLEARANCE_MM:
-        return PI_CASE_SLIDE_OFF_MM
-    low, high = 0.0, PI_CASE_SLIDE_OFF_MM
-    for _ in range(PI_CASE_SLIDE_BISECTION_STEPS):
-        middle = (low + high) / 2.0
-        if pi_case_slide_distance(arm, middle) >= PI_CASE_CLEARANCE_MM:
-            low = middle
-        else:
-            high = middle
-    return low
+def pi_case_slid_off():
+    """The Pi case slid PI_CASE_SLIDE_OFF_MM up its mount's face, where
+    its keyholes let go. It slides straight toward the riser, so the gap
+    is least there."""
+    return side_profile_prism(pi_case_slid_profile(PI_CASE_SLIDE_OFF_MM), PI_CASE_X_MM)
 
 
 def pi_mount():
@@ -1416,10 +1360,13 @@ def pi_mount():
 
 def keep_outs():
     """What the arm and case must stay clear of, with the clearance each
-    needs: any gap to the printer, more to the head and the Pi case."""
+    needs: any gap to the printer, more to the head and the Pi case, on
+    its keyholes and slid off them."""
     shapes = {name: (box_between(*box), 0.0) for name, box in keep_out_boxes().items()}
     shapes["print head's reach"] = (box_between(*head_reach_box()), HEAD_CLEARANCE_MM)
     shapes["Pi case"] = (pi_case(), PI_CASE_CLEARANCE_MM)
+    shapes[f"Pi case slid {PI_CASE_SLIDE_OFF_MM} mm up its mount's face, off its keyholes"] = (
+        pi_case_slid_off(), PI_CASE_CLEARANCE_MM)
     return shapes
 
 
@@ -1591,21 +1538,15 @@ def stack_report():
 def arm_report():
     path = arm_path()
     half_height, half_thickness = arm_section_half_extents()
-    names = ("run's west end", "run's corner", "riser's waist", "back leg's top", "upper leg's foot",
-             "bar's corner", "bar's end")
+    names = ("run's west end", "run's corner", "riser's waist", "bar's corner", "bar's north end at the case",
+             "bar's end")
     points = ", ".join(f"{name} ({x:.2f}, {distance_in_front_of_upright(y):.2f}, {z:.2f})"
                        for name, (x, y, z) in zip(names, path))
     foot = arm_base_range()
     return (f"arm:        {2 * half_height:.0f} x {2 * half_thickness:.0f} mm section along a path as (x, distance "
             f"in front of the upright, height): {points}; the foot, the run on the rail, takes {foot[0]:.1f} to "
-            f"{foot[1]:.1f} in front of the upright and x {path[0][0]:.1f} to {RAIL_HALF_WIDTH_MM:.1f}; the upper "
-            f"leg twists {upper_leg_twist_degrees():.2f} degrees")
-
-
-def bar_east():
-    """The bar's easternmost point, its bottom back edge at the corner."""
-    _, v_axis, w_axis = case_axes()
-    return max(corner[0] for corner in section_corners(arm_path()[5], (v_axis, w_axis)))
+            f"{foot[1]:.1f} in front of the upright and x {path[0][0]:.1f} to {RAIL_HALF_WIDTH_MM:.1f}; the bar "
+            f"twists {bar_twist_degrees():.2f} degrees north of the case")
 
 
 def check_east_of_pi_case(arm, placed_back, placed_front):
@@ -1715,9 +1656,10 @@ def main():
     target = camera_target()
     lowest = shells_extreme(lens, target, 2, min)
     right_edge = BED_PLATE_X_MM[1] - (BED_PLATE_SIZE_MM - PRINT_AREA_SIZE_MM) / 2.0
-    print(f"camera:     lens at x {lens[0]:.2f}, which puts the riser's east face on the Pi case's east edge at "
-          f"{PI_CASE_X_MM[1]} (the arm's east point at {arm_east:.4f}, the bar's at {bar_east():.2f}, the shells' "
-          f"at {shells_east:.2f}), {distance_in_front_of_upright(lens[1]):.1f} mm in front of the upright, {lens[2]:.2f} mm up: the "
+    print(f"camera:     lens at x {lens[0]:.2f}, which puts the bar's bottom back edge under the case at "
+          f"{bar_east_for(lens):.4f} on the Pi case's east edge at {PI_CASE_X_MM[1]}, with the riser's east face at "
+          f"{riser_x() + arm_section_half_extents()[1]:.4f} (the arm's east point at {arm_east:.4f}, the shells' at "
+          f"{shells_east:.2f}), {distance_in_front_of_upright(lens[1]):.1f} mm in front of the upright, {lens[2]:.2f} mm up: the "
           f"second arm's {second_lens[2]:.2f} ({LENS_HEIGHT_SHARE_OF_FIRST_ARM:.3f} of the first arm's "
           f"{first_lens[2]:.1f}) less {lens_drop():.2f}, half the way from its case's lowest point at "
           f"{second_arm_case_lowest():.2f} down to the screen's top at {pi_case_top():.1f}, which puts the case's "
@@ -1740,13 +1682,6 @@ def main():
         print(f"clearance:  {distance:.1f} mm to the {name}{needed}")
     print(f"clearance:  {cable_clearance:.1f} mm from the arm to the cable's corridor "
           f"({CABLE_CLEARANCE_MM:.0f} needed), {arm.distToShape(frustum)[0]:.1f} mm to the camera's field of view")
-    slide = farthest_pi_case_slide(arm)
-    if slide >= PI_CASE_SLIDE_OFF_MM:
-        print(f"clearance:  the Pi case slides the whole {PI_CASE_SLIDE_OFF_MM} mm its keyholes need up its "
-              f"mount's face and ends {pi_case_slide_distance(arm, slide):.2f} mm from the arm")
-    else:
-        print(f"clearance:  the Pi case slides {slide:.2f} of the {PI_CASE_SLIDE_OFF_MM} mm its keyholes need up its "
-              f"mount's face before it comes within {PI_CASE_CLEARANCE_MM:.0f} mm of the arm")
 
 
 run_and_exit(main)
