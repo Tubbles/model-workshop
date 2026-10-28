@@ -249,7 +249,7 @@ PI_CASE_CLEARANCE_MM = 2.0
 # face, toward the back and up.
 PI_CASE_SLIDE_OFF_MM = 12.0
 
-# The rail parts: the arm's base and the spacer and shim rails share
+# The rail parts: the arm's foot and the spacer and shim rails share
 # the T-rail profile of the user's Pi mount (case_mount.stl, sliced),
 # which fits the user's rail snugly: its right half as (x from the
 # slot's center, z below the rail's top face), mirrored. It is copied,
@@ -372,6 +372,7 @@ CUT_EXTRA_MM = 1.0
 CONTACT_VOLUME_LIMIT_MM3 = 0.01
 CLEARANCE_TOLERANCE_MM = 1e-6
 VIEW_CHECK_DEPTH_MM = (1.0, 300.0)  # the field of view the arm stays out of, from the lens
+TIGHT_BOUND_DEFLECTION_MM = 0.05  # the tessellation a part's extent is read from
 
 USAGE = """\
 usage: freecadcmd model/camera-arm/scripts/export_camera_arm.py --pass <output directory>\
@@ -557,23 +558,32 @@ def case_point_in_printer(lens, axes, point):
     return add(lens, along_axes(axes, subtract(point, lens_in_case())))
 
 
-def shells_bounding_corners():
-    """The corners of a box around both shells in the case frame: across
-    the ears along u, from the sock socket's bottom to the outline's top
-    along v, from the back shell's floor to the front plate along w."""
-    u_range = (EAR_CENTERS_U_MM[0] - EAR_RADIUS_MM, EAR_CENTERS_U_MM[1] + EAR_RADIUS_MM)
-    v_range = (-outer_offset() - SOCK_SOCKET_DEPTH_MM, BOARD_HEIGHT_MM + outer_offset())
+def shells_box_ranges():
+    """The (u, v, w) ranges of the boxes both shells are built from, in
+    the case frame: the outline, the sock socket over both shells and
+    each ear."""
     w_range = (case_back_w(), case_front_w())
-    return [(u, v, w) for u in u_range for v in v_range for w in w_range]
+    outline = (
+        (-outer_offset(), BOARD_WIDTH_MM + outer_offset()), (-outer_offset(), BOARD_HEIGHT_MM + outer_offset()),
+        w_range,
+    )
+    return [outline, sock_socket_ranges(w_range)] + [ear_box_ranges(center_u) for center_u in EAR_CENTERS_U_MM]
+
+
+def shells_box_corners():
+    return [(u, v, w) for u_range, v_range, w_range in shells_box_ranges()
+            for u in u_range for v in v_range for w in w_range]
 
 
 def shells_extreme(lens, target, index, pick):
     """The least or greatest (pick is min or max) printer frame
-    coordinate of the shells' bounding corners, the lens there aimed at
-    target. Along z the socket's bottom front edge is a box edge, so the
-    corners give its exact lowest point."""
+    coordinate of the corners of the shells' boxes, the lens there aimed
+    at target. The outline's and the ears' rounded corners lie inside
+    their boxes, while the sock socket is a plain box: the shells'
+    lowest point is its bottom front edge and their easternmost its
+    bottom back corner, so both are exact."""
     axes = case_axes_for(*yaw_and_pitch_toward(lens, target))
-    return pick(case_point_in_printer(lens, axes, corner)[index] for corner in shells_bounding_corners())
+    return pick(case_point_in_printer(lens, axes, corner)[index] for corner in shells_box_corners())
 
 
 def pi_case_top():
@@ -775,12 +785,17 @@ def outer_offset():
     return CASE_GAP_MM + CASE_WALL_MM
 
 
-def sock_socket_box(w_range):
-    """The socket's outside below the case's bottom wall, for one shell."""
+def sock_socket_ranges(w_range):
+    """The (u, v, w) ranges of the socket's outside below the case's bottom wall."""
     half_width = SOCK_SOCKET_WIDTH_MM / 2.0 + SOCK_SOCKET_WALL_MM
     center_u = BOARD_WIDTH_MM / 2.0
     bottom = -outer_offset() - SOCK_SOCKET_DEPTH_MM
-    return box_between((center_u - half_width, center_u + half_width), (bottom, -CASE_GAP_MM), w_range)
+    return (center_u - half_width, center_u + half_width), (bottom, -CASE_GAP_MM), w_range
+
+
+def sock_socket_box(w_range):
+    """The socket's outside below the case's bottom wall, for one shell."""
+    return box_between(*sock_socket_ranges(w_range))
 
 
 def sock_socket_bore():
@@ -813,13 +828,30 @@ def ribbon_slot():
     )
 
 
+def ear_wall_u(center_u):
+    """Where an ear starts, inside the back shell's side wall."""
+    return -CASE_GAP_MM if center_u < 0 else BOARD_WIDTH_MM + CASE_GAP_MM
+
+
+def ear_w_range():
+    return case_back_w(), case_back_w() + EAR_THICKNESS_MM
+
+
+def ear_box_ranges(center_u):
+    """The (u, v, w) ranges of the box around one ear."""
+    v = case_outline_center_v()
+    wall_u = ear_wall_u(center_u)
+    u_range = (min(center_u - EAR_RADIUS_MM, wall_u), max(center_u + EAR_RADIUS_MM, wall_u))
+    return u_range, (v - EAR_RADIUS_MM, v + EAR_RADIUS_MM), ear_w_range()
+
+
 def ears():
     """The two ears, from inside the back shell's side walls outward."""
     v = case_outline_center_v()
-    w_range = (case_back_w(), case_back_w() + EAR_THICKNESS_MM)
+    w_range = ear_w_range()
     shapes = []
     for center_u in EAR_CENTERS_U_MM:
-        wall_u = -CASE_GAP_MM if center_u < 0 else BOARD_WIDTH_MM + CASE_GAP_MM
+        wall_u = ear_wall_u(center_u)
         u_range = (min(center_u, wall_u), max(center_u, wall_u))
         tab = box_between(u_range, (v - EAR_RADIUS_MM, v + EAR_RADIUS_MM), w_range)
         shapes.append(tab.fuse(cylinder_z((center_u, v), EAR_RADIUS_MM, w_range)))
@@ -950,19 +982,19 @@ def riser_back_edge(path, sections):
 def riser_head_clearance(corner_u):
     """The distance from the riser to the head's reach, with the bar's
     corner at that u. The riser leans forward as it rises, so its back
-    edge comes nearest at the reach's lower back edge, at the bed top's
+    edge comes nearest at the reach's lower front edge, at the bed top's
     height."""
     path = arm_path_for(corner_u)
     reach = head_reach_box()
-    lower_back_edge = (distance_in_front_of_upright(reach[1][0]), reach[2][0])
-    return point_segment_distance(lower_back_edge, *riser_back_edge(path, arm_sections(path_directions(path))))
+    lower_front_edge = (distance_in_front_of_upright(reach[1][0]), reach[2][0])
+    return point_segment_distance(lower_front_edge, *riser_back_edge(path, arm_sections(path_directions(path))))
 
 
 def bar_corner_u():
     """The case frame u of the bar's corner: where the corner stands
     HEAD_CLEARANCE_MM off the head's reach, moved forward until the
     riser stands that far off it too (at the corner's u alone it stands
-    about 0.03 mm short)."""
+    about 0.16 mm short)."""
     u_axis = case_axes()[0]
     u = bar_corner_reach_u()
     for _ in range(BAR_CORNER_ITERATIONS):
@@ -1117,10 +1149,11 @@ def bent_bar():
 
 def arm_clip_box():
     """What of the bent bar the arm keeps: nothing behind the run's back
-    face, which the print stands on, or below the rail's top face. The
-    bend over the run's east end bulges past both."""
+    face, which the print stands on. The inner half of the bend over the
+    run's east end and the riser's back west corner reach behind it, to
+    about 80.68 in front of the upright."""
     big = 1000.0
-    return box_between((-big, big), (-big, y_in_front_of_upright(arm_base_range()[0])), (0.0, big))
+    return box_between((-big, big), (-big, y_in_front_of_upright(arm_base_range()[0])), (-big, big))
 
 
 def build_arm():
@@ -1448,10 +1481,21 @@ def case_front_print(shape):
     return shape.transformed(App.Matrix(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, case_front_w(), 0, 0, 0, 1))
 
 
+def tight_bound(shape):
+    """The least and the greatest corner of the shape's extent, over the
+    vertices of its tessellation, which lie on its surfaces. FreeCAD's
+    BoundBox of an unmeshed shape is loose around clipped revolved and
+    lofted faces: 0.317 mm on the arm. A copy is tessellated, so the
+    shape's own mesh is left to the STL export."""
+    points = shape.copy().tessellate(TIGHT_BOUND_DEFLECTION_MM)[0]
+    return (tuple(min(point[axis] for point in points) for axis in range(3)),
+            tuple(max(point[axis] for point in points) for axis in range(3)))
+
+
 def on_bed_origin(shape):
-    box = shape.BoundBox
+    minimum, _ = tight_bound(shape)
     moved = shape.copy()
-    moved.translate(App.Vector(-box.XMin, -box.YMin, -box.ZMin))
+    moved.translate(App.Vector(-minimum[0], -minimum[1], -minimum[2]))
     return moved
 
 
@@ -1508,11 +1552,13 @@ def arm_report():
             f"twists {riser_twist_degrees():.2f} degrees")
 
 
-def arm_box_report(arm_box):
-    """The arm's printer frame box, which maps the printed STL back: its
-    (X, Y, Z) is (x - XMin, z - ZMin, YMax - y)."""
-    return (f"arm box:    printer frame XMin {arm_box.XMin:.3f} XMax {arm_box.XMax:.3f} YMin {arm_box.YMin:.3f} "
-            f"YMax {arm_box.YMax:.3f} ZMin {arm_box.ZMin:.3f} ZMax {arm_box.ZMax:.3f}; the STL's (X, Y, Z) is "
+def arm_box_report(arm):
+    """The arm's printer frame box, the tight bound on_bed_origin places
+    the STL by, which maps the printed STL back: its (X, Y, Z) is
+    (x - XMin, z - ZMin, YMax - y)."""
+    minimum, maximum = tight_bound(arm)
+    return (f"arm box:    printer frame XMin {minimum[0]:.3f} XMax {maximum[0]:.3f} YMin {minimum[1]:.3f} "
+            f"YMax {maximum[1]:.3f} ZMin {minimum[2]:.3f} ZMax {maximum[2]:.3f}; the STL's (X, Y, Z) is "
             f"(x - XMin, z - ZMin, YMax - y)")
 
 
@@ -1593,7 +1639,7 @@ def main():
           f"chamfer's bottom corner")
     arm_box = arm.BoundBox
     print(arm_report())
-    print(arm_box_report(arm_box))
+    print(arm_box_report(arm))
 
     first_lens = first_arm_lens()
     second_lens = second_arm_lens()
