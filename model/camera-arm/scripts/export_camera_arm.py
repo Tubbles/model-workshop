@@ -385,11 +385,15 @@ BAR_INSERT_DEPTH_MM = 5.5
 # plumb, its front face PI_CASE_CLEARANCE_MM behind the rearmost corner
 # of the Pi case slid off its keyholes, up to the bar's height. There
 # it bends forward along -y, which keeps its 15 mm side along x, into
-# the bar. The bar is lofted from that bend's section to the case's at
-# the case's north end, which takes up the camera's pitch and the step
-# in x between the riser's center and the bar's under the case.
+# the bar, which runs straight on BAR_STRAIGHT_PAST_RISER_MM past the
+# riser's front face. From there the bar is lofted to the case's
+# section at the case's north end, which takes up the camera's pitch
+# and the step in x between the riser's center and the bar's under the
+# case. A loft starting inside the riser, its twisted faces touching
+# the riser's flat sides, fused into an invalid solid (40b19b9).
 PLUMB = (0.0, 0.0, 1.0)
 FORWARD = (0.0, -1.0, 0.0)
+BAR_STRAIGHT_PAST_RISER_MM = 0.5
 
 # Checks.
 OVERHANG_NORMAL_LIMIT = -0.7072  # a face pointing down more than 45 degrees
@@ -1013,16 +1017,19 @@ def arm_path():
     """The arm's center line from the foot up: the run's west end, at the
     left T-rail's head edge, the run's corner, the riser's waist at the
     height of the Pi case's rearmost corner, the bar's corner on the
-    riser at the bar's height, the bar's north end at the case and the
-    bar's end. The run lies on the rail, in the middle of the foot."""
-    half_thickness = arm_section_half_extents()[1]
+    riser at the bar's height, the loft's start past the riser's front
+    face, the bar's north end at the case and the bar's end. The run
+    lies on the rail, in the middle of the foot."""
+    half_height, half_thickness = arm_section_half_extents()
     run_y = y_in_front_of_upright(sum(arm_base_range()) / 2.0)
     riser_y = y_in_front_of_upright(riser_distance())
     west_x = RAIL_SLOT_CENTERS_X_MM[0] - T_RAIL_HALF_PROFILE_MM[2][0]
     north_end = bar_center_point(bar_north_u())
+    corner = (riser_x(), riser_y, north_end[2])
     return [
         (west_x, run_y, half_thickness), (riser_x(), run_y, half_thickness),
-        (riser_x(), riser_y, PI_CASE_SIDE_PROFILE_MM[0][1]), (riser_x(), riser_y, north_end[2]), north_end,
+        (riser_x(), riser_y, PI_CASE_SIDE_PROFILE_MM[0][1]), corner,
+        add(corner, scale(FORWARD, half_height + BAR_STRAIGHT_PAST_RISER_MM)), north_end,
         bar_center_point(EAR_CENTERS_U_MM[1] + BAR_REACH_BEYOND_EARS_MM),
     ]
 
@@ -1056,28 +1063,27 @@ def carried_through_bend(axes, incoming, outgoing):
 def arm_sections(directions):
     """The section axes, the 14 mm side's and then the 15 mm side's, of
     the run, the run's corner between its bend up and its bend back, the
-    leaning leg, the plumb riser, the bar's corner after the bend forward
-    and the bar under the case. The run's lie along y and z, carried up
-    through the run's corner and the riser, which turn about x alone, and
-    through the bend forward, about x too. The bar's under the case are
-    the case's v and w."""
-    run_direction, lean_direction, plumb_direction, _, _ = directions
+    leaning leg, the plumb riser, the bar's straight stretch after the
+    bend forward and the bar under the case. The run's lie along y and
+    z, carried up through the run's corner and the riser, which turn
+    about x alone, and through the bend forward, about x too. The bar's
+    under the case are the case's v and w."""
+    run_direction, lean_direction, plumb_direction, forward_direction, _, _ = directions
     run = ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
     standing = carried_through_bend(run, run_direction, PLUMB)
     lean = carried_through_bend(standing, PLUMB, lean_direction)
     plumb = carried_through_bend(lean, lean_direction, plumb_direction)
-    turned = carried_through_bend(plumb, plumb_direction, FORWARD)
+    turned = carried_through_bend(plumb, plumb_direction, forward_direction)
     _, v_axis, w_axis = case_axes()
     return run, standing, lean, plumb, turned, (v_axis, w_axis)
 
 
 def bar_twist_degrees():
     """How far the bar's section turns about the loft north of the case,
-    from the bend forward to the case's north end."""
-    path = arm_path()
-    directions = path_directions(path)
+    from the straight stretch past the riser to the case's north end."""
+    directions = path_directions(arm_path())
     _, _, _, _, turned, bar = arm_sections(directions)
-    return math.degrees(math.atan2(dot(cross(turned[0], bar[0]), directions[3]), dot(turned[0], bar[0])))
+    return math.degrees(math.atan2(dot(cross(turned[0], bar[0]), directions[4]), dot(turned[0], bar[0])))
 
 
 def section_corners(center, axes):
@@ -1122,26 +1128,27 @@ def bend_solids(corner, incoming, outgoing, axes):
 
 def bent_bar():
     """The arm's bar of constant section along its whole path: the run,
-    the leaning leg, the plumb riser, the bar lofted north of the case
-    between its twisted ends, the bar under the case and the bends, two
-    at the run's corner, one at the waist and one forward into the bar."""
+    the leaning leg, the plumb riser, the bar's straight stretch past the
+    riser, the bar lofted north of the case between its twisted ends, the
+    bar under the case and the bends, two at the run's corner, one at the
+    waist and one forward into the bar."""
     path = arm_path()
     directions = path_directions(path)
     run, standing, lean, plumb, turned, bar = arm_sections(directions)
-    west_end, run_corner, waist, bar_corner, north_end, bar_end = path
-    run_direction, lean_direction, plumb_direction, _, _ = directions
+    west_end, run_corner, waist, bar_corner, loft_start, north_end, bar_end = path
+    run_direction, lean_direction, plumb_direction, forward_direction, _, _ = directions
     loft = Part.makeLoft([
-        polygon_wire(section_corners(bar_corner, turned)), polygon_wire(section_corners(north_end, bar)),
+        polygon_wire(section_corners(loft_start, turned)), polygon_wire(section_corners(north_end, bar)),
     ], True, True)
     stretches = [
         prism_from_polygon(section_corners(start, axes), subtract(end, start))
         for start, end, axes in ((west_end, run_corner, run), (run_corner, waist, lean), (waist, bar_corner, plumb),
-                                 (north_end, bar_end, bar))
+                                 (bar_corner, loft_start, turned), (north_end, bar_end, bar))
     ] + [loft]
     bends = [
         bend_solids(*bend) for bend in (
             (run_corner, run_direction, PLUMB, run), (run_corner, PLUMB, lean_direction, standing),
-            (waist, lean_direction, plumb_direction, lean), (bar_corner, plumb_direction, FORWARD, plumb),
+            (waist, lean_direction, plumb_direction, lean), (bar_corner, plumb_direction, forward_direction, plumb),
         )
     ]
     return stretches[0].fuse(stretches[1:] + [half for halves in bends for half in halves])
@@ -1538,8 +1545,8 @@ def stack_report():
 def arm_report():
     path = arm_path()
     half_height, half_thickness = arm_section_half_extents()
-    names = ("run's west end", "run's corner", "riser's waist", "bar's corner", "bar's north end at the case",
-             "bar's end")
+    names = ("run's west end", "run's corner", "riser's waist", "bar's corner", "loft's start",
+             "bar's north end at the case", "bar's end")
     points = ", ".join(f"{name} ({x:.2f}, {distance_in_front_of_upright(y):.2f}, {z:.2f})"
                        for name, (x, y, z) in zip(names, path))
     foot = arm_base_range()
