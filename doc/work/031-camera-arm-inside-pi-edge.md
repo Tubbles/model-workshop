@@ -13,4 +13,4 @@ The user, 2026-10-28, on work item 030's arm, which reached 17.8 mm past the Pi 
 
 ## Open
 
-- The print (camera-arm-0cad1b7): the run flat on the rail, the riser's gaps to the Pi case and the head, whether the camera wobbles when the bed moves, and a snapshot to judge the aim.
+- The print, now of 032's arm, which superseded 0cad1b7's before it was printed.

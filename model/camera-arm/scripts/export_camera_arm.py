@@ -18,14 +18,15 @@ needed"). It runs east from the rail low behind the Pi case, leans
 back and rises plumb behind where the Pi case slides to come off its
 keyholes, and turns forward into the bar, which reaches north past the
 camera case to it and carries the case behind its back. The riser's
-east face and the bar's back edge under the case lie on the Pi case's
-east edge (the user: "Pull it back in so the outer wall aligns with
-the Pi's outer wall"), which puts the camera as far east as that
-allows (the user: "closer to the outer eastward edge of the pi"). Its
-run is the foot, so the T-rails under it are as long as the run is
-deep (the user: "make it extend to the outer bound of the arm
-projected down, no more"). The camera looks from the front and to the
-right at one fixed angle, at a point 5 cm in front of the bed's center.
+east face and the bar's bottom back edge at the case's north end lie
+on the Pi case's east edge (the user: "Pull it back in so the outer
+wall aligns with the Pi's outer wall"), which puts the camera as far
+east as that allows (the user: "closer to the outer eastward edge of
+the pi"). Its run is the foot, so the T-rails under it are as long as
+the run is deep (the user: "make it extend to the outer bound of the
+arm projected down, no more"). The camera looks from the front and to
+the right at one fixed angle, at a point 5 cm in front of the bed's
+center.
 The case is two shells around the camera board, closed by four M2
 screws through the board's holes into heat-set inserts in the back
 shell, and fixed to the arm by two M2 screws through ears on the back

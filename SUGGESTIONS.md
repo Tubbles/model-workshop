@@ -13,7 +13,7 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 
 ## Camera arm
 
-- The downward face check (`downward_faces()`, `model/camera-arm/scripts/export_camera_arm.py`) reads planar faces only, so curved overhangs go unlisted: the ceilings of the bar's two insert bores face down about 57 degrees (work item 029's review). A check over the exported mesh's triangles would cover them. Not done in 029, whose arm prints on supports. Since 031 the upper leg's twisted faces are B-splines too, its back face, about 15 x 24 mm, facing the bed in the print, unlisted.
+- The downward face check (`downward_faces()`, `model/camera-arm/scripts/export_camera_arm.py`) reads planar faces only, so curved overhangs go unlisted: the ceilings of the bar's two insert bores face down about 57 degrees (work item 029's review). A check over the exported mesh's triangles would cover them. Not done in 029, whose arm prints on supports.
 
 ## Placement solver
 
