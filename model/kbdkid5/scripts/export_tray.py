@@ -102,9 +102,12 @@ DESIGN_MOUNTING_DRILLS_MM = (
 # The sixth standoff merges with the joint block, the magnet slot at
 # 48.26 along the slant cut through it, and its bore keeps this much
 # plastic toward the slot. Over its top the block's inner face stands
-# this far from its axis, beside an insert pressed in from above.
+# this far from its axis, beside an insert pressed in from above. The
+# axis lies across the slot, which opens toward the cavity over the
+# standoff's top, so the face is probed this far south of the slot.
 DESIGN_MERGED_STANDOFF_BORE_WALL_MM = 0.83
 DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM = 2.432
+MERGED_AXIS_PROBE_PAST_SLOT_MM = 0.5
 DESIGN_MIRROR_LINE_X_MM = 66.199
 DESIGN_SLANT_ENDS_MM = ((132.398, 18.335), (113.348, 77.867))  # south, north
 DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES = 17.74
@@ -808,7 +811,9 @@ def merged_axes_from_block(tray, right):
     """How far the joint block's inner face stands from the axis of each
     standoff that reaches the block, over the standoff's top, along the
     slant's normal: open there, the standoff ending at the frame's tubes'
-    mouth and the block standing whole to its top."""
+    mouth and the block standing whole to its top. The face is planar,
+    so it is probed just south of a magnet slot the axis lies across,
+    which opens toward the cavity over the standoff's top."""
     block_inner_face = DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_JOINT_BLOCK_THICKNESS_MM
     _south, _direction, normal = design_slant_frame(right)
     over_top = (DESIGN_STANDOFF_TOP_Z_MM + DESIGN_LEDGE_TOP_Z_MM) / 2.0
@@ -817,7 +822,12 @@ def merged_axes_from_block(tray, right):
         along, outward = design_slant_coordinates(drill)
         if outward + DESIGN_STANDOFF_DIAMETER_MM / 2.0 <= block_inner_face:
             continue
-        _low, high = run_through(tray, slant_place(right, along, outward, over_top),
+        probe_along = along
+        for slot_along in DESIGN_MAGNET_ALONGS_MM:
+            slot_south = slot_along - DESIGN_MAGNET_SLOT_MM[0] / 2.0
+            if slot_south <= along <= slot_along + DESIGN_MAGNET_SLOT_MM[0] / 2.0:
+                probe_along = slot_south - MERGED_AXIS_PROBE_PAST_SLOT_MM
+        _low, high = run_through(tray, slant_place(right, probe_along, outward, over_top),
                                  vector(normal), False)
         distances.append(high)
     return distances
