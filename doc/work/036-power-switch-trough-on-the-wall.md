@@ -1,6 +1,6 @@
 # 036 Power switch's knob trough on the tray's outer face
 
-Status: implemented (2026-10-29)
+Status: implemented (2026-10-29, 8c57242 and 685dd08)
 
 The user, 2026-10-29: "could you move in the power switch so it doesn't stick out so much? I want the middle "trough" of the outside of the switch lever to align with the outside of the wall of the tray". Shown an overlay of the switch 2.04 further in (`tmp/power_switch/overlay.py`, untracked): "The power switch overlay looks good".
 

@@ -1,6 +1,6 @@
 # 035 No NC pad hole in the frame
 
-Status: implemented (2026-10-29)
+Status: implemented (2026-10-29, f13fcf5)
 
 The user, 2026-10-29: "let's also remove the redundant switch hole: there is a hole at NE of each switch footprint that isn't used for anything".
 
