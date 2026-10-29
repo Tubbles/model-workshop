@@ -158,6 +158,7 @@ The MFP 120-R's figures, read again on 2026-10-21 from the catalogue page render
 - Confirmed (Electrokit's page): SPDT, "Rastermått: 3.2mm", so 3 leads.
 - Derived: straightened, a lead reaches at most 8.25 behind the body, the bent run's middle 1.25 behind it plus the 2.8 down to the body's bottom and the 4.2 below it, the bend taken sharp.
 - Unconfirmed: where the MFP 120-R's window and three leads sit along the body. The drawing shows the MFP 140-R's five leads, centered on its body, and its window about 0.25 off the body's middle as drawn, within the drawing's accuracy. Both are taken centered.
+- Unconfirmed (read 2026-10-29 off the MFP 140 drawing at 1200 dpi, the knob's 3.4 as the scale, `work/research/downloads/electrokit-41011898-knitter-mfp120/datasheet.pdf`): the knob's tip has a V across its width. Its sides end 0.88 short of the tip, its peaks lie 0.86 either side of the knob's middle, and the trough's bottom lies 0.76 short of the tip.
 - Not published: tolerances, the slide force, the leads' bend radius.
 
 Keyboard builds: a nice!nano holder for the Dactyl Manuform names Adafruit's SPDT slide switch (product 805) for power (https://github.com/nathanielks/nice-nano-holder), and a hand-wired wireless Skeletyl glues an unnamed SPDT slide switch to its case (https://elescia.wordpress.com/2022/02/27/handwired-wireless-skeletyl/7/). The PCB kits use the MSK12C02 (above), which is SMD.
@@ -417,7 +418,7 @@ For trying a pointer on the keyboard (TODO.md).
 - Heights of the nRF52840 (about 0.85 from distributors), LEDs, inductors and crystals; that the antenna is a PCB trace at the far end.
 - That plastic over the antenna end detunes it only a little.
 - SS-12D00 dimensions from makers other than SOFNG (retailers say 8 x 4 x 3.8, 2.54 pitch).
-- The MFP 120-R's figures: from an untoleranced raster drawing of the MFP 140-R, its window's and leads' places taken centered, its slide force not published (section 2).
+- The MFP 120-R's figures: from an untoleranced raster drawing of the MFP 140-R, its window's and leads' places taken centered, its knob's tip profile read off it, its slide force not published (section 2).
 - The FSM2JRT's figures: from Tyco's 2008 catalogue drawing, not TE's current customer drawing, its leads' length as sold and its base's underside not known (section 3).
 - Marketplace "3 x 6 mm" tactile switch dimensions; the PTS645's travel.
 - Magnet-to-magnet forces: computed, not vendor data; derated to supermagnete's to-steel chart. K&J's magnet-to-magnet charts could not be read.

@@ -31,7 +31,9 @@ screw clamp (its block and foot, the insert bore, and its tab,
 tray_shape.py's, seated on the block, overlapping nothing of the
 tray), the pocket and the west and east walls with their raised
 pieces, the seat with its channels and the socket strips' pockets, the pry slot
-and recess, the knob slot and the cradle, the reset pin hole and the
+and recess, the knob slot, the power switch's stop (with how far the
+knob's peaks and trough stand from the outer face as built, as
+modelled and as printed) and the cradle, the reset pin hole and the
 back wall, and that the PCB connector's zone, layout.py's wire rooms
 and the nice!nano's socket strips with the rooms over them hold no
 plastic as printed.
@@ -198,7 +200,7 @@ STANDOFF_CUTTER_PAST_TOP_MM = 1.0
 # cavity on its left. Every inward corner (a right turn) is rounded as
 # the ledge's are, and each end meets the ledge's face square.
 DESIGN_SHELF_FACE_MM = (
-    (0.6, 63.386), (3.6, 63.386), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
+    (0.6, 61.346), (3.6, 61.346), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
     (53.074, 10.744), (79.324, 10.744), (79.324, 8.363), (98.374, 8.363), (98.374, 5.981),
     (117.424, 5.981), (117.424, 3.6), (131.798, 3.6),
 )
@@ -284,11 +286,20 @@ DESIGN_PRY_SLOT_WIDTH_MM = 5.0
 DESIGN_PRY_RECESS_UNDER_BOARD_MM = 2.0
 DESIGN_PRY_RECESS_FLOOR_UNDER_MM = 1.2  # the whole floor, the seat left out over it
 DESIGN_POWER_SWITCH_CENTER_X_MM = 9.049
-DESIGN_KNOB_SLOT_MM = (7.5, 4.1)  # along x, along z, through the ledge and the wall
+DESIGN_KNOB_SLOT_MM = (7.5, 4.1)  # along x, along z, through the stop, the ledge and the wall
 DESIGN_KNOB_SLOT_CENTER_Z_MM = 2.8
+DESIGN_POWER_SWITCH_STOP_DEPTH_MM = 2.04  # from the ledge's face, the body's north face on it
+DESIGN_POWER_SWITCH_STOP_ACROSS_MM = 13.8  # the cradle's span
+DESIGN_POWER_SWITCH_STOP_TOP_Z_MM = 5.6  # the body's top
+DESIGN_KNOB_LENGTH_MM = 5.0  # past the body's north face
+DESIGN_KNOB_TROUGH_SHORT_OF_TIP_MM = 0.76
+# The knob's tip past the outer face, as modelled and as printed (the
+# stop's face swollen south, pushing the body, the outer face north).
+DESIGN_KNOB_PEAKS_PROUD_MM = {False: 1.16, True: 0.76}
+DESIGN_KNOB_TROUGH_PROUD_MM = {False: 0.4, True: 0.0}
 DESIGN_CRADLE_OPENING_MM = 11.4
 DESIGN_CRADLE_END_MM = 1.2
-DESIGN_CRADLE_END_LENGTH_MM = 6.0  # from the ledge's face
+DESIGN_CRADLE_END_LENGTH_MM = 6.0  # from the stop's face
 DESIGN_CRADLE_TOP_Z_MM = 3.0
 DESIGN_RETAINER_GROOVE_MM = 1.65  # along y, from the end blocks' south ends
 DESIGN_RETAINER_SOCKET_ACROSS_MM = 12.6  # between the grooves' walls
@@ -1795,16 +1806,46 @@ def measure_nano_pry_slot(tray, right, design, figures):
     return f"pry slot:   {', '.join(texts)}"
 
 
+def knob_proud_texts(stop_face, outer_face, figures):
+    """How far the knob's peaks (its tip) and trough stand past the
+    outer face as built, the body's north face on the stop's: as
+    modelled, and as printed, the stop's face swollen south pushing the
+    body that far and the outer face swollen north."""
+    texts = []
+    for where, short_of_tip, stated in (("peaks", 0.0, DESIGN_KNOB_PEAKS_PROUD_MM),
+                                        ("trough", DESIGN_KNOB_TROUGH_SHORT_OF_TIP_MM,
+                                         DESIGN_KNOB_TROUGH_PROUD_MM)):
+        for printed in (False, True):
+            swelling = DESIGN_PRINT_SWELLING_PER_SIDE_MM if printed else 0.0
+            point = stop_face - swelling + DESIGN_KNOB_LENGTH_MM - short_of_tip
+            label = f"{where} proud of the outer face {'as printed' if printed else 'as modelled'}"
+            texts.append(figures.check(label, point - (outer_face + swelling), stated[printed], 2))
+    return texts
+
+
 def measure_power_switch(tray, right, figures):
     center = DESIGN_POWER_SWITCH_CENTER_X_MM
     inner, outer = north_wall_faces("power switch")
+    ledge_face = inner - DESIGN_LEDGE_WIDTH_MM
     in_slot = (center, (inner + outer) / 2.0, DESIGN_KNOB_SLOT_CENTER_Z_MM)
     across = run_span(tray, right, in_slot, "x", False)
     up = run_span(tray, right, in_slot, "z", False)
     through = run_span(tray, right, in_slot, "y", False)
-    if through[0] > inner - DESIGN_LEDGE_WIDTH_MM or through[1] < outer:
-        figures.problems.append("the knob slot does not pass through the ledge and the wall")
-    body_y = inner - 2.0
+    # Beside the slot the stop, the ledge and the wall are one run of
+    # plastic, from the stop's face to the outer face.
+    beside_slot = (across[0] - 0.5, (ledge_face + inner) / 2.0, DESIGN_KNOB_SLOT_CENTER_Z_MM)
+    stop_face, outer_face = run_span(tray, right, beside_slot, "y", True)
+    if through[0] > stop_face or through[1] < outer:
+        figures.problems.append("the knob slot does not pass through the stop, the ledge and the "
+                                "wall")
+    in_stop = (center, (stop_face + ledge_face) / 2.0, DESIGN_KNOB_SLOT_CENTER_Z_MM)
+    stop_opening_across = run_span(tray, right, in_stop, "x", False)
+    stop_opening_up = run_span(tray, right, in_stop, "z", False)
+    over_opening = (DESIGN_KNOB_SLOT_CENTER_Z_MM + DESIGN_KNOB_SLOT_MM[1] / 2.0
+                    + DESIGN_POWER_SWITCH_STOP_TOP_Z_MM) / 2.0
+    stop_across = run_span(tray, right, (center, in_stop[1], over_opening), "x", True)
+    stop_top = run_span(tray, right, (beside_slot[0], in_stop[1], 1.5), "z", True)[1]
+    body_y = stop_face - 2.0
     opening = run_span(tray, right, (center, body_y, 1.5), "x", False)
     ends = [
         run_span(tray, right, (opening[0] - 0.1, body_y, 1.5), "x", True),
@@ -1823,11 +1864,22 @@ def measure_power_switch(tray, right, figures):
         figures.check("off x", span_middle(across) - center, 0.0, 2),
         figures.check("middle z", span_middle(up), DESIGN_KNOB_SLOT_CENTER_Z_MM, 2),
     ]
+    stop_texts = [
+        figures.check("from the ledge's face", ledge_face - stop_face,
+                      DESIGN_POWER_SWITCH_STOP_DEPTH_MM, 2),
+        figures.check("across", span_length(stop_across), DESIGN_POWER_SWITCH_STOP_ACROSS_MM, 1),
+        figures.check("off x", span_middle(stop_across) - center, 0.0, 2),
+        figures.check("top z", stop_top, DESIGN_POWER_SWITCH_STOP_TOP_Z_MM, 1),
+        figures.check("the slot through it wide", span_length(stop_opening_across),
+                      DESIGN_KNOB_SLOT_MM[0], 1),
+        figures.check("tall", span_length(stop_opening_up), DESIGN_KNOB_SLOT_MM[1], 1),
+        figures.check("middle z", span_middle(stop_opening_up), DESIGN_KNOB_SLOT_CENTER_Z_MM, 2),
+    ]
     cradle_texts = [
         figures.check("opening", span_length(opening), DESIGN_CRADLE_OPENING_MM, 1),
         figures.check("off x", span_middle(opening) - center, 0.0, 2),
         figures.check("ends", min(span_length(end) for end in ends), DESIGN_CRADLE_END_MM, 1),
-        figures.check("ends from the ledge's face", inner - DESIGN_LEDGE_WIDTH_MM - end_south,
+        figures.check("ends from the stop's face", stop_face - end_south,
                       DESIGN_CRADLE_END_LENGTH_MM, 1),
         figures.check("top z", top, DESIGN_CRADLE_TOP_Z_MM, 1),
         figures.check("retainer's groove", span_length(groove), DESIGN_RETAINER_GROOVE_MM, 2),
@@ -1837,7 +1889,9 @@ def measure_power_switch(tray, right, figures):
         figures.check("off x", span_middle(socket) - center, 0.0, 2),
         figures.check("lip", span_length(lip), DESIGN_RETAINER_LIP_MM, 1),
     ]
-    return [f"knob slot:  {', '.join(slot_texts)}", f"cradle:     {', '.join(cradle_texts)}"]
+    knob_texts = knob_proud_texts(stop_face, outer_face, figures)
+    return [f"knob slot:  {', '.join(slot_texts)}", f"stop:       {', '.join(stop_texts)}",
+            f"knob:       {', '.join(knob_texts)}", f"cradle:     {', '.join(cradle_texts)}"]
 
 
 def measure_reset_button(tray, right, figures):

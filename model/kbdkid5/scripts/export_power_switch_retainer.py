@@ -33,7 +33,7 @@ from tray_shape import UP, build_power_switch_retainer
 # DESIGN.md's figures, transcribed independently of layout.py, each
 # compared within half its last digit.
 DESIGN_RETAINER_WIDTH_MM = 11.7  # along x
-DESIGN_RETAINER_HEIGHT_MM = 7.2  # along z as fitted
+DESIGN_RETAINER_HEIGHT_MM = 6.8  # along z as fitted
 DESIGN_RETAINER_THICKNESS_MM = 1.2  # along y as fitted
 DESIGN_RETAINER_OPENING_MM = (8.1, 3.55)  # across, up from the lower edge
 

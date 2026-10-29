@@ -605,6 +605,23 @@ def plate_layers():
     return (("top", (split_z, PLATE_TOP_Z_MM)), ("lower", (PCB_TOP_Z_MM, split_z)))
 
 
+# Printed fits. A print swells PRINT_SWELLING_PER_SIDE_MM per side (the
+# PCB mock's pull_in), so a hole or slot comes out that much smaller per
+# side than modelled. Each fit is modelled as the part's nominal size
+# plus the swelling on both sides plus the fit's clearance, so that it
+# prints as the nominal size plus the clearance. A 45 degree face swells
+# as much along its normal, which moves it PRINT_SWELLING_AT_45_DEGREES_MM
+# along x, y or z.
+PRINT_SWELLING_PER_SIDE_MM = 0.2
+PRINT_SWELLING_AT_45_DEGREES_MM = PRINT_SWELLING_PER_SIDE_MM * math.sqrt(2.0)
+SNUG_FIT_MM = 0.0  # holds a part pressed in by hand
+SLIP_FIT_MM = 0.1  # lets a part slide in, or leaves room for glue
+
+
+def printed_fit(nominal, fit):
+    return nominal + 2.0 * PRINT_SWELLING_PER_SIDE_MM + fit
+
+
 # The parts in the tray (DESIGN.md, "Parts in the tray"), as boxes:
 # the bodies DESIGN.md gives, then the leads from the parts'
 # drawings, each a piece of its part. The mounts that hold them and the room their wires need
@@ -614,7 +631,7 @@ def plate_layers():
 # it, ledge_cutaways()), THROUGH_WALL inside the tray's outer face (it
 # passes a window in the wall), PROUD nowhere (it stands out past the
 # wall by design, through an opening of its own in the wall and, for
-# the power switch's knob, the ledge in front of it).
+# the power switch's knob, the stop and the ledge in front of it).
 CAVITY = "cavity"
 THROUGH_WALL = "through the wall"
 PROUD = "proud of the wall"
@@ -734,14 +751,27 @@ NANO_USB_SHELL = Envelope(
 # tall, centered on column 0 at x 9.049 (moved there from column 2 with
 # the nice!nano's move, the user, 2026-10-21: "Yeah the power switch is
 # much easier to situate I think"), lies on the floor with its north
-# face on columns 0 and 1's ledge face (y 74.886), so the ledge stands
-# whole in front of it. The knob, 3.4 along x and 3.2 tall, reaches 5
-# past the north face and sweeps the window B, 6.6 along x, both
-# centered on the body as the drawing draws them. The three leads, 0.8
-# along x and 0.5 thick, at 3.2 pitch around the center (the MFP 140-R's
-# pitch, taken centered for the MFP 120-R's three), leave the south face
-# at its middle height and are bent down on the part, the bent run's
-# outer face 1.5 behind the body, to 4.2 below the body's bottom.
+# face on a stop on columns 0 and 1's ledge face (y 74.886,
+# power_switch_stop_boxes()), so the ledge stands whole in front of it.
+# The knob, 3.4 along x and 3.2 tall, reaches 5 past the north face and
+# sweeps the window B, 6.6 along x, both centered on the body as the
+# drawing draws them. Its tip has a V across x: its sides end
+# POWER_SWITCH_KNOB_SIDES_SHORT_OF_TIP_MM short of the tip, its peaks
+# lie POWER_SWITCH_KNOB_PEAKS_FROM_MIDDLE_MM either side of its middle,
+# and the trough's bottom lies POWER_SWITCH_KNOB_TROUGH_SHORT_OF_TIP_MM
+# short of the tip (read off the MFP 140 drawing with the knob's 3.4 as
+# the scale, doc/components.md). The body lies as far south of the
+# ledge's face as puts the trough on the tray's outer face as printed
+# (the user, 2026-10-29: "I want the middle "trough" of the outside of
+# the switch lever to align with the outside of the wall of the tray"):
+# the stop's face swells PRINT_SWELLING_PER_SIDE_MM south, pushing the
+# snug body that far south, and the outer face as much north, so as
+# modelled the trough stands twice the swelling proud. The three
+# leads, 0.8 along x and 0.5 thick, at 3.2 pitch around the center (the
+# MFP 140-R's pitch, taken centered for the MFP 120-R's three), leave
+# the south face at its middle height and are bent down on the part, the
+# bent run's outer face 1.5 behind the body, to 4.2 below the body's
+# bottom.
 # Straightened by hand (README.md) they point south, at most
 # POWER_SWITCH_LEAD_LENGTH_MM behind the body: the bent run's middle
 # 1.25 behind it plus the 2.8 and the 4.2 it runs down, the bend taken
@@ -758,7 +788,13 @@ POWER_SWITCH_KNOB_WIDTH_MM = 3.4  # along x
 POWER_SWITCH_KNOB_HEIGHT_MM = 3.2  # along z
 POWER_SWITCH_KNOB_LENGTH_MM = 5.0  # past the body's north face
 POWER_SWITCH_KNOB_WINDOW_MM = 6.6  # B, along x: the knob's sweep
-POWER_SWITCH_NORTH_FACE_Y_MM = ledge_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM)
+POWER_SWITCH_KNOB_SIDES_SHORT_OF_TIP_MM = 0.88
+POWER_SWITCH_KNOB_PEAKS_FROM_MIDDLE_MM = 0.86  # along x
+POWER_SWITCH_KNOB_TROUGH_SHORT_OF_TIP_MM = 0.76
+POWER_SWITCH_NORTH_FACE_Y_MM = (  # 72.846, 2.04 south of the ledge's face
+    outer_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM) + 2.0 * PRINT_SWELLING_PER_SIDE_MM
+    - (POWER_SWITCH_KNOB_LENGTH_MM - POWER_SWITCH_KNOB_TROUGH_SHORT_OF_TIP_MM)
+)
 POWER_SWITCH_BODY = Envelope(
     "power switch",
     "body",
@@ -1533,23 +1569,6 @@ JOINT_BLOCK_TOP_Z_MM = PCB_UNDERSIDE_Z_MM
 # The joint face's bottom edge is chamfered, so elephant foot (the first
 # layers squashed out past the face) cannot keep the faces apart.
 JOINT_FACE_BOTTOM_CHAMFER_MM = 0.4
-
-# Printed fits. A print swells PRINT_SWELLING_PER_SIDE_MM per side (the
-# PCB mock's pull_in), so a hole or slot comes out that much smaller per
-# side than modelled. Each fit is modelled as the part's nominal size
-# plus the swelling on both sides plus the fit's clearance, so that it
-# prints as the nominal size plus the clearance. A 45 degree face swells
-# as much along its normal, which moves it PRINT_SWELLING_AT_45_DEGREES_MM
-# along x, y or z.
-PRINT_SWELLING_PER_SIDE_MM = 0.2
-PRINT_SWELLING_AT_45_DEGREES_MM = PRINT_SWELLING_PER_SIDE_MM * math.sqrt(2.0)
-SNUG_FIT_MM = 0.0  # holds a part pressed in by hand
-SLIP_FIT_MM = 0.1  # lets a part slide in, or leaves room for glue
-
-
-def printed_fit(nominal, fit):
-    return nominal + 2.0 * PRINT_SWELLING_PER_SIDE_MM + fit
-
 
 # An up-facing bottom that a part must fit over (a notch's, a slot's, the
 # pry recess's) is counted this much higher as printed, as the fits above
@@ -3071,10 +3090,16 @@ def nano_pry_recess_box(fits=DEFAULT_MOUNT_FITS):
 
 
 # The power switch: its knob's slot through the ledge and the north
-# wall, and the cradle on the floor, two end blocks that hold the body
-# snug along its travel against the slide force (not published for the
-# MFP 120-R), the ledge's face its north stop, and behind the body the
-# socket of the retainer that takes a push on the knob's tip (below).
+# wall, the stop on the ledge's face that is the body's north stop, and
+# the cradle on the floor, two end blocks that hold the body snug along
+# its travel against the slide force (not published for the MFP 120-R),
+# and behind the body the socket of the retainer that takes a push on
+# the knob's tip (below). The stop fills the ledge's face over the
+# cradle's span from the floor to the body's top and leaves the slot's
+# section open through it, so the knob passes it as it passes the slot:
+# its sides, the sill under the opening and the bar over it, which
+# bridges the slot's width as the slot's top does in the ledge, so the
+# stop prints without support.
 # The slot is closed, so the knob goes in first, the body slid north
 # along the floor over the knob's length, and nothing fixed may stand
 # behind the body in its way (check_layout.py checks that path): the
@@ -3098,7 +3123,7 @@ def power_switch_knob_slot_box():
         centered_range(
             POWER_SWITCH_CENTER_X_MM, printed_fit(knob.x_range[1] - knob.x_range[0], fit)
         ),
-        (POWER_SWITCH_NORTH_FACE_Y_MM, outer_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM)),
+        (ledge_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM), outer_face_y(POWER_SWITCH_NORTH_EDGE_Y_MM)),
         centered_range(
             POWER_SWITCH_KNOB_Z_MM, printed_fit(knob.z_range[1] - knob.z_range[0], fit)
         ),
@@ -3110,9 +3135,28 @@ def power_switch_cradle_half_inside():
     return printed_fit(POWER_SWITCH_BODY_X_MM, SNUG_FIT_MM) / 2.0
 
 
+def power_switch_stop_boxes():
+    """The stop from the body's north face to the ledge's face, over the
+    cradle's span from the floor to the body's top: its sides beside the
+    knob's slot, the sill under it and the bar over it."""
+    center = POWER_SWITCH_CENTER_X_MM
+    half_span = power_switch_cradle_half_inside() + POWER_SWITCH_CRADLE_END_MM
+    slot = power_switch_knob_slot_box()
+    y_range = (POWER_SWITCH_NORTH_FACE_Y_MM, slot.y_range[0])
+    top = POWER_SWITCH_BODY_Z_MM
+    return (
+        MountBox("stop's west side", "power switch", (center - half_span, slot.x_range[0]),
+                 y_range, (0.0, top)),
+        MountBox("stop's east side", "power switch", (slot.x_range[1], center + half_span),
+                 y_range, (0.0, top)),
+        MountBox("stop's sill", "power switch", slot.x_range, y_range, (0.0, slot.z_range[0])),
+        MountBox("stop's bar", "power switch", slot.x_range, y_range, (slot.z_range[1], top)),
+    )
+
+
 def power_switch_cradle_boxes():
-    """The cradle's two end blocks, from the ledge's face over the
-    body's depth, and behind them the retainer's socket: a groove in each
+    """The cradle's two end blocks, from the stop over the body's
+    depth, and behind them the retainer's socket: a groove in each
     block's continuation south, open at the top and toward the body,
     with the lip behind it."""
     center = POWER_SWITCH_CENTER_X_MM
@@ -3143,18 +3187,20 @@ def power_switch_cradle_boxes():
 # the knob's tip, and an opening up from its lower edge over the leads.
 # Its thickness is a print's height, so it prints
 # PRINT_RISE_OF_TOP_FACES_MM thicker, a snug fit in the grooves, and its
-# edges swell like any face. It reaches up to
-# POWER_SWITCH_RETAINER_UNDER_POSTS_MM under the switches' center posts
-# and side pegs, which reach SWITCH_POSTS_BELOW_PCB_MM below the PCB
-# (DESIGN.md, Fused mock): S100's lie over it. Lifted to the PCB it
-# stays in its grooves, so the PCB keeps it in its socket.
+# edges swell like any face. Its top as printed lies
+# FRAME_TRAY_CLEARANCE_MM under the hand-wired frame's pocket walls'
+# mouth, out of the heights the walls keep that clearance in, since
+# S100's walls stand over its west end in plan, where they cap its
+# lift. The switches' center posts and side pegs, which reach
+# SWITCH_POSTS_BELOW_PCB_MM below the PCB (DESIGN.md, Fused mock),
+# S100's over it, end higher still. Lifted to the PCB it stays in its
+# grooves, so the PCB keeps it in its socket.
 POWER_SWITCH_RETAINER_THICKNESS_MM = 1.2  # along y as fitted, the print's height
 POWER_SWITCH_RETAINER_GROOVE_DEPTH_MM = 0.6  # into each end block, along x
 POWER_SWITCH_RETAINER_LIP_MM = 1.2  # along y, behind each groove
 POWER_SWITCH_RETAINER_OVER_LEADS_MM = 0.5  # the opening's top over the leads
 POWER_SWITCH_RETAINER_BESIDE_LEADS_MM = 0.25  # as printed, either side of the leads
 SWITCH_POSTS_BELOW_PCB_MM = 1.4
-POWER_SWITCH_RETAINER_UNDER_POSTS_MM = 0.5
 
 
 def power_switch_retainer_printed_thickness():
@@ -3169,7 +3215,10 @@ def power_switch_retainer_groove_y_range():
 
 
 def power_switch_retainer_printed_top_z():
-    return PCB_UNDERSIDE_Z_MM - SWITCH_POSTS_BELOW_PCB_MM - POWER_SWITCH_RETAINER_UNDER_POSTS_MM
+    """FRAME_TRAY_CLEARANCE_MM under the frame's pocket walls' mouth, the
+    socket's height under the PCB's place."""
+    walls_mouth = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_BODY_HEIGHT_MM
+    return walls_mouth - FRAME_TRAY_CLEARANCE_MM
 
 
 def power_switch_retainer_half_width():
@@ -3341,7 +3390,8 @@ def mount_bodies(fits=DEFAULT_MOUNT_FITS):
     """Every box of plastic the mounts add, in the order the tray
     builder fuses them, the nice!nano's last."""
     return (
-        power_switch_cradle_boxes()
+        power_switch_stop_boxes()
+        + power_switch_cradle_boxes()
         + reset_back_wall_boxes()
         + reset_socket_boxes()
         + nano_bodies(fits)
@@ -3773,7 +3823,7 @@ def frame_backing_tray_bodies(right=False):
     outline: the joint's dowel bosses and fills, the parking boss and its
     fill, the nice!nano's walls' raised pieces (all to the frame's
     underside), the nice!nano's clamp screw's head (to z 8.0) and the
-    power switch's retainer (to z 7.6 as printed)."""
+    power switch's retainer (to z 7.2 as printed)."""
     bodies = [(f"dowel boss at {along} along the slant", dowel_boss_polygon(along, right))
               for along in DOWEL_PIN_ALONGS_MM]
     bodies.append(("upper dowel boss's fill", upper_boss_fill_polygon(right)))

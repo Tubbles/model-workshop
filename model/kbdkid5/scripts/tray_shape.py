@@ -33,9 +33,11 @@ walls' among them. Every cut but the wall pockets is clipped to the
 cavity so it never reaches the wall, and a cut that finds nothing left
 to remove (a tab's relief inside its notch) is skipped. Then the parts' mounts
 (work item 004), layout.py's boxes in its order: the power switch's
-cradle with its retainer's socket, the reset button's back wall, side
-walls and front stop, then the nice!nano's north block with the sill
-under its opening, its screw clamp's block and foot (work items
+stop on the ledge's face, its sides, sill and bar around the knob
+slot's section, and its cradle with the retainer's socket, the reset
+button's back wall, side walls and front stop, then the nice!nano's
+north block with the sill under its opening, its screw clamp's block
+and foot (work items
 009 and 010), its west and east walls, cut back over the board's top
 for the socket strips, with their raised pieces up to the PCB's
 underside, and the seat the board lies on, which leaves the pry
@@ -1446,9 +1448,10 @@ def cut_usb_window(tray, fits):
 
 def cut_knob_slot(tray):
     """The power switch knob's slot through the ledge and the north wall,
-    its cutter run on into the open cavity where the switch's body lies
-    and out past the outer face, so it removes the slot through the ledge
-    and the wall alone."""
+    its cutter run on into the stop's opening in front of the ledge,
+    which the stop leaves open over the slot's section, and out past the
+    outer face, so it removes the slot through the ledge and the wall
+    alone."""
     box = layout.power_switch_knob_slot_box()
     inner, outer = box.y_range
     cutter_box = layout.MountBox(

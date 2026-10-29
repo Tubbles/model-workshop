@@ -147,7 +147,11 @@ DESIGN_NANO_SIZE_MM = (18.20, 33.20)  # along x, along y
 DESIGN_NANO_FROM_STEP_LEDGE_FACE_MM = 0.3
 DESIGN_NANO_EAST_OF_COLUMN_2_MM = 0.475
 DESIGN_NANO_USB_MOUTH_BEHIND_OUTER_FACE_MM = 0.5
-DESIGN_POWER_SWITCH_KNOB_PROUD_MM = {False: 3.2, True: 2.8}  # as modelled, as printed
+DESIGN_POWER_SWITCH_BEHIND_LEDGE_FACE_MM = 2.04  # the body's north face, on the stop
+# The knob's tip past the tray's outer face, as modelled and as printed:
+# its peaks and the trough between them.
+DESIGN_POWER_SWITCH_PEAKS_PROUD_MM = {False: 1.16, True: 0.76}
+DESIGN_POWER_SWITCH_TROUGH_PROUD_MM = {False: 0.4, True: 0.0}
 DESIGN_PCB_CONNECTOR_CLEAR_ZONE_FROM_LEDGE_MM = 0.39
 DESIGN_TAB_NOTCH_KEYS = {"S100", "S101", "S102", "S103"}
 DESIGN_TAB_TIP_PAST_WEST_EDGE_MM = 0.231
@@ -292,12 +296,18 @@ DESIGN_CLAMP_TAB_UNDER_SOCKET_MM = 1.38  # the plate as printed, lifted by the p
 DESIGN_CLAMP_SOCKET_KEYS = {"S121"}  # over the tab
 DESIGN_KNOB_IN_SLOT_PRINTED_MM = 0.25  # per side
 # The power switch's retainer as printed and fitted: under the switches'
-# center posts and side pegs where it lies under them, still in its
-# socket lifted to the PCB, from the sockets in plan on both halves, and
-# its opening from the leads, beside them and over them.
-DESIGN_RETAINER_UNDER_POSTS_MM = 0.5
-DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM = 1.1
-DESIGN_RETAINER_FROM_SOCKETS_MM = 2.649  # S100's
+# center posts and side pegs where it lies under them, under the frame's
+# pocket walls that reach over it in plan and how far they reach, still
+# in its socket lifted to those walls and to the PCB, from the sockets
+# in plan on both halves, and its opening from the leads, beside them
+# and over them.
+DESIGN_RETAINER_UNDER_POSTS_MM = 0.9
+DESIGN_RETAINER_UNDER_WALLS_KEYS = {"S100"}
+DESIGN_RETAINER_UNDER_WALLS_MM = 0.5
+DESIGN_RETAINER_WALLS_OVER_IT_MM = 0.313  # in plan, past its south face
+DESIGN_RETAINER_IN_SOCKET_AT_WALLS_MM = 2.5
+DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM = 0.7
+DESIGN_RETAINER_FROM_SOCKETS_MM = 0.609  # S100's
 DESIGN_RETAINER_BESIDE_LEADS_PRINTED_MM = 0.25
 DESIGN_RETAINER_OVER_LEADS_MM = 0.5
 # The reliefs under the switches' center posts and side pegs (work item
@@ -411,7 +421,7 @@ DESIGN_FRAME_TUBES_INTO_TAB_WIRE_ROOMS_MM = {
 # thumb's ledge, and the north edges' from their start at the ledge's
 # face to column 3's north ledge, as modelled, sharp-cornered.
 DESIGN_SHELF_FACE_MM = (
-    (0.6, 63.386), (3.6, 63.386), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
+    (0.6, 61.346), (3.6, 61.346), (3.6, 3.6), (34.024, 3.6), (34.024, 8.363), (53.074, 8.363),
     (53.074, 10.744), (79.324, 10.744), (79.324, 8.363), (98.374, 8.363), (98.374, 5.981),
     (117.424, 5.981), (117.424, 3.6), (131.798, 3.6),
 )
@@ -425,7 +435,7 @@ DESIGN_SHELF_UNDER_BACKING_MM = 2.5  # in from the backing's edge
 # Between the shelf's top and the backing's underside as printed, the
 # shelf's top rising as a top face or as an up-facing bottom.
 DESIGN_SHELF_UNDER_BACKING_PRINTED_MM = {"a top face": 0.333, "an up-facing bottom": 0.183}
-DESIGN_SHELF_OUTER_EDGE_START_Y_MM = 63.386  # 0.5 south of the power switch's body going in
+DESIGN_SHELF_OUTER_EDGE_START_Y_MM = 61.346  # 0.5 south of the power switch's body going in
 # 0.5 west of the right half's upper dowel boss's inner corner, on the
 # 0.001 step past it
 DESIGN_SHELF_NORTH_EDGE_START_X_MM = 104.468
@@ -1715,31 +1725,34 @@ def power_switch_figures():
             layout.POWER_SWITCH_CENTER_X_MM - layout.COLUMN_X_MM[0], 0.0, 3,
         ),
         require_figure(
-            "power switch's north face past the ledge's face",
-            layout.POWER_SWITCH_BODY.y_range[1] - layout.ledge_face_y(north_edge_y),
-            0.0,
-            3,
+            "power switch's north face behind the ledge's face",
+            layout.ledge_face_y(north_edge_y) - layout.POWER_SWITCH_BODY.y_range[1],
+            DESIGN_POWER_SWITCH_BEHIND_LEDGE_FACE_MM,
+            2,
         ),
+    ] + [
         require_figure(
-            "knob proud of the outer face",
-            layout.POWER_SWITCH_KNOB.y_range[1] - layout.outer_face_y(north_edge_y),
-            DESIGN_POWER_SWITCH_KNOB_PROUD_MM[False],
-            1,
-        ),
-        require_figure(
-            "as printed", knob_proud_as_printed(), DESIGN_POWER_SWITCH_KNOB_PROUD_MM[True], 1
-        ),
+            f"knob's {where} proud of the outer face{' as printed' if printed else ''}",
+            knob_proud(short_of_tip, printed), stated[printed], 2,
+        )
+        for where, short_of_tip, stated in (
+            ("peaks", 0.0, DESIGN_POWER_SWITCH_PEAKS_PROUD_MM),
+            ("trough", layout.POWER_SWITCH_KNOB_TROUGH_SHORT_OF_TIP_MM,
+             DESIGN_POWER_SWITCH_TROUGH_PROUD_MM),
+        )
+        for printed in (False, True)
     ]
 
 
-def knob_proud_as_printed():
-    """The knob's tip past the outer face as printed: the swollen ledge
-    face pushes the snug body south, and the outer face swells north."""
+def knob_proud(short_of_tip, printed):
+    """How far the knob's tip profile, short_of_tip behind the tip,
+    stands past the outer face, as modelled or as printed: as printed
+    the stop's face swells south and pushes the snug body that far, and
+    the outer face swells north."""
     north_edge_y = layout.POWER_SWITCH_NORTH_EDGE_Y_MM
-    swelling = layout.PRINT_SWELLING_PER_SIDE_MM
-    knob_past_body = layout.POWER_SWITCH_KNOB.y_range[1] - layout.POWER_SWITCH_BODY.y_range[1]
-    tip = layout.ledge_face_y(north_edge_y) - swelling + knob_past_body
-    return tip - (layout.outer_face_y(north_edge_y) + swelling)
+    swelling = layout.PRINT_SWELLING_PER_SIDE_MM if printed else 0.0
+    point = layout.POWER_SWITCH_KNOB.y_range[1] - short_of_tip - swelling
+    return point - (layout.outer_face_y(north_edge_y) + swelling)
 
 
 def check_part_figures():
@@ -3116,7 +3129,7 @@ def shell_in_channel_margins(fits=layout.DEFAULT_MOUNT_FITS):
 
 def knob_in_slot_margin():
     """The least, as printed, between the knob's swept box and its
-    slot."""
+    slot, whose section the stop leaves open through it too."""
     knob = layout.POWER_SWITCH_KNOB
     slot = layout.power_switch_knob_slot_box()
     swelling = layout.PRINT_SWELLING_PER_SIDE_MM
@@ -3325,12 +3338,26 @@ def retainer_from_sockets(envelope, right):
     return tightest
 
 
+def retainer_under_walls(envelope, right):
+    """(keys, how far their outer face reaches over the retainer in plan
+    at the most) of the frame's pocket walls that stand over it."""
+    polygon = box_polygon(envelope)
+    reach = {key: -outline_clearance(layout.frame_wall_outer_polygon(key, right), polygon)
+             for key in layout.KEY_CENTERS_MM}
+    over = {key: depth for key, depth in reach.items() if depth > TOLERANCE_MM}
+    return set(over), max(over.values(), default=0.0)
+
+
 def check_power_switch_retainer(right=False):
-    """The retainer under the posts and pegs over it, kept in its
-    socket by the PCB, clear of the sockets in plan, its opening clear of
+    """The retainer under the posts and pegs over it, under the frame's
+    pocket walls over it, which cap its lift, kept in its socket by them
+    and by the PCB, clear of the sockets in plan, its opening clear of
     the leads as printed and the leads' shortest cut behind it."""
     envelope = layout.power_switch_retainer_envelope()
     under, keys = retainer_under_posts(envelope)
+    wall_keys, walls_over = retainer_under_walls(envelope, right)
+    under_walls = frame_walls_z_range()[0] - envelope.z_range[1]
+    in_socket_at_walls = layout.POWER_SWITCH_CRADLE_TOP_Z_MM - under_walls
     in_socket = layout.POWER_SWITCH_CRADLE_TOP_Z_MM - (layout.PCB_UNDERSIDE_Z_MM
                                                        - envelope.z_range[1])
     sockets = retainer_from_sockets(envelope, right)
@@ -3342,6 +3369,12 @@ def check_power_switch_retainer(right=False):
     figures = [
         require_figure("under the posts and pegs of " + ", ".join(keys), under,
                        DESIGN_RETAINER_UNDER_POSTS_MM, 1),
+        require_figure("under the pocket walls of " + ", ".join(sorted(wall_keys)), under_walls,
+                       DESIGN_RETAINER_UNDER_WALLS_MM, 1),
+        require_figure("reaching over it in plan", walls_over, DESIGN_RETAINER_WALLS_OVER_IT_MM,
+                       3),
+        require_figure("in its socket lifted to them", in_socket_at_walls,
+                       DESIGN_RETAINER_IN_SOCKET_AT_WALLS_MM, 1),
         require_figure("in its socket lifted to the PCB", in_socket,
                        DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM, 1),
         require_figure("from the sockets in plan", sockets.value, DESIGN_RETAINER_FROM_SOCKETS_MM,
@@ -3352,6 +3385,9 @@ def check_power_switch_retainer(right=False):
                        1),
     ]
     problems = failed(figures)
+    if wall_keys != DESIGN_RETAINER_UNDER_WALLS_KEYS:
+        problems.append(f"the pocket walls over the retainer are {sorted(wall_keys)}, DESIGN.md's "
+                        f"{sorted(DESIGN_RETAINER_UNDER_WALLS_KEYS)}")
     if sockets.value < DESIGN_MOUNT_FROM_OTHER_PARTS_MM - TOLERANCE_MM:
         problems.append(f"the retainer comes {sockets.value:.3f} from {sockets.where}")
     if past < TOLERANCE_MM:
