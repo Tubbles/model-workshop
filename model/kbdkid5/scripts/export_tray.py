@@ -210,6 +210,7 @@ DESIGN_SHELF_NORTH_FACE_MM = (
 )
 DESIGN_SHELF_TOP_Z_MM = 6.0
 DESIGN_SHELF_REACH_MM = 3.0  # in from the ledge's inner face
+REACH_PROBE_PAST_NOTCH_MM = 0.5  # the reach is probed this far clear of a notch
 DESIGN_SHELF_ROUND_MM = 2.13  # the ledge's inner face's, wherever the outline steps in
 # Per half, the notches for the backing's screw heads, by kind: (count,
 # deep, long).
@@ -688,13 +689,25 @@ def notch_bottoms(faces, start, length, direction, normal):
     return found
 
 
-def shelf_reach(tray, right, start, length, direction, normal):
-    """How far the shelf reaches in from the ledge's face across the
-    middle of a straight run: from 0.5 behind its face, the plastic's
-    end toward the cavity at half the shelf's height and the open
-    stretch's back to the ledge's face just over its top."""
-    middle = (start[0] + direction[0] * length / 2.0 - normal[0] * 0.5,
-              start[1] + direction[1] * length / 2.0 - normal[1] * 0.5)
+def reach_probe_along(length, notches):
+    """Where along a run its reach is probed: the middle, or, where a
+    notch for a screw head takes the middle, the nearer of the notch's
+    ends moved REACH_PROBE_PAST_NOTCH_MM out of it."""
+    along = length / 2.0
+    for _depth, (low, high) in notches:
+        if low - REACH_PROBE_PAST_NOTCH_MM < along < high + REACH_PROBE_PAST_NOTCH_MM:
+            along = (low - REACH_PROBE_PAST_NOTCH_MM if along - low < high - along
+                     else high + REACH_PROBE_PAST_NOTCH_MM)
+    return along
+
+
+def shelf_reach(tray, right, start, along, direction, normal):
+    """How far the shelf reaches in from the ledge's face at along on a
+    straight run: from 0.5 behind its face, the plastic's end toward the
+    cavity at half the shelf's height and the open stretch's back to the
+    ledge's face just over its top."""
+    middle = (start[0] + direction[0] * along - normal[0] * 0.5,
+              start[1] + direction[1] * along - normal[1] * 0.5)
     toward_cavity = vector(half_vector(normal, right))
     _low, face = run_through(tray, vector(half_point(middle, right), DESIGN_SHELF_TOP_Z_MM / 2.0),
                              toward_cavity, True)
@@ -736,7 +749,8 @@ def measure_shelves(tray, right, figures):
             f"in {len(pieces)} {'piece' if len(pieces) == 1 else 'pieces'}",
         ]
         if straight > 2.0 * DESIGN_SHELF_ROUND_MM:
-            reach = shelf_reach(tray, right, start, length, direction, normal)
+            reach = shelf_reach(tray, right, start, reach_probe_along(length, run_notches),
+                                direction, normal)
             texts.append(figures.check("reach", reach, DESIGN_SHELF_REACH_MM, 2))
         notches.extend(run_notches)
         lines.append(f"shelf:      from ({where[0]:.3f}, {where[1]:.3f}), {length:.3f} long as "
