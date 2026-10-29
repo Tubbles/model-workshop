@@ -366,8 +366,14 @@ DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM = 4.883
 DESIGN_FRAME_TAB_SLOT_WIDTH_MM = 3.18
 DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # The frame's footprint holes as modelled, in layout.CHOC_FOOTPRINT_HOLES_MM's
-# order: the post, the pegs, the blades, the NC pad's.
-DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2, 1.6)
+# order but the NC pad's, which the frame leaves out (work item 035): the
+# post, the pegs, the blades.
+DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2)
+# The NC pad's hole as the frame had it when its bosses were placed. The
+# bosses still keep from its place, so that they stay where they were
+# placed: DESIGN.md (Hand-wired frame, Bosses) has what the rule would
+# free without it.
+DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM = 1.6
 # The frame's pocket walls, whole (work item 026): their outer face out
 # of the socket, their heights in the tray, the wall's pockets beside the
 # bottom row's walls, the walls' standoff flats per half as (key,
@@ -4227,6 +4233,29 @@ def frame_left_point(point, right):
     return layout.mirror_for_right_half(point) if right else point
 
 
+def frame_footprint_holes(key, right):
+    """(center in the left half's frame, diameter as modelled) of the
+    frame's holes at a key: the footprint's but the NC pad's
+    (layout.CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM), at
+    DESIGN_FRAME_HOLE_DIAMETERS_MM."""
+    centers = [center for (center, _), (local_center, _)
+               in zip(layout.footprint_holes(frame_key_center(key, right)),
+                      layout.CHOC_FOOTPRINT_HOLES_MM)
+               if local_center != layout.CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM]
+    return [(frame_left_point(center, right), diameter)
+            for center, diameter in zip(centers, DESIGN_FRAME_HOLE_DIAMETERS_MM)]
+
+
+def frame_boss_footprint_holes(key, right):
+    """(center in the left half's frame, diameter) of the holes a boss
+    keeps from at a key: the frame's (frame_footprint_holes()) and the
+    NC pad's place at DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM."""
+    nc_pad = layout.footprint_point(frame_key_center(key, right),
+                                    layout.CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM)
+    return frame_footprint_holes(key, right) + [
+        (frame_left_point(nc_pad, right), DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM)]
+
+
 def frame_local_box(key, right, x_range, y_range):
     """A footprint-local box on the half, in the left half's frame."""
     center = frame_key_center(key, right)
@@ -4262,7 +4291,8 @@ def frame_tab_pieces(key, right):
 def frame_own_obstacles(right):
     """(label, kind, shape, minimum) of the frame's features a boss keeps
     from: the walls (their outer face, not convex), the tab slots and
-    wire rooms and the footprint holes as the frame has them."""
+    wire rooms and the footprint holes as the frame has them, with the
+    NC pad's place (frame_boss_footprint_holes())."""
     obstacles = []
     for key in layout.KEY_CENTERS_MM:
         obstacles.append((f"{key}'s walls", "outline", layout.frame_wall_outer_polygon(key, right),
@@ -4272,11 +4302,10 @@ def frame_own_obstacles(right):
                          for slot in slots)
         obstacles.extend((f"{key}'s tab wire room", "polygon", room,
                           layout.FRAME_BOSS_FROM_WIRE_ROOMS_MM) for room in rooms)
-        holes = layout.footprint_holes(frame_key_center(key, right))
         obstacles.extend(
-            (f"{key}'s {diameter} hole", "circle",
-             (frame_left_point(center, right), diameter / 2.0), layout.FRAME_BOSS_FROM_FRAME_MM)
-            for (center, _), diameter in zip(holes, DESIGN_FRAME_HOLE_DIAMETERS_MM)
+            (f"{key}'s {diameter} hole", "circle", (center, diameter / 2.0),
+             layout.FRAME_BOSS_FROM_FRAME_MM)
+            for center, diameter in frame_boss_footprint_holes(key, right)
         )
     return obstacles
 
@@ -4834,10 +4863,9 @@ def frame_tube_neighbours(tube, right):
         near.extend(("tab slots", f"{key}'s tab slot", "polygon", slot) for slot in slots
                     if bounding_gap(tube, slot) < TUBE_NEAR_MM)
         rooms.extend((key, room) for room in key_rooms if bounding_gap(tube, room) < TUBE_NEAR_MM)
-        holes = layout.footprint_holes(frame_key_center(key, right))
         near.extend(("footprint holes", f"{key}'s {diameter} hole", "circle",
-                     (frame_left_point(center, right), diameter / 2.0))
-                    for (center, _), diameter in zip(holes, DESIGN_FRAME_HOLE_DIAMETERS_MM))
+                     (center, diameter / 2.0))
+                    for center, diameter in frame_footprint_holes(key, right))
     return near, rooms
 
 

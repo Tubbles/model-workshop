@@ -125,6 +125,9 @@ CHOC_FOOTPRINT_HOLES_MM = (
 
 # Of those, the holes the switch's two pins pass through.
 CHOC_FOOTPRINT_PIN_HOLE_CENTERS_MM = ((-3.75, 5.0), (-5.95, 0.0))
+# And the NC pad's, which no part of the switch reaches (doc/components.md,
+# section 9), so the hand-wired frame leaves it out (work item 035).
+CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM = (4.2, -5.22)
 
 
 def footprint_holes(key_center):

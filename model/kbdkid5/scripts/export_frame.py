@@ -141,6 +141,11 @@ def main():
         print(f"frame:      {half} half, {len(figures)} sockets at fit "
               f"{layout.FRAME_POCKET_FIT_MM}, {len(shape.boss_centers(right))} bosses, volume "
               f"{frame.Volume:.3f} mm3 (plan {expected:.3f} mm3)")
+        per_key = sorted({len(shape.key_holes(center))
+                          for center in shape.half_key_centers(right).values()})
+        print(f"holes:      {' or '.join(str(count) for count in per_key)} per key, the NC pad's "
+              f"left out (work item 035), {len(shape.frame_holes(right))} through the body with "
+              "the drills")
         cut_back = layout.frame_walls_cut_back(right)
         print(f"walls:      whole around {len(figures) - len(cut_back)} of {len(figures)} sockets, "
               f"{sum(figures.values()):.3f} mm2 in plan, the tray at least "

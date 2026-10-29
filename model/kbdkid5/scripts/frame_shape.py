@@ -6,10 +6,11 @@ The frame is printed in the PCB's place: the PCB mock's body
 (pcb_shape.py: the outline pulled in by pull_in with its rounded
 corners, the mounting drills grown by it, 1.6 thick) with every key's
 footprint holes at the switch hole strip's cell 1 (the center post's
-3.42 and the side pegs' 1.90 as modelled, the blades' 3.2, the NC pad's
-1.2 grown by pull_in), and, from socket_test_shape.py's cells, each
-socket's tab recesses in its underside (the ceiling) and its pocket
-walls at layout.FRAME_POCKET_FIT_MM below it. The walls stand whole on
+3.42 and the side pegs' 1.90 as modelled, the blades' 3.2) but the NC
+pad's, which no part of the switch reaches (work item 035), and, from
+socket_test_shape.py's cells, each socket's tab recesses in its
+underside (the ceiling) and its pocket walls at
+layout.FRAME_POCKET_FIT_MM below it. The walls stand whole on
 every pocket (work item 026: cut walls print with heavy blobbing and
 stringing) but those layout.frame_walls_cut_back() lists, which are cut
 back that clearance from a body that cannot give way (none since the
@@ -104,12 +105,14 @@ def half_key_centers(right):
 
 
 def key_holes(key_center):
-    """A key's footprint holes as (center, radius as modelled)."""
+    """A key's footprint holes as (center, radius as modelled), but the
+    NC pad's (layout.CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM)."""
     return [
         (center, cells.switch_strip_hole_radius(SWITCH_HOLE_CELL_INDEX, local_center, diameter,
                                                 PULL_IN_MM))
         for (center, diameter), (local_center, _) in zip(layout.footprint_holes(key_center),
                                                           layout.CHOC_FOOTPRINT_HOLES_MM)
+        if local_center != layout.CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM
     ]
 
 
