@@ -558,13 +558,18 @@ STANDOFF_BORE_DIAMETER_MM = 3.2
 PCB_THICKNESS_MM = 1.6
 PLATE_THICKNESS_MM = 2.2  # resting on the PCB
 RIM_ABOVE_PLATE_MM = 0.1  # as on kbdkid4
-PCB_UNDERSIDE_Z_MM = 9.5  # also the standoff and ledge tops
+PCB_UNDERSIDE_Z_MM = 9.5  # also the ledge top
 FLOOR_UNDERSIDE_Z_MM = -TRAY_FLOOR_MM  # the 1.0 rubber sole goes under it
 SOCKET_BOTTOM_Z_MM = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_REACH_MM  # 7.48
 PCB_TOP_Z_MM = PCB_UNDERSIDE_Z_MM + PCB_THICKNESS_MM  # 11.1
 PLATE_TOP_Z_MM = PCB_TOP_Z_MM + PLATE_THICKNESS_MM  # 13.3
 TRAY_RIM_Z_MM = PLATE_TOP_Z_MM + RIM_ABOVE_PLATE_MM  # 13.4
-STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM
+# The standoffs end at the mouth of the hand-wired frame's tubes, which
+# stand on them (work item 034): the tubes are as deep below the frame's
+# underside as its pocket walls, the socket body's height. So the
+# standoffs no longer seat a PCB (kbdkid5 has none, the user,
+# 2026-10-29).
+STANDOFF_HEIGHT_MM = PCB_UNDERSIDE_Z_MM - HOTSWAP_SOCKET_BODY_HEIGHT_MM  # 7.70
 
 # The switch plate's cutouts as its model cuts them (plate_shape.py's
 # PLATE_MODEL_FILE, kbdkid3's switch cell, read off the shape the file
@@ -1105,6 +1110,10 @@ RIGHT_SOCKET_STANDOFF_FLATS = ()
 # at (75.724, 62.785), so a flat would stand 1.971 from it and leave 0.371
 # around the bore: that standoff keeps its socket's flats alone, and its
 # walls stand 0.080 beyond them (DESIGN.md, Tray, Frame pocket walls).
+# Since the standoffs end at the walls' mouth (work item 034) no
+# standoff stands within the walls' heights, and the flats stay as they
+# were: the frame's tubes on the standoffs follow them
+# (check_layout.frame_tube_polygon(), frame_shape.tube_face()).
 FRAME_WALL_STANDOFF_FLATS = ()  # (standoff center, key)
 RIGHT_FRAME_WALL_STANDOFF_FLATS = (
     ((56.091, 23.460), "S122"),
@@ -1113,9 +1122,11 @@ RIGHT_FRAME_WALL_STANDOFF_FLATS = (
 # from a body of the tray that cannot give way without breaking one of
 # its minimums, as before work item 026, where the user kept the cut:
 # (key, the body's label in check_layout.frame_wall_tray_pieces() or
-# frame_wall_standoff_bands()). S140's by the standoff, above (the
-# user, 2026-10-23, over moving the standoff or thinning its flat).
-FRAME_WALLS_CUT_BACK = (("S140", "standoff at (75.724, 62.785)"),)
+# frame_wall_standoff_bands()). None: S140's on the left half were cut
+# back from the standoff at (75.724, 62.785) (the user, 2026-10-23, over
+# moving the standoff or thinning its flat) until the standoffs came
+# down to the walls' mouth (work item 034).
+FRAME_WALLS_CUT_BACK = ()
 RIGHT_FRAME_WALLS_CUT_BACK = ()
 
 
@@ -3746,7 +3757,8 @@ def frame_backing_outline():
 def frame_backing_circle_cutouts(standoff_centers):
     """(label, center, radius) of the backing's cutouts around the
     standoffs at standoff_centers (MOUNTING_DRILL_CENTERS_MM for the
-    layout's), which stand to the frame's underside."""
+    layout's), which stand up through its heights to the frame's tubes
+    (STANDOFF_HEIGHT_MM)."""
     radius = STANDOFF_DIAMETER_MM / 2.0 + FRAME_TRAY_CLEARANCE_MM
     return [(f"around the standoff at {center}", center, radius)
             for center in standoff_centers]
@@ -3824,16 +3836,60 @@ def hotswap_socket_outline_points():
     return points
 
 
-def frame_wall_outer_polygon(key, right=False):
-    """A pocket's walls' outer face before their cuts, in the left
-    half's frame: the socket's outline moved out by the pocket's gap and
-    the wall, corners extended (DESIGN.md, "Frame cells")."""
+def frame_socket_outline(key, right=False):
+    """A key's socket's outline under the frame on the given half, in
+    the left half's frame, counter-clockwise."""
     center = mirror_for_right_half(KEY_CENTERS_MM[key]) if right else KEY_CENTERS_MM[key]
     points = [footprint_point(center, point) for point in hotswap_socket_outline_points()]
     if right:
         points = [mirror_for_right_half(point) for point in points]
-    outline = counter_clockwise(points)
-    return offset_polygon(outline, frame_wall_reach())
+    return counter_clockwise(points)
+
+
+def frame_wall_outer_polygon(key, right=False):
+    """A pocket's walls' outer face before their cuts, in the left
+    half's frame: the socket's outline moved out by the pocket's gap and
+    the wall, corners extended (DESIGN.md, "Frame cells")."""
+    return offset_polygon(frame_socket_outline(key, right), frame_wall_reach())
+
+
+def frame_pocket_polygon(key, right=False):
+    """A pocket's inside, in the left half's frame: the walls' inner
+    face, the socket's outline moved out by the pocket's gap at
+    FRAME_POCKET_FIT_MM, corners extended."""
+    return offset_polygon(frame_socket_outline(key, right), half_fit_gap(0.0, FRAME_POCKET_FIT_MM))
+
+
+# The frame's tubes (work item 034): under each mounting drill a tube on
+# the frame's underside, as deep as the pocket walls, its mouth on the
+# standoff's top (STANDOFF_HEIGHT_MM), so the matrix's wires stay off
+# the screw's path. In plan it is the standoff as the tray builds it
+# there, its circle less every flat it gets (all_socket_standoff_flats()),
+# less the frame's drill. A tube whose standoff merges with the joint
+# block stops FRAME_TRAY_CLEARANCE_MM short of the block's inner face
+# (frame_tube_block_cut()), as the frame keeps from the tray, the block
+# standing to the frame's underside beside it.
+
+
+def joint_block_face_from(point):
+    """How far the joint block's inner face lies out of a point in the
+    cavity, along the slant's outward normal."""
+    normal = slant_outward_normal()
+    outward = ((point[0] - SLANT_SOUTH_END_MM[0]) * normal[0]
+               + (point[1] - SLANT_SOUTH_END_MM[1]) * normal[1])
+    return JOINT_FACE_OUTWARD_MM - JOINT_BLOCK_THICKNESS_MM - outward
+
+
+def frame_tube_block_cut(standoff_center):
+    """(the slant's outward normal, its distance from the standoff's
+    center) of the plane the frame's tube on that standoff stops at,
+    FRAME_TRAY_CLEARANCE_MM short of the joint block's inner face, in
+    the left half's frame, or None where the whole tube keeps that from
+    the block."""
+    distance = joint_block_face_from(standoff_center) - FRAME_TRAY_CLEARANCE_MM
+    if distance >= STANDOFF_DIAMETER_MM / 2.0:
+        return None
+    return slant_outward_normal(), distance
 
 
 # The shelves under the backing's edges (work items 020 and 022,

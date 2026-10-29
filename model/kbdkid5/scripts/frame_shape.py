@@ -12,18 +12,24 @@ socket's tab recesses in its underside (the ceiling) and its pocket
 walls at layout.FRAME_POCKET_FIT_MM below it. The walls stand whole on
 every pocket (work item 026: cut walls print with heavy blobbing and
 stringing) but those layout.frame_walls_cut_back() lists, which are cut
-back that clearance from their one body that cannot give way (S140's
-on the left half, from its standoff, as the user kept them). The tray
+back that clearance from a body that cannot give way (none since the
+standoffs came down to the walls' mouth, work item 034). The tray
 gives way to them instead, keeping layout.FRAME_TRAY_CLEARANCE_MM in
 plan from their outer face wherever it stands within their heights
 (layout.py's cuts for the frame's walls, held by check_layout.py's
 check_frame_walls()), and the build fails where anything of it, or of
-the parts in it, comes nearer, that one body apart. The
+the parts in it, comes nearer, those bodies apart. The
 footprint holes run on through the walls, as on the strips. Under the
 ceiling stand the bosses at layout.frame_boss_centers()
 (socket_test_shape.py's bosses: 5.8 across, ending boss_end_depth()
 below the ceiling, bored for an M2 heat-set insert), which the backing
-screws up to.
+screws up to, and under each mounting drill a tube as deep as the
+walls, which stands on the tray's standoff there (work item 034,
+layout.py's frame_tube_block_cut()): the standoff's outline with every
+flat it gets, stopped layout.FRAME_TRAY_CLEARANCE_MM short of the joint
+block where the standoff merges with it, less the drill. The tray
+keeps that clearance from the tubes too, and the build fails where it
+comes nearer.
 
 The backing: layout.frame_backing_outline(), 0.8 thick, with the
 strips' 2.8 clearance hole for an M2 screw under each boss, the
@@ -71,6 +77,13 @@ WALL_TRAY_TOLERANCE_MM = 0.001
 # A circle as a polygon around it, for the keep-out of a standoff the
 # walls are still cut back from.
 CIRCLE_SEGMENTS = 96
+# How much nearer than layout.FRAME_TRAY_CLEARANCE_MM the tray may come
+# to the tubes: a tube cut at the joint block lies exactly that
+# clearance from it.
+TUBE_TRAY_TOLERANCE_MM = 1e-6
+# How far past the clearance the tray's nearest piece to the tubes is
+# looked for, to report it.
+TUBE_NEAREST_REACH_MM = 1.0
 VOLUME_RELATIVE_TOLERANCE = cells.VOLUME_RELATIVE_TOLERANCE
 
 
@@ -113,19 +126,25 @@ def boss_centers(right):
     return [half_point(center, right) for center in layout.frame_boss_centers(right)]
 
 
-def beyond_flat_polygon(center, flat):
-    """A square beyond a standoff flat's plane that covers the rest of
-    the standoff, in the left half's frame."""
+def beyond_plane_polygon(center, toward, plane_distance):
+    """A square beyond a plane square to the unit vector toward,
+    plane_distance from a standoff's center, that covers the rest of the
+    standoff, in the left half's frame."""
     reach = layout.STANDOFF_DIAMETER_MM
-    toward = flat.toward
     along = (-toward[1], toward[0])
 
     def point(out, side):
         return (center[0] + toward[0] * out + along[0] * side,
                 center[1] + toward[1] * out + along[1] * side)
 
-    return [point(flat.plane_distance, -reach), point(flat.plane_distance, reach),
+    return [point(plane_distance, -reach), point(plane_distance, reach),
             point(reach, reach), point(reach, -reach)]
+
+
+def beyond_flat_polygon(center, flat):
+    """A square beyond a standoff flat's plane that covers the rest of
+    the standoff, in the left half's frame."""
+    return beyond_plane_polygon(center, flat.toward, flat.plane_distance)
 
 
 def flattened_standoff_face(center, flats, right):
@@ -142,16 +161,7 @@ def flattened_standoff_face(center, flats, right):
 def flattened_standoff_polygon(center, flats):
     """A standoff's band in plan with its flats, as a convex polygon
     around the circle, in the left half's frame."""
-    radius = layout.STANDOFF_DIAMETER_MM / 2.0 / math.cos(math.pi / CIRCLE_SEGMENTS)
-    polygon = tuple(
-        (center[0] + radius * math.cos(2.0 * math.pi * index / CIRCLE_SEGMENTS),
-         center[1] + radius * math.sin(2.0 * math.pi * index / CIRCLE_SEGMENTS))
-        for index in range(CIRCLE_SEGMENTS)
-    )
-    for flat in flats:
-        limit = flat.plane_distance + check_layout.dot(center, flat.toward)
-        polygon = check_layout.clip_to_half_plane(polygon, flat.toward, limit)
-    return polygon
+    return check_layout.standoff_plan_polygon(center, flats, CIRCLE_SEGMENTS)
 
 
 def cut_back_keepouts(key, right):
@@ -201,18 +211,25 @@ def wall_plan(key_center, keepouts=()):
     return ring.cut(Part.makeCompound(cutters)).Faces
 
 
+def tray_distances(faces, obstacles, within):
+    """(label, distance) of each obstacle within the given distance of
+    the faces in plan."""
+    compound = Part.makeCompound(faces)
+    return [
+        (label, distance)
+        for label, face in obstacles
+        if boxes_within(compound.BoundBox, face.BoundBox, within)
+        for distance in (compound.distToShape(face)[0],)
+        if distance < within
+    ]
+
+
 def walls_too_near_the_tray(key, faces, obstacles):
     """Where a socket's walls come nearer an obstacle than
     layout.FRAME_TRAY_CLEARANCE_MM, as messages."""
-    walls = Part.makeCompound(faces)
     minimum = layout.FRAME_TRAY_CLEARANCE_MM - WALL_TRAY_TOLERANCE_MM
-    return [
-        f"{key}'s walls and the {label}: {distance:.4f}"
-        for label, face in obstacles
-        if boxes_within(walls.BoundBox, face.BoundBox, minimum)
-        for distance in (walls.distToShape(face)[0],)
-        if distance < minimum
-    ]
+    return [f"{key}'s walls and the {label}: {distance:.4f}"
+            for label, distance in tray_distances(faces, obstacles, minimum)]
 
 
 def all_wall_plans(right):
@@ -237,6 +254,56 @@ def all_wall_plans(right):
     return plans
 
 
+# The tubes (work item 034).
+
+
+def standoff_flats(center, right):
+    """Every flat the standoff at center gets on the given half
+    (layout.all_socket_standoff_flats())."""
+    return [flat for flat in layout.all_socket_standoff_flats(right)
+            if flat.standoff_center == center]
+
+
+def tube_face(center, right):
+    """The tube on the standoff at center (in the left half's frame) in
+    plan on the given half: the standoff's band with its flats
+    (flattened_standoff_face()), stopped at layout.frame_tube_block_cut()
+    where that cuts it, less the frame's drill (frame_holes())."""
+    face = flattened_standoff_face(center, standoff_flats(center, right), right)
+    cut = layout.frame_tube_block_cut(center)
+    if cut is not None:
+        beyond = cells.plan_face(half_polygon(beyond_plane_polygon(center, *cut), right))
+        face = face.cut(beyond).Faces[0]
+    drill = cells.circle_face(half_point(center, right),
+                              layout.MOUNTING_DRILL_DIAMETER_MM / 2.0 + PULL_IN_MM)
+    return face.cut(drill).Faces[0]
+
+
+def all_tube_plans(right):
+    """({standoff center: its tube's plan face on the given half}, (the
+    least the tray keeps from them in plan, where)), after checking that
+    nothing of the tray, or of the parts in it, standing within their
+    heights, the walls' (wall_tray_obstacles()), comes nearer them than
+    layout.FRAME_TRAY_CLEARANCE_MM."""
+    obstacles = wall_tray_obstacles(right)
+    plans = {center: tube_face(center, right) for center in layout.MOUNTING_DRILL_CENTERS_MM}
+    minimum = layout.FRAME_TRAY_CLEARANCE_MM - TUBE_TRAY_TOLERANCE_MM
+    nearest = (math.inf, "nothing")
+    problems = []
+    for center, face in plans.items():
+        for label, distance in tray_distances([face], obstacles, minimum + TUBE_NEAREST_REACH_MM):
+            where = f"the tube at {center} and the {label}"
+            nearest = min(nearest, (distance, where))
+            if distance < minimum:
+                problems.append(f"{where}: {distance:.4f}")
+    if problems:
+        raise SystemExit(
+            f"error: the tray comes nearer the tubes than {layout.FRAME_TRAY_CLEARANCE_MM}: "
+            + "; ".join(problems)
+        )
+    return plans, nearest
+
+
 # The frame.
 
 
@@ -253,8 +320,9 @@ def tab_recess_polygons(right):
 
 
 def build_frame(right, insert_length=None):
-    """(frame, its expected volume, {key: wall area in plan}), checked
-    to be one valid solid of that volume."""
+    """(frame, its expected volume, {key: wall area in plan}, ({standoff
+    center: tube area in plan}, the tray's least distance from the tubes
+    and where)), checked to be one valid solid of that volume."""
     insert_length = cells.longest_insert_length() if insert_length is None else insert_length
     if not 0.0 < insert_length <= cells.longest_insert_length() + 1e-9:
         raise SystemExit(
@@ -277,8 +345,10 @@ def build_frame(right, insert_length=None):
              for wall_face in faces]
     centers = boss_centers(right)
     bosses = cells.build_bosses(cells.boss_end_depth(), centers)
-    frame = body.fuse(walls + bosses).removeSplitter()
-    require_one_valid_solid(frame, "fusing the walls and bosses to the frame's body")
+    tubes, nearest = all_tube_plans(right)
+    tube_prisms = [cells.face_prism(tube, depth) for tube in tubes.values()]
+    frame = body.fuse(walls + bosses + tube_prisms).removeSplitter()
+    require_one_valid_solid(frame, "fusing the walls, bosses and tubes to the frame's body")
     frame = frame.cut(Part.makeCompound(cells.build_bores(cells.boss_end_depth(), insert_length,
                                                           centers)))
     require_one_valid_solid(frame, "boring the bosses")
@@ -286,12 +356,14 @@ def build_frame(right, insert_length=None):
     recess_area = sum(face.common(cells.plan_face(recess)).Area for recess in recesses)
     figures = {key: sum(wall_face.Area for wall_face in faces) for key, faces in plans.items()}
     wall_area = sum(figures.values())
+    tube_areas = {center: tube.Area for center, tube in tubes.items()}
     boss_area = math.pi * (cells.BOSS_DIAMETER_MM / 2.0) ** 2
     bore_area = math.pi * (cells.INSERT_BORE_DIAMETER_MM / 2.0) ** 2
     expected = (
         (face.Area - sum(math.pi * radius**2 for _center, radius in holes)) * thickness
         - recess_area * cells.TAB_RECESS_DEPTH_MM
         + wall_area * depth
+        + sum(tube_areas.values()) * depth
         + len(centers) * boss_area * cells.boss_end_depth()
         - len(centers) * bore_area * cells.insert_bore_depth(insert_length)
     )
@@ -299,7 +371,7 @@ def build_frame(right, insert_length=None):
         raise SystemExit(
             f"error: the frame's volume is {frame.Volume:.4f} mm3, its plan gives {expected:.4f} mm3"
         )
-    return frame.Solids[0], expected, figures
+    return frame.Solids[0], expected, figures, (tube_areas, nearest)
 
 
 def turned_for_printing(frame):

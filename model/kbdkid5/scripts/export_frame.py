@@ -5,7 +5,8 @@ grooves. frame_shape.py builds them and its docstring has the design.
   frame    the frame in the PCB's place, upside down for printing, its
            top face on z = 0: the switches' holes, the sockets' pockets
            at -0.15 with their tab slots and recesses, the bosses bored
-           for M2 heat-set inserts, the mounting drills
+           for M2 heat-set inserts, the mounting drills with a tube
+           under each that stands on the tray's standoff
   backing  the backing that screws up under the sockets, bottom down,
            with a pad under each socket lobe and its cutouts around the
            tray; checked stacked under the frame, which it builds too
@@ -19,10 +20,10 @@ invocation):
 
 Either part is checked for one valid solid of the volume its plan
 faces give and written as one closed mesh. The frame's pocket walls
-are whole but those layout.frame_walls_cut_back() lists (S140's on the
-left half, cut back from its standoff), and the export fails where the
-tray comes nearer them than layout.FRAME_TRAY_CLEARANCE_MM, that body
-apart (frame_shape.py). The backing is also checked
+are whole but those layout.frame_walls_cut_back() lists (none since
+work item 034), and the export fails where the tray comes nearer them
+or the tubes than layout.FRAME_TRAY_CLEARANCE_MM (frame_shape.py). The
+backing is also checked
 stacked under the frame: nothing overlapping, the backing touching only
 the bosses' ends, every pad 0.1 under its socket's bottom.
 """
@@ -134,7 +135,8 @@ def main():
     right = arguments.right
     half = "right" if right else "left"
     if arguments.kind == "frame":
-        frame, expected, figures = shape.build_frame(right, arguments.insert_length)
+        frame, expected, figures, (tubes, nearest) = shape.build_frame(right,
+                                                                       arguments.insert_length)
         part = shape.turned_for_printing(frame)
         print(f"frame:      {half} half, {len(figures)} sockets at fit "
               f"{layout.FRAME_POCKET_FIT_MM}, {len(shape.boss_centers(right))} bosses, volume "
@@ -146,9 +148,22 @@ def main():
         for key, body in cut_back:
             print(f"            {key}'s cut back from the {body} (work item 026, kept by the user), "
                   f"{figures[key]:.3f} mm2 left")
+        depth = cells.wall_depth()
+        print(f"tubes:      {len(tubes)} under the drills, {depth:.3f} deep, the walls' depth (z "
+              f"{layout.PCB_UNDERSIDE_Z_MM - depth:.3f} to {layout.PCB_UNDERSIDE_Z_MM} in the "
+              f"tray, their mouth on the standoffs' top at {layout.STANDOFF_HEIGHT_MM:.3f}), each "
+              f"the standoff's {layout.STANDOFF_DIAMETER_MM} circle with its flats less the "
+              f"drill, {sum(tubes.values()):.3f} mm2 in plan, the tray at least "
+              f"{nearest[0]:.4f} from them ({nearest[1]})")
+        for center, area in tubes.items():
+            cut = layout.frame_tube_block_cut(center)
+            stop = (f", stopped {cut[1]:.3f} from its axis, {layout.FRAME_TRAY_CLEARANCE_MM} short "
+                    "of the joint block" if cut is not None else "")
+            flats = len(shape.standoff_flats(center, right))
+            print(f"            at {center}: {area:.3f} mm2, {flats} flats{stop}")
     else:
         backing, expected = shape.build_backing(right)
-        frame, _, _ = shape.build_frame(right, arguments.insert_length)
+        frame, _, _, _ = shape.build_frame(right, arguments.insert_length)
         stacked = shape.stacked_backing(backing)
         contact = check_stack(frame, stacked, right)
         top = check_pad_tops(stacked, right)

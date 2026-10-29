@@ -14,16 +14,18 @@ constants the tray is built from: the outside's size, the walls, the
 floor, the ledge and the joint block, the shelves under the hand-wired
 frame's backing (each straight run of their face, its height and
 reach, and the notches for the backing's screw heads), the standoffs
-and their bores
+and their bores, their tops at the hand-wired frame's tubes' mouth
 (the one merged with the joint block, its bore's plastic toward the
-magnet slot cut through it), the joint face's angle, place and bottom
+magnet slot cut through it and the block's inner face beside its axis
+over its top), the joint face's angle, place and bottom
 chamfer, the pin holes (depth, diameter, the plastic behind and over
 them, the flat top, the lead-in),
 the magnet slots, the parking hole, the reliefs under the switches'
 center posts and side pegs (across at the mouth, the bottom, open over
 the post's or peg's place), the sockets' clearance from the
 tray as built, the hand-wired frame's pocket walls' clearance from it
-(work item 026), and the mounts: the USB shell's channel and the USB
+(work item 026) and its tubes' (work item 034), the standoffs they
+stand on left out, and the mounts: the USB shell's channel and the USB
 window, the nice!nano's north block with the bar over the shell, the
 screw clamp (its block and foot, the insert bore, and its tab,
 tray_shape.py's, seated on the block, overlapping nothing of the
@@ -85,7 +87,8 @@ DESIGN_WALL_MM = 0.8
 DESIGN_FLOOR_MM = 1.2
 DESIGN_LEDGE_WIDTH_MM = 1.0
 DESIGN_LEDGE_UNDER_PCB_MM = 0.6
-DESIGN_LEDGE_TOP_Z_MM = 9.5  # the PCB's underside, also the standoffs' and the block's tops
+DESIGN_LEDGE_TOP_Z_MM = 9.5  # the PCB's underside, also the block's top
+DESIGN_STANDOFF_TOP_Z_MM = 7.7  # the hand-wired frame's tubes' mouth (work item 034)
 DESIGN_STANDOFF_DIAMETER_MM = 5.8
 DESIGN_STANDOFF_BORE_MM = 3.2
 DESIGN_MOUNTING_DRILLS_MM = (
@@ -98,8 +101,10 @@ DESIGN_MOUNTING_DRILLS_MM = (
 )
 # The sixth standoff merges with the joint block, the magnet slot at
 # 48.26 along the slant cut through it, and its bore keeps this much
-# plastic toward the slot.
+# plastic toward the slot. Over its top the block's inner face stands
+# this far from its axis, beside an insert pressed in from above.
 DESIGN_MERGED_STANDOFF_BORE_WALL_MM = 0.83
+DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM = 2.432
 DESIGN_MIRROR_LINE_X_MM = 66.199
 DESIGN_SLANT_ENDS_MM = ((132.398, 18.335), (113.348, 77.867))  # south, north
 DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES = 17.74
@@ -170,6 +175,18 @@ DESIGN_FRAME_WALL_REACH_MM = 0.925
 DESIGN_FRAME_WALLS_Z_MM = (7.7, 9.5)
 DESIGN_FRAME_WALL_CLEARANCE_MM = 0.5
 FRAME_WALL_ARC_TOLERANCE_MM = 0.001
+# The hand-wired frame's tubes (work item 034): the standoffs' circles
+# over the walls' heights, their mouth on the standoffs' tops, the one
+# whose standoff merges with the joint block cut the walls' clearance
+# short of the block's inner face, and the least the tray as cut keeps
+# from them.
+DESIGN_FRAME_TUBES_FROM_TRAY_MM = 0.5
+# The walls and the tubes are measured against the tray less its
+# standoffs (tray_without_standoffs()), each cut away as a cylinder this
+# much wider than it, from this height to this far past its top.
+STANDOFF_CUTTER_MARGIN_MM = 0.01
+STANDOFF_CUTTER_BOTTOM_Z_MM = 0.5
+STANDOFF_CUTTER_PAST_TOP_MM = 1.0
 # The shelves under the hand-wired frame's backing's edges (DESIGN.md,
 # "Tray", Shelves), the left half's: their face as modelled, sharp, in
 # two runs, from the outer edge's shelf's start at the ledge's face to
@@ -787,10 +804,31 @@ def merged_bore_walls(tray, right):
     return walls
 
 
+def merged_axes_from_block(tray, right):
+    """How far the joint block's inner face stands from the axis of each
+    standoff that reaches the block, over the standoff's top, along the
+    slant's normal: open there, the standoff ending at the frame's tubes'
+    mouth and the block standing whole to its top."""
+    block_inner_face = DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_JOINT_BLOCK_THICKNESS_MM
+    _south, _direction, normal = design_slant_frame(right)
+    over_top = (DESIGN_STANDOFF_TOP_Z_MM + DESIGN_LEDGE_TOP_Z_MM) / 2.0
+    distances = []
+    for drill in DESIGN_MOUNTING_DRILLS_MM:
+        along, outward = design_slant_coordinates(drill)
+        if outward + DESIGN_STANDOFF_DIAMETER_MM / 2.0 <= block_inner_face:
+            continue
+        _low, high = run_through(tray, slant_place(right, along, outward, over_top),
+                                 vector(normal), False)
+        distances.append(high)
+    return distances
+
+
 def measure_standoffs(tray, right, figures):
-    """The standoffs and their bores, and the plastic a merged one's bore
-    keeps toward the joint's slot. The nice!nano clamp's insert bore is
-    the only other bore that size, measured with the clamp."""
+    """The standoffs and their bores, their tops, and the plastic a
+    merged one's bore keeps toward the joint's slot and how far the
+    block's inner face stands from its axis over its top. The nice!nano
+    clamp's insert bore is the only other bore that size, measured with
+    the clamp."""
     bores = vertical_cylinders(tray, DESIGN_STANDOFF_BORE_MM / 2.0)
     posts = vertical_cylinders(tray, DESIGN_STANDOFF_DIAMETER_MM / 2.0)
     drills = [half_point(drill, right) for drill in DESIGN_MOUNTING_DRILLS_MM]
@@ -813,7 +851,8 @@ def measure_standoffs(tray, right, figures):
     texts = [
         f"{len(drills)} on DESIGN.md's drills within {worst:.6f}",
         figures.check("bore bottoms z", max(bore_lows, key=abs), 0.0, 1),
-        figures.check("tops z", min(post_highs), DESIGN_LEDGE_TOP_Z_MM, 1),
+        figures.check("tops z", min(post_highs), DESIGN_STANDOFF_TOP_Z_MM, 1),
+        figures.check("to", max(post_highs), DESIGN_STANDOFF_TOP_Z_MM, 1),
         figures.check("plastic under the inserts", min(floors), DESIGN_FLOOR_MM, 1),
         f"{DESIGN_STANDOFF_DIAMETER_MM} across, {DESIGN_STANDOFF_BORE_MM} bores (by radius)",
     ]
@@ -823,6 +862,10 @@ def measure_standoffs(tray, right, figures):
     else:
         texts.append(figures.check("the merged one's bore from the magnet slot", walls[0],
                                    DESIGN_MERGED_STANDOFF_BORE_WALL_MM, 2))
+    axes = merged_axes_from_block(tray, right)
+    if len(axes) == 1:
+        texts.append(figures.check("the block's inner face from its axis over its top", axes[0],
+                                   DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM, 3))
     return f"standoffs:  {', '.join(texts)}"
 
 
@@ -1199,11 +1242,29 @@ def frame_wall_prism(key_center):
     return prism
 
 
+def tray_without_standoffs(tray, right):
+    """The tray less its standoffs, which the frame's walls and tubes are
+    measured against: the standoffs end at the walls' mouth, where the
+    tubes stand on them (work item 034), so a wall or a tube meets one
+    only in that plane, where the frame stands on it. Each goes as a
+    cylinder STANDOFF_CUTTER_MARGIN_MM wider than it, which takes the
+    merged one's share of the joint block below the cylinder's top with
+    it. The block stands in plan over it as it does below, up to the
+    walls' and the tubes' top, so they measure the same against it."""
+    radius = DESIGN_STANDOFF_DIAMETER_MM / 2.0 + STANDOFF_CUTTER_MARGIN_MM
+    bottom = STANDOFF_CUTTER_BOTTOM_Z_MM
+    height = DESIGN_STANDOFF_TOP_Z_MM + STANDOFF_CUTTER_PAST_TOP_MM - bottom
+    cutters = [Part.makeCylinder(radius, height, vector(half_point(drill, right), bottom), UP)
+               for drill in DESIGN_MOUNTING_DRILLS_MM]
+    return tray.cut(Part.makeCompound(cutters))
+
+
 def measure_frame_wall_clearance(tray, right, figures):
     """Every pocket's walls of the hand-wired frame on the half (on the
     right half the left one's at the mirrored key center, as
-    half_sockets()) against the exported tray: the walls stand whole, so
-    the tray gives way to them."""
+    half_sockets()) against the exported tray less its standoffs
+    (tray_without_standoffs()): the walls stand whole, so the tray gives
+    way to them."""
     closest = (math.inf, "nothing")
     cut_back = {key for key, _body in layout.frame_walls_cut_back(right)}
     for name, center in layout.KEY_CENTERS_MM.items():
@@ -1224,8 +1285,52 @@ def measure_frame_wall_clearance(tray, right, figures):
     return (
         f"frame:      the hand-wired frame's pocket walls of "
         f"{len(layout.KEY_CENTERS_MM) - len(cut_back)} keys ({DESIGN_FRAME_WALL_REACH_MM} out of "
-        f"the socket, z {bottom} to {top}) against the tray as cut: {text} ({closest[0]:.4f}), "
-        f"at {closest[1]}'s{left_out}"
+        f"the socket, z {bottom} to {top}) against the tray as cut, its standoffs left out: "
+        f"{text} ({closest[0]:.4f}), at {closest[1]}'s{left_out}"
+    )
+
+
+def frame_tube_prism(drill, right):
+    """The frame's tube on the standoff at a DESIGN.md drill as a prism
+    over its heights on the given half: the standoff's circle (its
+    flats, which only take more away, left out), cut
+    DESIGN_FRAME_WALL_CLEARANCE_MM short of the joint block's inner face
+    where it would come nearer."""
+    bottom, top = DESIGN_STANDOFF_TOP_Z_MM, DESIGN_FRAME_WALLS_Z_MM[1]
+    radius = DESIGN_STANDOFF_DIAMETER_MM / 2.0
+    prism = Part.makeCylinder(radius, top - bottom, vector(half_point(drill, right), bottom), UP)
+    along, outward = design_slant_coordinates(drill)
+    limit = (DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_JOINT_BLOCK_THICKNESS_MM
+             - DESIGN_FRAME_WALL_CLEARANCE_MM)
+    if outward + radius <= limit:
+        return prism
+    reach = DESIGN_STANDOFF_DIAMETER_MM
+    corners = [slant_place(right, along + side, out, bottom - 1.0)
+               for side, out in ((-reach, limit), (reach, limit), (reach, limit + reach),
+                                 (-reach, limit + reach))]
+    beyond = Part.Face(Part.makePolygon(corners + [corners[0]])).extrude(UP * (top - bottom + 2.0))
+    return prism.cut(beyond)
+
+
+def measure_frame_tube_clearance(tray, right, figures):
+    """The hand-wired frame's tubes (frame_tube_prism()) against the
+    exported tray less its standoffs (tray_without_standoffs())."""
+    closest = (math.inf, "nothing")
+    for drill in DESIGN_MOUNTING_DRILLS_MM:
+        distance = frame_tube_prism(drill, right).distToShape(tray)[0]
+        if distance < closest[0]:
+            closest = (distance, half_point(drill, right))
+    if closest[0] < DESIGN_FRAME_TUBES_FROM_TRAY_MM - FRAME_WALL_ARC_TOLERANCE_MM:
+        raise SystemExit(
+            f"error: the frame's tube at {closest[1]} comes {closest[0]:.4f} from the tray, "
+            f"DESIGN.md keeps {DESIGN_FRAME_TUBES_FROM_TRAY_MM}"
+        )
+    text = figures.check("least clearance", closest[0], DESIGN_FRAME_TUBES_FROM_TRAY_MM, 1)
+    return (
+        f"frame:      the hand-wired frame's {len(DESIGN_MOUNTING_DRILLS_MM)} tubes (the "
+        f"standoffs' {DESIGN_STANDOFF_DIAMETER_MM} circles, z {DESIGN_STANDOFF_TOP_Z_MM} to "
+        f"{DESIGN_FRAME_WALLS_Z_MM[1]}) against the tray as cut, its standoffs left out: {text} "
+        f"({closest[0]:.4f}), at the one at ({closest[1][0]:.3f}, {closest[1][1]:.3f})"
     )
 
 
@@ -1879,7 +1984,9 @@ def measure(tray, right, pin_hole_radius, design, mount_design, fits):
     lines.extend(measure_post_relief(tray, right, relief, figures)
                  for relief in DESIGN_POST_RELIEFS)
     lines.append(measure_socket_clearance(tray, right, figures))
-    lines.append(measure_frame_wall_clearance(tray, right, figures))
+    without_standoffs = tray_without_standoffs(tray, right)
+    lines.append(measure_frame_wall_clearance(without_standoffs, right, figures))
+    lines.append(measure_frame_tube_clearance(without_standoffs, right, figures))
     lines.extend(measure_mounts(tray, right, mount_design, fits, figures))
     for line in lines:
         print(line)

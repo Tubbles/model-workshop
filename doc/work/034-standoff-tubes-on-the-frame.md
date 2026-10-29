@@ -1,6 +1,6 @@
 # 034 Standoff tubes on the frame's underside
 
-Status: todo (2026-10-29)
+Status: implemented (2026-10-29)
 
 The user, 2026-10-29: "Could you add a cylindrical wall around the 6 mounting holes on the underside of the frame board? Make it the same height as the hotswap pocket walls. And naturally we'll have to shrink the 6 opposing standoffs in the tray by the same amount, and I might have to use longer screws but that should be fine. That way I can lay down the wire as i am soldering it and even hot glue it down without having to worry about things getting in the way". On the tube's shape: "standoffs own outline, basically project the standoff onto the frame board's underside". kbdkid5 has no PCB, so the tray need not seat one (doc/log/2026-10-29.md).
 

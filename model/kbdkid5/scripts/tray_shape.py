@@ -19,9 +19,11 @@ First the walls and floor, every corner bent with the same concentric
 pair of radii, the ledge with the joint block in its place along the
 slant, the shelves on the ledge's face under the edges of the
 hand-wired frame's backing (work item 020), notched for its screw
-heads, the standoffs bored for M2 heat-set inserts, and the dowel pin
-bosses and the parking hole's boss, up to the PCB's underside, with the
-fills that close the crevices beside them. Then the cuts, all exactly as
+heads, the standoffs bored for M2 heat-set inserts up to the mouth of
+the hand-wired frame's tubes, which stand on them (work item 034), and
+the dowel pin bosses and the parking hole's boss, up to the PCB's
+underside, with the fills that close the crevices beside them. Then the
+cuts, all exactly as
 layout.py gives them: the ledge cut-aways layout.py declares for the
 parts in the tray, the west socket strip's pocket in the column 1/2
 step's ledge,
@@ -300,7 +302,8 @@ def wall_outward(outline_wire, center_on_edge, direction, up):
 # The tray builder (see the module docstring).
 
 FLOOR_UNDERSIDE_Z_MM = layout.FLOOR_UNDERSIDE_Z_MM
-LEDGE_TOP_Z_MM = layout.PCB_UNDERSIDE_Z_MM  # also the joint block's and the standoffs' tops
+LEDGE_TOP_Z_MM = layout.PCB_UNDERSIDE_Z_MM  # also the joint block's top
+STANDOFF_TOP_Z_MM = layout.STANDOFF_HEIGHT_MM  # the frame's tubes' mouth
 RIM_Z_MM = layout.TRAY_RIM_Z_MM
 
 
@@ -401,8 +404,8 @@ def build_walls(corner_radius):
 
 
 def add_ledge(tray, corner_radius):
-    """Fuse the ledge along the cavity wall, its top level with the
-    standoffs', with the joint block in its place along the slant (both
+    """Fuse the ledge along the cavity wall, its top at the PCB's
+    underside, with the joint block in its place along the slant (both
     in layout.ledge_inner_polygon()). The well inside it continues the
     concentric corners inward: its convex corners have run out of radius
     (sharp), its concave ones grow by the ledge's width."""
@@ -521,10 +524,12 @@ def standoff_area_in_joint_block(center):
 
 def add_standoffs(tray):
     """Fuse a standoff at each mounting drill, from the floor's
-    underside (so the fuse leaves no seam) to the ledge top, bored for a
-    heat-set insert down to the floor's top, which backs the insert with
-    the floor's thickness (kbdkid4's). One near the slant merges with the
-    joint block, whose slots and holes are cut through both later."""
+    underside (so the fuse leaves no seam) to the frame's tubes' mouth,
+    bored for a heat-set insert down to the floor's top, which backs the
+    insert with the floor's thickness (kbdkid4's). One near the slant
+    merges with the joint block, whose slots and holes are cut through
+    both later: only its ring outside the block ends at the tubes'
+    mouth, the block standing whole to the ledge top beside it."""
     radius = layout.STANDOFF_DIAMETER_MM / 2.0
     bore_radius = layout.STANDOFF_BORE_DIAMETER_MM / 2.0
     bodies = []
@@ -533,22 +538,22 @@ def add_standoffs(tray):
         bodies.append(
             Part.makeCylinder(
                 radius,
-                LEDGE_TOP_Z_MM - FLOOR_UNDERSIDE_Z_MM,
+                STANDOFF_TOP_Z_MM - FLOOR_UNDERSIDE_Z_MM,
                 App.Vector(x, y, FLOOR_UNDERSIDE_Z_MM),
                 UP,
             )
         )
         bores.append(
             Part.makeCylinder(
-                bore_radius, LEDGE_TOP_Z_MM + CUT_EXTRA_MM, App.Vector(x, y, 0.0), UP
+                bore_radius, STANDOFF_TOP_Z_MM + CUT_EXTRA_MM, App.Vector(x, y, 0.0), UP
             )
         )
     result = tray.fuse(Part.makeCompound(bodies)).cut(Part.makeCompound(bores))
     require_one_valid_solid(result, "adding the standoffs")
     # Each adds its whole ring but the segment already in the joint block.
     ring_area = math.pi * (radius**2 - bore_radius**2)
-    expected = LEDGE_TOP_Z_MM * sum(ring_area - standoff_area_in_joint_block(center)
-                                    for center in layout.MOUNTING_DRILL_CENTERS_MM)
+    expected = STANDOFF_TOP_Z_MM * sum(ring_area - standoff_area_in_joint_block(center)
+                                       for center in layout.MOUNTING_DRILL_CENTERS_MM)
     require_volume("the standoffs", result.Volume - tray.Volume, expected, 1e-6)
     return result
 
@@ -1105,7 +1110,7 @@ def rectangle_disc_area(x_range, y_range, center, radius):
 def standoff_overlap_volume(box):
     """The volume a box shares with the standoffs, bores and all."""
     radius = layout.STANDOFF_DIAMETER_MM / 2.0
-    height = range_overlap(box.z_range, (FLOOR_UNDERSIDE_Z_MM, LEDGE_TOP_Z_MM))
+    height = range_overlap(box.z_range, (FLOOR_UNDERSIDE_Z_MM, STANDOFF_TOP_Z_MM))
     return height * sum(rectangle_disc_area(box.x_range, box.y_range, center, radius)
                         for center in layout.MOUNTING_DRILL_CENTERS_MM)
 
@@ -1117,7 +1122,7 @@ def mount_body_solid(box):
     radius = layout.STANDOFF_BORE_DIAMETER_MM / 2.0
     for x, y in layout.MOUNTING_DRILL_CENTERS_MM:
         if rectangle_disc_area(box.x_range, box.y_range, (x, y), radius) > 0.0:
-            height = LEDGE_TOP_Z_MM + CUT_EXTRA_MM
+            height = STANDOFF_TOP_Z_MM + CUT_EXTRA_MM
             body = body.cut(Part.makeCylinder(radius, height, App.Vector(x, y, 0.0), UP))
     require_one_valid_solid(body, f"the {box.label}'s body")
     return body.Solids[0]

@@ -137,6 +137,7 @@ DESIGN_HALF_SIZE_MM = (132.4, 82.6)
 DESIGN_MIRROR_LINE_X_MM = 66.199
 DESIGN_HEIGHTS_Z_MM = (  # (what, z)
     ("socket bottoms", 7.48),
+    ("standoff tops", 7.70),
     ("PCB top", 11.1),
     ("plate top", 13.3),
     ("tray rim", 13.4),
@@ -381,6 +382,24 @@ DESIGN_FRAME_WALL_POCKET_DEPTH_MM = 0.04
 DESIGN_FRAME_WALL_FLATS = {False: (), True: (("S122", (56.091, 23.460), 3.149, 1.049),)}
 DESIGN_FRAME_WALL_BOSS_NOTCHES = {False: (), True: (("S150", 59.0, 0.177, 1.335),)}
 DESIGN_FRAME_WALL_NOTCH_FROM_JOINT_VOIDS_MM = 1.073
+# The frame's tubes (work item 034): their heights in the tray, the
+# merged standoff's tube's cut from its axis, 0.5 short of the joint
+# block's inner face, and that face from the axis, the least they keep
+# from the tray, per half from the pockets' insides and the tab slots,
+# and per half how far each reaches into a tab wires' room, by (key,
+# standoff), as the standoff under it always did.
+DESIGN_FRAME_TUBES_Z_MM = (7.70, 9.5)
+DESIGN_FRAME_TUBE_BLOCK_CUT_FROM_AXIS_MM = 1.932
+DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM = 2.432
+DESIGN_FRAME_TUBES_FROM_TRAY_MM = 0.5
+DESIGN_FRAME_TUBES_FROM_FRAME_MM = {
+    False: {"pockets": 0.880, "tab slots": 0.219},  # S140's, from the standoff at (75.724, 62.785)
+    True: {"pockets": 1.300, "tab slots": 1.335},  # S122's, and S100's, S102's and S150's
+}
+DESIGN_FRAME_TUBES_INTO_TAB_WIRE_ROOMS_MM = {
+    False: {("S122", (56.091, 23.460)): 0.142, ("S140", (75.724, 62.785)): 0.050},
+    True: {("S140", (75.724, 62.785)): 0.179},
+}
 # The shelves under the backing's edges (work items 020 and 022): their
 # face from the outer edge's shelf's start at the ledge's face to the
 # thumb's ledge, and the north edges' from their start at the ledge's
@@ -1635,6 +1654,7 @@ def check_plate_head_holes():
 def check_heights():
     computed = (
         layout.SOCKET_BOTTOM_Z_MM,
+        layout.STANDOFF_HEIGHT_MM,
         layout.PCB_TOP_Z_MM,
         layout.PLATE_TOP_Z_MM,
         layout.TRAY_RIM_Z_MM,
@@ -4510,8 +4530,10 @@ def check_frame_backing(right=False):
 # below them, keeps layout.FRAME_TRAY_CLEARANCE_MM in plan from their
 # outer face (layout.frame_wall_outer_polygon()), the tray giving
 # way by the cuts layout.py makes for them, so a later change to the
-# tray cannot cut a wall again. frame_shape.py builds the walls whole
-# and fails where these pieces come nearer.
+# tray cannot cut a wall again, but the standoffs, which end at the
+# walls' mouth under the frame's tubes (frame_wall_standoff_bands()).
+# frame_shape.py builds the walls whole and fails where these pieces
+# come nearer.
 
 
 def frame_walls_z_range():
@@ -4562,10 +4584,14 @@ def frame_wall_tray_pieces(right=False):
 
 def frame_wall_standoff_bands(right=False):
     """(label, center, z range, flats) of the given half's standoffs'
-    height bands within the frame's pocket walls' heights, grown by the
-    clearance (frame_walls_reach_z_range()), with the flats layout.py
-    cuts into each (standoff_bands())."""
-    walls = frame_walls_reach_z_range()
+    height bands within the frame's pocket walls' heights, with the
+    flats layout.py cuts into each (standoff_bands()). Their own
+    heights, not grown by the clearance as the other pieces' are: the
+    standoffs end at the walls' mouth, where the frame's tubes stand on
+    them (work item 034), and a tube is its standoff's outline, so a
+    wall that comes near a standoff's top comes as near the frame's own
+    tube there. None stands within them."""
+    walls = frame_walls_z_range()
     return [(f"standoff at {center}", center, z_range, flats)
             for center in layout.MOUNTING_DRILL_CENTERS_MM
             for z_range, flats in standoff_bands(center, right)
@@ -4741,6 +4767,166 @@ def check_frame_walls(right=False):
              f"{', '.join(cut_back)}" if cut_back else "")
     return (f"walls:     {half_label(right)}{joined(figures)}; every pocket's walls clear of the "
             f"tray by {tightest}{still}")
+
+
+# The frame's tubes (work item 034, layout.py's frame_tube_block_cut()):
+# each tube, standing on its standoff, keeps
+# layout.FRAME_TRAY_CLEARANCE_MM in plan from whatever of the tray, or
+# of the parts in it, stands within its heights, the pocket walls'
+# (frame_wall_tray_pieces()), and stays out of every pocket's inside,
+# tab slot and footprint hole. Some standoffs stood in tab wires' rooms
+# over the rooms' whole height before the tubes came, and a tube stands
+# where its standoff stood: DESIGN.md names how far, and any other
+# overlap fails. frame_shape.py builds the tubes and fails where the
+# tray comes nearer.
+
+# A tube's circle as a polygon around it, fine enough that the figures
+# hold to their last digit.
+TUBE_CIRCLE_SEGMENTS = 360
+# The frame's features a tube is measured against: those whose bounding
+# boxes come within this of its own.
+TUBE_NEAR_MM = 2.0
+
+
+def standoff_plan_polygon(center, flats, segments):
+    """A standoff's band in plan with its flats, as a convex polygon
+    around its circle of the given number of sides, clipped by each
+    flat, in the left half's frame."""
+    radius = layout.STANDOFF_DIAMETER_MM / 2.0 / math.cos(math.pi / segments)
+    polygon = tuple(
+        (center[0] + radius * math.cos(2.0 * math.pi * index / segments),
+         center[1] + radius * math.sin(2.0 * math.pi * index / segments))
+        for index in range(segments)
+    )
+    for flat in flats:
+        limit = flat.plane_distance + dot(center, flat.toward)
+        polygon = clip_to_half_plane(polygon, flat.toward, limit)
+    return polygon
+
+
+def frame_tube_polygon(center, right=False):
+    """The frame's tube on the standoff at center on the given half, in
+    the left half's frame, as a convex polygon around it: the standoff's
+    band with every flat it gets, stopped at
+    layout.frame_tube_block_cut() where that cuts it. The drill inside
+    is left out."""
+    flats = [flat for flat in layout.all_socket_standoff_flats(right)
+             if flat.standoff_center == center]
+    polygon = standoff_plan_polygon(center, flats, TUBE_CIRCLE_SEGMENTS)
+    cut = layout.frame_tube_block_cut(center)
+    if cut is not None:
+        normal, distance = cut
+        polygon = clip_to_half_plane(polygon, normal, distance + dot(center, normal))
+    return polygon
+
+
+def frame_tube_neighbours(tube, right):
+    """(what, kind, shape) of the frame's features near a tube polygon on
+    the given half that it stays out of: the pockets' insides
+    (layout.frame_pocket_polygon(), not convex), the tab slots and the
+    footprint holes, and apart (key, room) the tab wires' rooms."""
+    near, rooms = [], []
+    for key in layout.KEY_CENTERS_MM:
+        pocket = layout.frame_pocket_polygon(key, right)
+        if bounding_gap(tube, pocket) < TUBE_NEAR_MM:
+            near.append(("pockets", f"{key}'s pocket", "outline", pocket))
+        slots, key_rooms = frame_tab_pieces(key, right)
+        near.extend(("tab slots", f"{key}'s tab slot", "polygon", slot) for slot in slots
+                    if bounding_gap(tube, slot) < TUBE_NEAR_MM)
+        rooms.extend((key, room) for room in key_rooms if bounding_gap(tube, room) < TUBE_NEAR_MM)
+        holes = layout.footprint_holes(frame_key_center(key, right))
+        near.extend(("footprint holes", f"{key}'s {diameter} hole", "circle",
+                     (frame_left_point(center, right), diameter / 2.0))
+                    for (center, _), diameter in zip(holes, DESIGN_FRAME_HOLE_DIAMETERS_MM))
+    return near, rooms
+
+
+def frame_tube_clearance(tube, kind, shape):
+    if kind == "outline":
+        return outline_clearance(shape, tube)
+    if kind == "circle":
+        return circle_separation(shape[0], shape[1], tube)
+    return convex_separation(tube, shape)
+
+
+def frame_tube_clearances(right=False):
+    """(problems, {what: Tightest}, {(key, standoff center): how far into
+    the key's tab wires' rooms}) of every tube on the given half: from
+    the tray's pieces within its heights by layout.FRAME_TRAY_CLEARANCE_MM,
+    out of the pockets, the tab slots and the footprint holes, and into
+    the rooms where they overlap."""
+    pieces = frame_wall_tray_pieces(right)
+    tightest = {what: Tightest() for what in ("tray", "pockets", "tab slots", "footprint holes")}
+    problems, overlaps = [], {}
+    for center in layout.MOUNTING_DRILL_CENTERS_MM:
+        tube = frame_tube_polygon(center, right)
+        where = f"the tube at {center}"
+        for label, polygon, z_range in pieces:
+            if bounding_gap(tube, polygon) >= layout.FRAME_TRAY_CLEARANCE_MM + TUBE_NEAR_MM:
+                continue
+            clearance = convex_separation(tube, polygon)
+            what = f"{where} and the {describe_piece(label, z_range)}"
+            tightest["tray"].update(clearance, what)
+            if clearance < layout.FRAME_TRAY_CLEARANCE_MM - TOLERANCE_MM:
+                problems.append(f"{what}: {clearance:.3f}, less than "
+                                f"{layout.FRAME_TRAY_CLEARANCE_MM}")
+        near, rooms = frame_tube_neighbours(tube, right)
+        for what, label, kind, shape in near:
+            clearance = frame_tube_clearance(tube, kind, shape)
+            tightest[what].update(clearance, f"{where} and {label}")
+            if clearance < -TOLERANCE_MM:
+                problems.append(f"{where} reaches {-clearance:.3f} into {label}")
+        for key, room in rooms:
+            clearance = convex_separation(tube, room)
+            if clearance < -TOLERANCE_MM:
+                overlaps[(key, center)] = max(overlaps.get((key, center), 0.0), -clearance)
+    return problems, tightest, overlaps
+
+
+def frame_tube_figures(tightest, right=False):
+    """The tubes' heights, the cut at the joint block, and how near they
+    come to the tray, the pockets and the tab slots by tightest
+    (frame_tube_clearances()), against DESIGN.md's."""
+    cuts = [(center, cut) for center in layout.MOUNTING_DRILL_CENTERS_MM
+            for cut in (layout.frame_tube_block_cut(center),) if cut is not None]
+    figures = [
+        require_figure("from z", layout.STANDOFF_HEIGHT_MM, DESIGN_FRAME_TUBES_Z_MM[0], 2),
+        require_figure("to", layout.PCB_UNDERSIDE_Z_MM, DESIGN_FRAME_TUBES_Z_MM[1], 2),
+        require_figure("tubes cut at the joint block", len(cuts), 1, 0),
+    ]
+    for center, (_normal, distance) in cuts:
+        figures.append(require_figure(f"the one at {center} cut from its axis", distance,
+                                      DESIGN_FRAME_TUBE_BLOCK_CUT_FROM_AXIS_MM, 3))
+        figures.append(require_figure("the block's inner face from it",
+                                      layout.joint_block_face_from(center),
+                                      DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM, 3))
+    figures.append(require_figure("from the tray", tightest["tray"].value,
+                                  DESIGN_FRAME_TUBES_FROM_TRAY_MM, 3))
+    stated = DESIGN_FRAME_TUBES_FROM_FRAME_MM[right]
+    figures.extend(require_figure(f"from the {what}", tightest[what].value, stated[what], 3)
+                   for what in ("pockets", "tab slots"))
+    return figures
+
+
+def check_frame_tubes(right=False):
+    """Every tube of the frame clear of the tray and out of the pockets,
+    the tab slots and the footprint holes (frame_tube_clearances()), the
+    tab wires' rooms but where DESIGN.md names an overlap, and the tubes'
+    figures DESIGN.md's (frame_tube_figures())."""
+    problems, tightest, overlaps = frame_tube_clearances(right)
+    named = DESIGN_FRAME_TUBES_INTO_TAB_WIRE_ROOMS_MM[right]
+    problems.extend(f"the tube at {center} reaches {overlaps[(key, center)]:.4f} into {key}'s tab "
+                    f"wire room" for key, center in sorted(set(overlaps) - set(named)))
+    problems.extend(f"the tube at {center} no longer reaches into {key}'s tab wire room"
+                    for key, center in sorted(set(named) - set(overlaps)))
+    figures = frame_tube_figures(tightest, right)
+    figures.extend(require_figure(f"the tube at {center} into {key}'s tab wire room",
+                                  overlaps[(key, center)], stated, 3)
+                   for (key, center), stated in sorted(named.items()) if (key, center) in overlaps)
+    fail_on(problems + failed(figures), f"{half_label(right)}the frame's tubes off DESIGN.md")
+    places = "; ".join(f"{what}: {tightest[what].where}" for what in tightest)
+    return (f"tubes:     {half_label(right)}{joined(figures)}, from the footprint holes "
+            f"{tightest['footprint holes'].value:.3f}; the nearest, {places}")
 
 
 # The shelves under the backing's edges (work item 020): their face
@@ -4970,6 +5156,8 @@ CHECKS = (
     on_right_half(check_backing_shelves),
     check_frame_walls,
     on_right_half(check_frame_walls),
+    check_frame_tubes,
+    on_right_half(check_frame_tubes),
 )
 
 
