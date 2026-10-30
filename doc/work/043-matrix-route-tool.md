@@ -1,6 +1,6 @@
 # 043 The matrix route as a documented tool
 
-Status: todo (2026-10-30)
+Status: implemented (2026-10-30, c8ce051)
 
 The matrix's route under the hand-wired frame was worked out on 2026-10-28 in untracked scratch (`tmp/matrix_route/`): a DO-35 diode beside each socket's west tab, its anode lead from that tab, a column wire chaining the east tabs, a row wire chaining the cathodes, and a lead from every row and column to the backing's opening (work item 028), drawn as each half's underside. The user, 2026-10-30, on rerunning it once the bosses are replanned: "Yes and promote this to full documentation".
 
