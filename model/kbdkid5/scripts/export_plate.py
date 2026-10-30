@@ -366,7 +366,8 @@ def match_features(found, expected, what):
 
 def expected_cutouts(arguments):
     return [
-        (name, placed_point(center, arguments.pattern_shift, arguments.right))
+        (layout.key_name_on_half(name, arguments.right),
+         placed_point(center, arguments.pattern_shift, arguments.right))
         for name, center in layout.KEY_CENTERS_MM.items()
         if not (arguments.covered and name == COVERED_KEY_NAME)
     ]
