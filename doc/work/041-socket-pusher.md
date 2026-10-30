@@ -1,6 +1,6 @@
 # 041 Socket pusher
 
-Status: implemented (2026-10-30)
+Status: implemented (2026-10-30, e6d086b)
 
 The user, 2026-10-30, after the switch pusher (work items 039, 040): "Now make a similar thing, but for pushing out the hotswap sockets".
 

@@ -1,6 +1,6 @@
 # 040 Deeper dimple on the switch pusher
 
-Status: implemented (2026-10-30)
+Status: implemented (2026-10-30, 477bae7)
 
 A follow-up to work item 039. The user, 2026-10-30: "I think the dimple had the right idea, but it needs to be exaggerated, it didnt come through at all in the final piece and the post pusher top just looks flat".
 
