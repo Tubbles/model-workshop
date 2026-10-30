@@ -1,6 +1,6 @@
 # 042 Pry slots on the pushers, the socket pusher recentered with a pilot
 
-Status: implemented (2026-10-30)
+Status: implemented (2026-10-30, 9849358)
 
 A follow-up to work items 039 to 041. The user, 2026-10-30: "Make the socket pins center on the base plate. And for both prints, could you add a small slot along the underside where i can slide a small tool and pry it off the print bed? say 6 mm wide and 4 mm deep, and 1.5 mm high (half the base side height)". Then, on the socket pusher: "the hotswap socket pusher's pins are way too high, i just need it to nudge the socket out of the pocket, I expect it to become half as high or even shorter", "add a pilot pin for the post hole for the socket pusher" and "and then re-center the whole thing". A smaller socket pusher was made and dropped (the user chose to drop it rather than grow it to carry the pilot).
 

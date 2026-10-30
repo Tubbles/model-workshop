@@ -50,8 +50,10 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 - `export_switch_pusher.py`'s raise tops are flat with sharp edges, and after 1.35 of push they must meet the frame's post and peg holes within 0.05 per side as printed. If the user reports them catching at the ceiling, a chamfer on the tops' edges is the lead-in (039's review).
 - `export_switch_pusher.py`'s off-axis figures measure the raises against the centers they were built at, so that check cannot fail. The raises sit right because the frame and the pusher share `frame_shape.key_holes()` (039's review).
 - The pusher's 0.5 under the bosses' ends counts on the post and pegs reaching `SWITCH_POSTS_BELOW_PCB_MM` 1.4 past the frame's body, a model figure, not calipered. It holds for posts reaching down to about 0.9 (039's review).
-- The socket pusher's pins enter the frame's pin holes from its top face, the face on the bed, with 0.05 per side as printed, and its flat keeps 0.2 from the plate's top layer cutout, also printed on the bed. How much a first layer swells at a hole's edge is not measured. If the user reports the pins catching there, that is the figure to measure (040 and 041's review).
-- Nothing checks the socket pusher's STL after `turned_for_printing()`: the pins' places as printed are right by reading only (040 and 041's review).
+- The socket pusher's pins enter the frame's pin holes from its top face, the face on the bed, with 0.05 per side as printed. How much a first layer swells at a hole's edge is not measured. If the user reports the pins catching there, that is the figure to measure (040 and 041's review).
+- Nothing checks the socket pusher's pins' places in its STL after `turned_for_printing()`: they are right by reading, and the 042 review found them right in CI's STL against the frame's (040 to 042's reviews).
+- The socket pusher pushes the socket exactly the pocket walls' depth, so with Kailh's tolerances (body 1.80 +-0.05, bosses 3.05 +-0.05) its top ends anywhere from 0.1 above to 0.1 below the walls' mouth. If the user reports it still sitting in the pocket, lengthen the pins by that much (042's review).
+- Neither pusher's export checks that its pry slot opens to the base's edge: its depth is measured from the edge to the slot's back wall, so a closed pocket would pass. The cutters run past the edge (042's review).
 - If the switch post's tip narrows below about 1.4, it sinks into the 1.8 x 1.2 dimple and bears on the cone, and the peg raises take more of the push (040 and 041's review).
 
 ## kbdkid4
