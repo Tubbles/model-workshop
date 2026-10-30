@@ -398,6 +398,25 @@ jobs:
           path: spool/
           if-no-files-found: error
 
+  coffee-block:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the artifacts after the commit
+        run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/freecad-image
+      - name: Export coffee block STL
+        run: |
+          mkdir -p coffee
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/coffee-block/scripts/export_coffee_block.py --pass coffee/coffee-block.stl
+      - name: Upload coffee block STL
+        uses: actions/upload-artifact@v4
+        with:
+          name: coffee-block-${{ env.SHORT_SHA }}
+          path: coffee/
+          if-no-files-found: error
+
   camera-arm:
     runs-on: ubuntu-latest
     steps:

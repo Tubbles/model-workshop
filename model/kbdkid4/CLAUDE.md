@@ -10,7 +10,7 @@ Tubbles/kbdkid4 has no model code and never reads anything from here. The user (
 
 Each script's module docstring says what it builds and how, and its constants and the comments on its steps give the details. Beyond them:
 
-- `model/kbdkid4/scripts/board_step.py`: the shared helpers, the freecadcmd scaffolding among them. The solder spool axle's and the camera arm's export scripts import it too, so a change to it reaches their STLs.
+- `model/kbdkid4/scripts/board_step.py`: the shared helpers, the freecadcmd scaffolding among them. The solder spool axle's, the camera arm's and the coffee block's export scripts import it too, so a change to it reaches their STLs.
 - `model/kbdkid4/scripts/tray_shape.py`: what the tray export shares with the case export.
 - An export script ends in `run_and_exit(main)`, so importing one would run it. Shared code goes into `board_step.py` or `tray_shape.py`, which an export script imports from its own directory on `sys.path`.
 - `model/kbdkid4/scripts/export_pcb.py` offsets the outline's wire and each hole's wire separately, since FreeCAD's `makeOffset2D` on the whole face would shrink the holes along with the outline.
