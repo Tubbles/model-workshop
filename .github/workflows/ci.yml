@@ -119,7 +119,7 @@ jobs:
       - name: Name the artifacts after the commit
         run: echo "SHORT_SHA=${HEAD_SHA::7}" >> "$GITHUB_ENV"
       - uses: ./.github/actions/freecad-image
-      - name: Export hand-wired frame, backing and switch pusher STL
+      - name: Export hand-wired frame, backing, switch pusher and socket pusher STL
         run: |
           mkdir -p frame
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
@@ -134,7 +134,9 @@ jobs:
             backing right
           docker run --rm -v "$PWD":/work -w /work freecad-headless \
             freecadcmd model/kbdkid5/scripts/export_switch_pusher.py --pass frame/kbdkid5-switch-pusher.stl
-      - name: Upload hand-wired frame, backing and switch pusher STL
+          docker run --rm -v "$PWD":/work -w /work freecad-headless \
+            freecadcmd model/kbdkid5/scripts/export_socket_pusher.py --pass frame/kbdkid5-socket-pusher.stl
+      - name: Upload hand-wired frame, backing, switch pusher and socket pusher STL
         uses: actions/upload-artifact@v4
         with:
           name: kbdkid5-part-frame-${{ env.SHORT_SHA }}

@@ -96,6 +96,21 @@ To take a switch out, take the frame out of the tray and unscrew the backing, le
 
 Report whether the raises find the post and pegs and go up into the frame's holes without catching, whether the switch's clips come free of the plate, and whether the thin peg raises hold.
 
+## 3D printed socket pusher
+
+`model/kbdkid5/scripts/export_socket_pusher.py` exports a tool for taking a hotswap socket out of the hand-wired frame: a key-sized square with two pins that reach down through the plate and the frame's two pin holes onto the socket's contact bosses and push the socket down out of its pocket. One serves both halves. DESIGN.md (Socket pusher) has the design.
+
+    docker run --rm -v "$PWD":/work -w /work freecad-headless \
+        freecadcmd model/kbdkid5/scripts/export_socket_pusher.py --pass pusher.stl
+
+CI exports it as `kbdkid5-socket-pusher.stl`, in `kbdkid5-<short commit hash>`.
+
+Print it as written, base down with the pins up. It needs no supports.
+
+To take a socket out, take the frame out of the tray, unscrew the backing, leave the plate on and take the key's switch out with the switch pusher. Hold the frame with room under the key for the socket to drop into. Turn the pusher over, pins down, and lower them into the key's plate cutout: the flattened pin goes into the frame's pin hole by the middle of the cutout's edge, its flat toward that edge, the other into the pin hole beside it. Press straight down until the base sits on the plate. The socket comes out of its pocket and hangs on its wires.
+
+Report whether the pins go through the plate and into the frame's pin holes without catching, whether the socket comes all the way out of its pocket at the full push (if not, how far it still sits in), and whether the flattened pin holds.
+
 ## 3D printed tray
 
 `model/kbdkid5/scripts/export_tray.py` exports a half's tray: walls, floor and the ledge the hand-wired frame rests on, the shelves along the south and outer edges and the north edge over columns 4 and 5 that catch the hand-wired frame's backing, standoffs bored for M2 heat-set inserts at the mounting drills, which the frame's tubes stand on (they end 1.80 under the frame's underside, so they no longer seat a PCB), the cuts that clear the switches' hotswap sockets, the joint along the slanted edge, reliefs where a switch's center post or pegs come down over the tray, and the mounts for the parts that are not on the PCB (DESIGN.md: Tray, Parts in the tray, The joint). The tray is written floor on the bed.
