@@ -81,6 +81,21 @@ What to check and report:
 - Along the south edge, the outer edge (the west edge on the left half, the east one on the right) and the north edge over columns 4 and 5, from the joint to the reset button, press the keys over the backing's edge: the backing should give less than before and stop on the shelf under it. Report each stretch where it still gives as much as before.
 - Report each of these as good, loose or tight, with the key names.
 
+## 3D printed switch pusher
+
+`model/kbdkid5/scripts/export_switch_pusher.py` exports a tool for taking a switch out of the hand-wired frame: a key-sized square with a raise under the switch's center post and one under each side peg, which pushes the switch up from below until its clips clear the plate. One serves both halves. DESIGN.md (Switch pusher) has the design.
+
+    docker run --rm -v "$PWD":/work -w /work freecad-headless \
+        freecadcmd model/kbdkid5/scripts/export_switch_pusher.py --pass pusher.stl
+
+CI exports it as `kbdkid5-switch-pusher.stl`, in `kbdkid5-<short commit hash>`.
+
+Print it as written, base down with the raises up. It needs no supports.
+
+To take a switch out, take the frame out of the tray and unscrew the backing, leaving the sockets in their pockets and the plate on. Hold the pusher under the key, the raise with the dimple under the switch's center post and the other two under its side pegs, which stick out under the frame's holes, and press it straight up until the switch's clips clear the plate. Then lift the switch out by hand.
+
+Report whether the raises find the post and pegs and go up into the frame's holes without catching, whether the switch's clips come free of the plate, and whether the thin peg raises hold.
+
 ## 3D printed tray
 
 `model/kbdkid5/scripts/export_tray.py` exports a half's tray: walls, floor and the ledge the hand-wired frame rests on, the shelves along the south and outer edges and the north edge over columns 4 and 5 that catch the hand-wired frame's backing, standoffs bored for M2 heat-set inserts at the mounting drills, which the frame's tubes stand on (they end 1.80 under the frame's underside, so they no longer seat a PCB), the cuts that clear the switches' hotswap sockets, the joint along the slanted edge, reliefs where a switch's center post or pegs come down over the tray, and the mounts for the parts that are not on the PCB (DESIGN.md: Tray, Parts in the tray, The joint). The tray is written floor on the bed.
