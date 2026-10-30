@@ -1,6 +1,6 @@
 # 028 The backing's opening for the matrix's leads, and an inline connector
 
-Status: in progress (2026-10-30)
+Status: implemented (2026-10-30, d7840a3)
 
 The user, 2026-10-24, on the hand-wired frame's leads to the nice!nano: "there needs to be some wire slack that'll get stuffed into the tray when closing it up" and "let's look at where the backing hole could go, it doesn't need to be close to the bay necessarily". On the first pick, S110 north of column 1: "Hmm I am not sure that's the best pick, remember I want a bundled up wire nest so there is slack enough that I can remove the whole matrix assembly to access the tray pocket, so I can work in it, do repairs, rewire, etc.". On the next, S122 south of the bay: "That's still very huddled up close to the nano, and just next to the battery. I think S102 is a better fit". Then: "I'm thinking I might want a cable connector between the nano wire bundle and matrix wire bundle, is there something neat that could fit? Then the wire nest doesn't need to be so big, just big enough to get in with the hands and disconnect the connector to separate the matrix assembly from the tray", and on the kit below: "Yes I'll order this kit and use one 13 cm cable for each side of the connector, and skip the ethernet cabling. That'll be 22 cables per half, or 44 in total, and 2x each of 6p and 5p male and female housings. That'll be 26 cm in total between the matrix and nano, I think that'll be enough".
 

@@ -55,6 +55,11 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 - The socket pusher pushes the socket exactly the pocket walls' depth, so with Kailh's tolerances (body 1.80 +-0.05, bosses 3.05 +-0.05) its top ends anywhere from 0.1 above to 0.1 below the walls' mouth. If the user reports it still sitting in the pocket, lengthen the pins by that much (042's review).
 - Neither pusher's export checks that its pry slot opens to the base's edge: its depth is measured from the edge to the slot's back wall, so a closed pocket would pass. The cutters run past the edge (042's review).
 - If the switch post's tip narrows below about 1.4, it sinks into the 1.8 x 1.2 dimple and bears on the cone, and the peg raises take more of the push (040 and 041's review).
+- `check_layout.py`'s `frame_opening_margins()` cannot fail on the heads alone: they have the bosses' centers and a smaller radius than the bosses' ends (2.0 against 2.9), which it also checks (028's review).
+- The backing opening's ranges in DESIGN.md are held by no `DESIGN_` constant, unlike most figures `check_layout.py` prints (028).
+- DESIGN.md's free floor under the backing, 6,664 and 6,646 mm2, are 0.1 raster figures (6,665.3 and 6,646.6 as polygons), and the region it calls one from the opening to the strips reaches only one strip's insulator in plan, the other across the bay's walls or the wire rooms (028's review).
+- `layout.frame_wall_outer_polygon()` self-intersects on every key (for example at (5.444, 21.309)), where `check_layout.py`'s `outline_clearance()` takes a simple polygon. The walls' figures still agree with an independent offset (028's review).
+- The backing keeps 1.7 between the column 0 boss's screw hole and the opening, 0.8 thick, on both halves. README's check for sockets that give could name S102 and S262 (028's review).
 
 ## kbdkid4
 
