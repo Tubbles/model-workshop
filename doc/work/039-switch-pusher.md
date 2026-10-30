@@ -1,6 +1,6 @@
 # 039 Switch pusher
 
-Status: implemented (2026-10-30)
+Status: implemented (2026-10-30, 5e95a5c)
 
 The user, 2026-10-30: "I would like to have a small new tool I can print, a choc v1 pusher, for removing the switches from the frame board. Let's make it big as a single switch's footprint and square, and have holes for the electrical pins. It shall Then have slight raises for the side pegs, and a larger for the center post. The post pusher shall have a slight simple [dimple] in it as well for alignment. I think the pegs are too small for a dimple to print correctly." On how it is used: "Plate on, that's fine, and backing off, but the hotswap sockets populated. Only need to push it betong [beyond] the plate grip so I can lift the rest by hand".
 
