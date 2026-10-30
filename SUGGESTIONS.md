@@ -60,6 +60,8 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 - DESIGN.md's free floor under the backing, 6,664 and 6,646 mm2, are 0.1 raster figures (6,665.3 and 6,646.6 as polygons), and the region it calls one from the opening to the strips reaches only one strip's insulator in plan, the other across the bay's walls or the wire rooms (028's review).
 - `layout.frame_wall_outer_polygon()` self-intersects on every key (for example at (5.444, 21.309)), where `check_layout.py`'s `outline_clearance()` takes a simple polygon. The walls' figures still agree with an independent offset (028's review).
 - The backing keeps 1.7 between the column 0 boss's screw hole and the opening, 0.8 thick, on both halves. README's check for sockets that give could name S102 and S262 (028's review).
+- The right half's boss at S230's north-west corner (75.967, 76.248) sits exactly 0.5 from column 4's north ledge as modelled, where its left twin keeps 0.147 more. If the first print shows it touching the ledge, it can move 0.1 south at the cost of its margin from S230's walls, 0.0001 today (044).
+- `place.py`'s docstring still calls `TAKEN_OUT_BOSS_SEEDS` the places the user took out, and DESIGN.md and work item 044 call the right half's new boss's label "S230's east corner", which is an alternative of the seed "S230 north". The list also holds the found place that stays out, the right half's "S210 north" (044's review).
 
 ## kbdkid4
 

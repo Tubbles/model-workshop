@@ -1,6 +1,6 @@
 # 044 The frame's bosses replanned without the NC hole
 
-Status: in progress (2026-10-30)
+Status: implemented (2026-10-30, 6cc8a66)
 
 The bosses kept clear of the NC pad's hole after work item 035 took it out of the frame, so they stayed where they were. The user, 2026-10-30: "replanning the bosses is a good idea since the NC pin is gone, maybe there are more that can be added or moved to a better spot, let's have a look". Shown the options (`tmp/boss_look/`, untracked), the user: "Just go with your recommendation".
 
