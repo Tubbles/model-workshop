@@ -369,7 +369,7 @@ DESIGN_NANO_ROOMS_INTO_STRIPS_MM = {
            ("over the P1.01/P1.02/P1.07 pads", "east"): (0.44, 2)},
 }
 # The hand-wired frame (work item 014).
-DESIGN_FRAME_BOSS_COUNT = {False: 22, True: 23}
+DESIGN_FRAME_BOSS_COUNT = {False: 23, True: 24}
 DESIGN_FRAME_BACKING_TOP_Z_MM = 7.233  # on the bosses' ends, 2.267 under the frame
 DESIGN_FRAME_BACKING_UNDERSIDE_PRINTED_Z_MM = 6.383
 DESIGN_FRAME_SCREW_HEADS_BOTTOM_Z_MM = 4.883
@@ -379,11 +379,6 @@ DESIGN_FRAME_TAB_SLOT_PAST_TIP_MM = 0.5
 # order but the NC pad's, which the frame leaves out (work item 035): the
 # post, the pegs, the blades.
 DESIGN_FRAME_HOLE_DIAMETERS_MM = (3.42, 1.90, 1.90, 3.2, 3.2)
-# The NC pad's hole as the frame had it when its bosses were placed. The
-# bosses still keep from its place, so that they stay where they were
-# placed: DESIGN.md (Hand-wired frame, Bosses) has what the rule would
-# free without it.
-DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM = 1.6
 # The frame's pocket walls, whole (work item 026): their outer face out
 # of the socket, their heights in the tray, the wall's pockets beside the
 # bottom row's walls, the walls' standoff flats per half as (key,
@@ -4284,16 +4279,6 @@ def frame_footprint_holes(key, right):
             for center, diameter in zip(centers, DESIGN_FRAME_HOLE_DIAMETERS_MM)]
 
 
-def frame_boss_footprint_holes(key, right):
-    """(center in the left half's frame, diameter) of the holes a boss
-    keeps from at a key: the frame's (frame_footprint_holes()) and the
-    NC pad's place at DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM."""
-    nc_pad = layout.footprint_point(frame_key_center(key, right),
-                                    layout.CHOC_FOOTPRINT_NC_PAD_HOLE_CENTER_MM)
-    return frame_footprint_holes(key, right) + [
-        (frame_left_point(nc_pad, right), DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM)]
-
-
 def frame_local_box(key, right, x_range, y_range):
     """A footprint-local box on the half, in the left half's frame."""
     center = frame_key_center(key, right)
@@ -4329,8 +4314,7 @@ def frame_tab_pieces(key, right):
 def frame_own_obstacles(right):
     """(label, kind, shape, minimum) of the frame's features a boss keeps
     from: the walls (their outer face, not convex), the tab slots and
-    wire rooms and the footprint holes as the frame has them, with the
-    NC pad's place (frame_boss_footprint_holes())."""
+    wire rooms and the footprint holes as the frame has them."""
     obstacles = []
     for key in layout.key_centers_on_half(right):
         obstacles.append((f"{key}'s walls", "outline", layout.frame_wall_outer_polygon(key, right),
@@ -4343,7 +4327,7 @@ def frame_own_obstacles(right):
         obstacles.extend(
             (f"{key}'s {diameter} hole", "circle", (center, diameter / 2.0),
              layout.FRAME_BOSS_FROM_FRAME_MM)
-            for center, diameter in frame_boss_footprint_holes(key, right)
+            for center, diameter in frame_footprint_holes(key, right)
         )
     return obstacles
 

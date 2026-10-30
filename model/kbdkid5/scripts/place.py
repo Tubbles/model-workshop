@@ -108,24 +108,25 @@ STANDOFF_WINDOW = 8.0  # around the target
 # keeps the rules within BOSS_REACH of it. BOSS_REACH and the merging of
 # places nearer than the bosses' spacing are tmp/frame015/search2.py's,
 # whose run on the committed scripts (tmp/tray_move/boss_search.py)
-# gave FRAME_BOSS_CENTERS_MM, with the places the user took out below.
+# gave FRAME_BOSS_CENTERS_MM, with the places the user took out below,
+# but for the right half's boss at (75.967, 76.248), which this module's
+# frame-bosses run gave (doc/work/044).
 BOSS_NORTH_OFFSET = (-2.8, 4.0)
 BOSS_CORNER_OFFSETS = (("west", (-9.525, 3.1)), ("east", (9.525, 3.1)))
 BOSS_REACH = 3.0
 
 # The search's places the user took out (doc/work/021: 50 M2 x 4 screws
-# on hand against the 56 the two backings took), per half, each as the
-# labels of the seeds whose answers merged into it, which boss_seeds()
-# leaves out so that the search finds the bosses that stay. The comments
-# give the work item's numbers (FRAME_BOSS_CENTERS_MM's order before it)
-# and the places.
+# on hand against the 56 the two backings took) or left out
+# (doc/work/044), per half, each as the labels of the seeds whose answers
+# merged into it, which boss_seeds() leaves out so that the search finds
+# the bosses that stay. The comments give work item 021's numbers
+# (FRAME_BOSS_CENTERS_MM's order before it) and the places.
 TAKEN_OUT_BOSS_SEEDS = {
     False: (
         ("S103's east corner", "S113's west corner"),  # L4 (18.574, 12.307)
         ("S110 north",),  # L9 (25.049, 70.607)
         ("S123's west corner",),  # L10 (37.624, 17.070)
         ("S133's east corner", "S143's west corner"),  # L18 (75.724, 19.451)
-        ("S140 north",),  # L23 (82.199, 75.370)
         ("S143's east corner", "S153's west corner"),  # L24 (94.774, 17.070)
     ),
     True: (
@@ -134,6 +135,7 @@ TAKEN_OUT_BOSS_SEEDS = {
         ("S243's east corner", "S233's west corner"),  # R15 (56.416, 17.115)
         ("S233's east corner", "S223's west corner"),  # R20 (75.724, 19.451)
         ("S223's east corner", "S213's west corner"),  # R25 (94.774, 17.070)
+        ("S210 north",),  # (95.958, 73.343), its west corner as its fallback (044)
     ),
 }
 

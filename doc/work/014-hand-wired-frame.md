@@ -11,7 +11,7 @@ Done: `model/kbdkid5/scripts/frame_shape.py` and `export_frame.py`, the `kbdkid5
 Still open:
 
 - The thumb's socket has no boss near it on either half (DESIGN.md, Hand-wired frame, Bosses), so its backing reaches it unsupported and only its pocket holds it against a switch going in.
-- The sockets of S100 and S130 (S260 and S230 on the right half), S110 and S140 on the left half (since work item 021) and S242 and S210 on the right half have no boss north of them, only south of them and at their corners, and the right half's S230 and S210 only south of them (S120, S240 and S262 in place of S100, S260 and S242 until the nice!nano moved, work item 015).
+- The sockets of S100 and S130 (S260 and S230 on the right half), S110 on the left half (since work item 021) and S242 and S210 on the right half have no boss north of them, only south of them and at their corners, and the right half's S210 only south of it (S120, S240 and S262 in place of S100, S260 and S242 until the nice!nano moved, work item 015).
 - The bottom row's sockets have no room for a boss south of them, and since work item 021 none at their corners, so the backing under them reaches out past the bosses north of them.
 - In the tray, the thumb switch's center post and pegs, which reach 1.4 below the frame, overlapped the parking boss in plan, and S150's east peg (S210's west one on the right half) the upper dowel boss, as they would under a PCB. Resolved by work item 023, which cuts reliefs for them into the bosses' tops (DESIGN.md, The joint, Post reliefs).
 - Nothing has been printed yet.

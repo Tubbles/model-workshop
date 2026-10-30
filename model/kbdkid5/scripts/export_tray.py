@@ -217,8 +217,8 @@ DESIGN_SHELF_ROUND_MM = 2.13  # the ledge's inner face's, wherever the outline s
 # Per half, the notches for the backing's screw heads, by kind: (count,
 # deep, long).
 DESIGN_SHELF_NOTCHES = {
-    False: ((3, 0.102, 1.408), (1, 1.223, 4.298), (1, 1.954, 4.880)),
-    True: ((1, 1.223, 4.298),),
+    False: ((3, 0.102, 1.408), (2, 1.223, 4.298), (1, 1.954, 4.880)),
+    True: ((1, 1.223, 4.298), (1, 2.101, 4.936)),
 }
 # The parts' mounts (DESIGN.md, "Parts in the tray"), the left half's,
 # placed on either half by half_point(). The nice!nano's mounts follow
