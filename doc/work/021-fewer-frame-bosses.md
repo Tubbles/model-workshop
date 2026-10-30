@@ -7,9 +7,9 @@ The user, 2026-10-22, with 50 M2 x 4 screws on hand against the 56 the two backi
 Scope:
 
 - Take out the left half's L4 (18.574, 12.307), L9 (25.049, 70.607), L10 (37.624, 17.070), L18 (75.724, 19.451), L23 (82.199, 75.370) and L24 (94.774, 17.070), and the right half's R4 (18.574, 12.307), R10 (37.624, 12.307), R15 (56.416, 17.115), R20 (75.724, 19.451) and R25 (94.774, 17.070). That leaves 22 and 23, 45 inserts and screws, and with the nice!nano clamps' two M2 x 4, 47 of the user's 50.
-- Each one taken out stands 6.3 to 6.6 from a boss that stays. On the left only one of S140's pads gets a nearest boss more than 0.1 farther (8.2 to 9.9, L19 for L23). R4 rather than R1: without R1, S102's and S103's farther pads would lie 10.6 and 13.0 from a boss instead of 9.4 and 10.6, and without R4 only S123's move, by 0.1 (`tmp/bosses/removal_and_s130.py`, `tmp/bosses/removal_r4.py`, untracked).
+- Each one taken out stands 6.3 to 6.6 from a boss that stays. On the left only one of S140's pads gets a nearest boss more than 0.1 farther (8.2 to 9.9, L19 for L23). R4 rather than R1: without R1, S262's and S263's farther pads would lie 10.6 and 13.0 from a boss instead of 9.4 and 10.6, and without R4 only S243's move, by 0.1 (`tmp/bosses/removal_and_s130.py`, `tmp/bosses/removal_r4.py`, untracked).
 - The placement solver's `frame-bosses` run would put them back: it has to leave out the places the user took out, so that it still finds the committed set.
-- No boss can stand north of S130 on either half: the screw head would meet the reset button by up to 2.2, and the boss would come 0.227 too close to S130's switch hole. The right half's S130 also loses its east corner to S130's mirrored socket walls (0.216). Its socket has one boss near it, R19 at 9.4, the next 17.9 away.
+- No boss can stand north of S130 on the left half or S230 on the right: the screw head would meet the reset button by up to 2.2, and the boss would come 0.227 too close to the key's switch hole. The right half's S230 also loses its east corner to S230's mirrored socket walls (0.216). Its socket has one boss near it, R19 at 9.4, the next 17.9 away.
 
 Done:
 

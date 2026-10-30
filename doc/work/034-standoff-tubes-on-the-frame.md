@@ -14,4 +14,4 @@ Specification:
 
 Verify: `check_layout.py` passes. CI's frame and tray exports pass and print the tubes and the standoffs' top. DESIGN.md and README.md follow.
 
-Deviation: three tubes reach into tab wires' rooms, by 0.142 (S122) and 0.050 (S140) on the left half and 0.179 (S140) on the right, where the standoffs stood over the rooms' full height before. They are held to those figures rather than clipped (DESIGN.md, Hand-wired frame, Tubes). S140's walls on the left half stand 0.080 from their tube as modelled, which the print's swelling closes.
+Deviation: three tubes reach into tab wires' rooms, by 0.142 (S122) and 0.050 (S140) on the left half and 0.179 (S220) on the right, where the standoffs stood over the rooms' full height before. They are held to those figures rather than clipped (DESIGN.md, Hand-wired frame, Tubes). S140's walls on the left half stand 0.080 from their tube as modelled, which the print's swelling closes.

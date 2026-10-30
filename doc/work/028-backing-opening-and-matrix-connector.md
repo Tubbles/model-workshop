@@ -6,14 +6,14 @@ The user, 2026-10-24, on the hand-wired frame's leads to the nice!nano: "there n
 
 ## Decided
 
-- The opening goes in the backing under S102 on both halves. The floor under the backing is one free region over each half (6,687 mm2 on the left half and 6,668 on the right, 6.38 clear, 4.88 under the backing's screw heads), so the leads' slack lies on it between the opening and the bay. The largest rectangle there that keeps the backing's rules (1.0 from the pads, clear of the screw heads, the bosses' ends and the walls' outer faces) over free floor, in the left half's frame: 9.7 x 12.2 at x 8.9 to 18.6, y 25.6 to 37.8 on the left half, 5.6 x 12.2 at x 3.6 to 9.2, y 25.6 to 37.8 on the right (`tmp/slack_hole/probe.py`, untracked, with its output in `left.txt` and `right.txt`).
+- The opening goes in the backing under S102 on the left half and S262 on the right. The floor under the backing is one free region over each half (6,687 mm2 on the left half and 6,668 on the right, 6.38 clear, 4.88 under the backing's screw heads), so the leads' slack lies on it between the opening and the bay. The largest rectangle there that keeps the backing's rules (1.0 from the pads, clear of the screw heads, the bosses' ends and the walls' outer faces) over free floor, in the left half's frame: 9.7 x 12.2 at x 8.9 to 18.6, y 25.6 to 37.8 on the left half, 5.6 x 12.2 at x 3.6 to 9.2, y 25.6 to 37.8 on the right (`tmp/slack_hole/probe.py`, untracked, with its output in `left.txt` and `right.txt`).
 - The connector: elechawk's PicoBlade compatible 1.25 mm kit (model 125BOXMF, Amazon.se B08RMQP6YP, 209 kr on 2026-10-24), male and female housings of 2 to 6 positions and 180 pre-crimped 13 cm silicone wires, each with a male terminal at one end and a female one at the other (the listing's photos). Per half a 6P and a 5P pair carry the 11 signals, with one 13 cm wire per signal on each side and no Ethernet cores: 44 wires in all and two each of the 6P and 5P male and female housings. The two sizes cannot be swapped, and each housing mates one way. Molex's own PicoBlade housings have a friction lock and are polarized to their mating part (the 51021 and 51047 product sheets, `tmp/connector/picoblade-51021-drawings/`). The kit is a clone, so its lock is unverified, and the listing gives neither the wire's gauge nor the housings' size.
 - The nano side's wires end in clipped 1N4148 leads (0.5 at most) as the pins in the strips, held by hot glue (doc/log/2026-10-24.md).
 - Power, ground and reset stay in the tray and plug into the strips like the matrix: the battery's negative on a GND pin, its positive through the power switch on RAW, the reset button on RST and GND. B+ and B- stay empty. The user: "I mean b- and b+ is not populated by the strip". nicekeyboards: "RAW and GND are the respective equivalents to B+ and B-" (doc/components.md, section 1). None of these wires pass the opening.
 
 ## The nice!nano's pins
 
-kbdkid4's, since "the matrix wiring will be the same as in kbdkid3/4" (the user), traced in kbdkid4's `circuit/circuit.lp` through its reversible board's jumpers: its U1 and U2 carry each signal on the same pin. The nice!nano lies the same side up on both halves, its B+ row (RAW, GND, RST, VCC) east and its B- row west as built. Pins are counted from the USB end. C0 is the outer column, C6 the thumb (S163), R0 the top row.
+kbdkid4's, since "the matrix wiring will be the same as in kbdkid3/4" (the user), traced in kbdkid4's `circuit/circuit.lp` through its reversible board's jumpers: its U1 and U2 carry each signal on the same pin. The nice!nano lies the same side up on both halves, its B+ row (RAW, GND, RST, VCC) east and its B- row west as built. Pins are counted from the USB end. C0 is the outer column, C6 the thumb (S163, S203 on the right half), R0 the top row.
 
 | Strip | Pin | Signal |
 |---|---|---|
@@ -34,7 +34,7 @@ kbdkid4's, since "the matrix wiring will be the same as in kbdkid3/4" (the user)
 | | 11 | R1, P1.04 |
 | | 12 | R2, P1.06 |
 
-The west strip's other pins are free. kbdkid4 also wires a display's CS, MOSI and SCK to west pins 1, 5 and 6, and kbdkid5 has none. West pins 4, 5 and 12 lie under the backing by S120's and S121's pads, and pin 11 at its cutout's end (DESIGN.md, Wires to the nice!nano), so R1, R2 and a GND on west pin 4 take a lead bent flat over the strip, 1.17 under the backing.
+The west strip's other pins are free. kbdkid4 also wires a display's CS, MOSI and SCK to west pins 1, 5 and 6, and kbdkid5 has none. West pins 4, 5 and 12 lie under the backing by S120's and S121's pads (S240's and S241's on the right half), and pin 11 at its cutout's end (DESIGN.md, Wires to the nice!nano), so R1, R2 and a GND on west pin 4 take a lead bent flat over the strip, 1.17 under the backing.
 
 ## Routes in the tray
 
