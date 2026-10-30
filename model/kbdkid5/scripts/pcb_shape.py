@@ -83,8 +83,9 @@ def half_outline(right):
 
 
 def half_key_centers(right):
-    """{key name: center} on the given half."""
-    return {name: half_point(center, right) for name, center in layout.KEY_CENTERS_MM.items()}
+    """{key name on the half: center} on the given half."""
+    return {name: half_point(center, right)
+            for name, center in layout.key_centers_on_half(right).items()}
 
 
 def half_drills(right):

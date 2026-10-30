@@ -43,7 +43,8 @@ frame, and mirrored at the end, so what it is cut for comes in that
 frame: socket_polygons_on_half() and the socket rule functions with
 right=True give the right half's sockets mirrored back across the
 mirror line, which is the footprint's mirror image at the left half's
-key center, not the left half's socket.
+key center, not the left half's socket. They take a right half key by
+its own name, S2xx (key_centers_on_half()).
 """
 
 import math
@@ -77,6 +78,26 @@ KEY_CENTERS_MM = {
     for row, y in enumerate(rows)
 }
 KEY_CENTERS_MM[THUMB_KEY_NAME] = THUMB_KEY_CENTER_MM
+
+# The right half's keys have kbdkid4's right half names (DESIGN.md,
+# "Keys"): the right twin of S1<column><row> is S2<6 minus column><row>,
+# the thumb S163's S203. The right half is built in the left half's
+# frame (see the module docstring), each key where its left twin is, so
+# a function that takes a key and a half takes the key's name on that
+# half and looks it up there (key_centers_on_half()).
+RIGHT_HALF_KEY_NAMES = {key: f"S2{6 - int(key[2])}{key[3]}" for key in KEY_CENTERS_MM}
+
+
+def key_name_on_half(key, right=False):
+    """A left half key's name on the given half: its own, or its right
+    twin's."""
+    return RIGHT_HALF_KEY_NAMES[key] if right else key
+
+
+def key_centers_on_half(right=False):
+    """{name: center} of the given half's keys, by their names on it, in
+    the left half's frame: a right half key at its left twin's center."""
+    return {key_name_on_half(key, right): center for key, center in KEY_CENTERS_MM.items()}
 
 
 def key_cell_top_right_corner(key_center):
@@ -352,7 +373,7 @@ def mirrored_back_polygon(polygon):
 def socket_polygons_on_half(key, right=False):
     """A key's socket polygons on the given half, in the left half's
     frame (see the module docstring), counter-clockwise."""
-    center = KEY_CENTERS_MM[key]
+    center = key_centers_on_half(right)[key]
     if not right:
         return socket_polygons(center)
     return tuple(
@@ -364,7 +385,7 @@ def socket_polygons_on_half(key, right=False):
 def socket_tab_tip_on_half(key, right=False):
     """A key's socket tab tip on the given half, in the left half's
     frame."""
-    center = KEY_CENTERS_MM[key]
+    center = key_centers_on_half(right)[key]
     if not right:
         return socket_tab_tip(center)
     return mirror_for_right_half(socket_tab_tip(mirror_for_right_half(center)))
@@ -1048,11 +1069,11 @@ RESET_BUTTON_LEDGE_CUTAWAY = ledge_cutaway(
 # edges where kbdkid4 used the straight stretches between the corner
 # rounds. Along an edge is measured from its start vertex, across it
 # outward (outline_edge_frame()). The layout names the sockets each rule
-# applies to, for each half, and the functions below work out the cuts
-# by the rule, the right half's in the left half's frame. check_layout.py
-# checks that the sockets then keep the rules' clearances from the
-# ledge, the wall and the standoffs on both halves, so a socket left out
-# fails there.
+# applies to, for each half, the right half's by their own names, and
+# the functions below work out the cuts by the rule, the right half's in
+# the left half's frame. check_layout.py checks that the sockets then
+# keep the rules' clearances from the ledge, the wall and the standoffs
+# on both halves, so a socket left out fails there.
 #
 # Ledge cuts run through the ledge's full width: from
 # LEDGE_CUT_OVERSHOOT_MM inside its inner face, where kbdkid4's cutters
@@ -1076,7 +1097,7 @@ LEDGE_NOTCH_CLEARANCE_MM = 0.5
 SOCKET_TAB_NOTCH_KEYS = ("S100", "S101", "S102", "S103")  # column 0, along the west edge
 # On the right half the thumb's tab, along the thumb's outer edge (the
 # east edge in the left half's frame).
-RIGHT_SOCKET_TAB_NOTCH_KEYS = ("S163",)
+RIGHT_SOCKET_TAB_NOTCH_KEYS = ("S203",)
 
 # Ledge reliefs: wherever a socket polygon comes within
 # LEDGE_RELIEF_CLEARANCE_MM of the ledge's inner face along an outline
@@ -1119,7 +1140,7 @@ SOCKET_LEDGE_RELIEF_KEYS = (
 )
 # On the right half the bottom row's lobes and walls, and the thumb's
 # tab (inside its notch) and walls.
-RIGHT_SOCKET_LEDGE_RELIEF_KEYS = ("S103", "S113", "S123", "S133", "S143", "S153", "S163")
+RIGHT_SOCKET_LEDGE_RELIEF_KEYS = ("S263", "S253", "S243", "S233", "S223", "S213", "S203")
 
 # Standoff flats: wherever a socket polygon comes within
 # STANDOFF_RELIEF_CLEARANCE_MM of a standoff in plan, the standoff gets
@@ -1155,7 +1176,7 @@ RIGHT_SOCKET_STANDOFF_FLATS = ()
 # (check_layout.frame_tube_polygon(), frame_shape.tube_face()).
 FRAME_WALL_STANDOFF_FLATS = ()  # (standoff center, key)
 RIGHT_FRAME_WALL_STANDOFF_FLATS = (
-    ((56.091, 23.460), "S122"),
+    ((56.091, 23.460), "S242"),
 )
 # The frame's pocket walls still cut back to FRAME_TRAY_CLEARANCE_MM
 # from a body of the tray that cannot give way without breaking one of
@@ -1629,7 +1650,7 @@ MAGNET_WALL_CUTBACK_TOP_Z_MM = TRAY_RIM_Z_MM
 # face allows: each boss ends where the outline's slant ends (the upper
 # one 0.006 short), which keeps it on the face's flat part between the
 # tray's corner rounds. At 55.5, where the upper pin first sat, its boss
-# overlapped the right half's S150 socket.
+# overlapped the right half's S210 socket.
 DOWEL_PIN_DIAMETER_MM = 4.0
 DOWEL_PIN_LENGTH_MM = 16.0
 DOWEL_PIN_EMBEDDED_MM = 8.0
@@ -1772,7 +1793,7 @@ def upper_boss_fill_polygon(right=False):
 # The dowel bosses keep the ledge's clearance from every socket by their
 # places (DESIGN.md, "The joint"). Where a frame pocket's walls' outer
 # face comes within FRAME_TRAY_CLEARANCE_MM of a boss (work item 026),
-# as S150's does on the right half beside the upper boss's south side
+# as S210's does on the right half beside the upper boss's south side
 # and inner end, the boss is notched over the ledge reliefs' heights,
 # which lie under the walls: by the box, in the slant's frame, around
 # the part of that face within the clearance of the boss's box, grown by
@@ -1815,7 +1836,7 @@ def frame_wall_boss_notches(right=False):
     notches = []
     for along in DOWEL_PIN_ALONGS_MM:
         along_range, outward_range = dowel_boss_ranges(along, right)
-        for key in KEY_CENTERS_MM:
+        for key in key_centers_on_half(right):
             pairs = [outline_edge_coordinates(point, SLANT_EDGE_INDEX)
                      for point in frame_wall_outer_polygon(key, right)]
             notch = box_notch(pairs, along_range, outward_range, FRAME_TRAY_CLEARANCE_MM)
@@ -2723,7 +2744,7 @@ def socket_y_ranges_beside(x_range, clearance):
     either half whose x ranges come within clearance of x_range."""
     blocked = []
     for right in (False, True):
-        for key in KEY_CENTERS_MM:
+        for key in key_centers_on_half(right):
             for polygon in socket_polygons_on_half(key, right):
                 (low_x, high_x), (low_y, high_y) = bounding_ranges(polygon)
                 if low_x - clearance < x_range[1] and x_range[0] < high_x + clearance:
@@ -2737,7 +2758,7 @@ def frame_wall_y_ranges_beside(x_range, clearance):
     x_range across x."""
     blocked = []
     for right in (False, True):
-        for key in KEY_CENTERS_MM:
+        for key in key_centers_on_half(right):
             pairs = [(y, x) for x, y in frame_wall_outer_polygon(key, right)]
             ys = [y for y, _x in clipped_to_band(pairs, grown_range(x_range, clearance))]
             if ys:
@@ -3453,7 +3474,7 @@ def switch_posts_and_pegs_on_half(key, right=False):
     """(center, diameter) of a key's center post and side pegs at their
     footprint holes' size (the first three of CHOC_FOOTPRINT_HOLES_MM)
     on the given half, in the left half's frame."""
-    center = KEY_CENTERS_MM[key]
+    center = key_centers_on_half(right)[key]
     if not right:
         return footprint_holes(center)[:3]
     holes = footprint_holes(mirror_for_right_half(center))[:3]
@@ -3490,7 +3511,7 @@ def switch_post_reliefs(right=False, fits=DEFAULT_MOUNT_FITS):
     z_range = (switch_post_relief_bottom_z(), PCB_UNDERSIDE_Z_MM)
     reliefs = []
     for body, polygon in post_relief_bodies(right, fits):
-        for key in KEY_CENTERS_MM:
+        for key in key_centers_on_half(right):
             for index, (center, diameter) in enumerate(switch_posts_and_pegs_on_half(key, right)):
                 if toward_polygon(center, polygon)[0] >= diameter / 2.0 + reach:
                     continue
@@ -3759,7 +3780,7 @@ def frame_pad_boxes(right=False):
     half's frame: the right half's footprint unmirrored at its mirrored
     key center, mirrored back."""
     boxes = []
-    for key, center in KEY_CENTERS_MM.items():
+    for key, center in key_centers_on_half(right).items():
         half_center = mirror_for_right_half(center) if right else center
         for pad in backing_pad_polygons(half_center):
             points = [mirror_for_right_half(point) if right else point for point in pad]
@@ -3892,7 +3913,9 @@ def hotswap_socket_outline_points():
 def frame_socket_outline(key, right=False):
     """A key's socket's outline under the frame on the given half, in
     the left half's frame, counter-clockwise."""
-    center = mirror_for_right_half(KEY_CENTERS_MM[key]) if right else KEY_CENTERS_MM[key]
+    center = key_centers_on_half(right)[key]
+    if right:
+        center = mirror_for_right_half(center)
     points = [footprint_point(center, point) for point in hotswap_socket_outline_points()]
     if right:
         points = [mirror_for_right_half(point) for point in points]

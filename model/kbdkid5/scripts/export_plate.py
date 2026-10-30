@@ -108,6 +108,7 @@ usage: freecadcmd model/kbdkid5/scripts/export_plate.py --pass <plate.stl> [righ
                  right-half mirror line, x = {layout.RIGHT_HALF_MIRROR_X_MM:.3f}
   covered        fill the switch cutout of {COVERED_KEY_NAME} solid, with a pit in its
                  underside for the key's diode, for a plate without that key
+                 ({layout.key_name_on_half(COVERED_KEY_NAME, True)} on the right half)
   pattern_shift  move every cutout and hole this far along +x (east, the way
                  kbdkid4's holes drifted, cause unknown) while the outline
                  stays put, mm
@@ -551,7 +552,7 @@ def format_point(point):
     return f"({point[0]:.3f}, {point[1]:.3f})"
 
 
-def print_build(build):
+def print_build(build, right):
     corner = build.corner
     print(f"layout:     {len(layout.KEY_CENTERS_MM)} keys, "
           f"{len(layout.MOUNTING_DRILL_CENTERS_MM)} mounting drills, plate "
@@ -569,7 +570,8 @@ def print_build(build):
     if build.diode_pit is not None:
         pit = build.diode_pit
         key = layout.KEY_CENTERS_MM[COVERED_KEY_NAME]
-        print(f"cover:      {COVERED_KEY_NAME}'s cutout at {format_point(key)} filled solid, "
+        name = layout.key_name_on_half(COVERED_KEY_NAME, right)
+        print(f"cover:      {name}'s cutout at {format_point(key)} filled solid, "
               f"{pit.length:.2f} x {pit.width:.2f} mm pit {pit.depth:.2f} mm deep in the "
               f"underside for its diode at {format_point(pit.center)}, rotated "
               f"{layout.DIODE_ROTATION_DEGREES:.0f} degrees, "
@@ -634,7 +636,7 @@ def main():
     build = build_plate(
         arguments.covered, arguments.pattern_shift, arguments.side_shave, arguments.hole_diameter
     )
-    print_build(build)
+    print_build(build, arguments.right)
     plate = build.solid
     half = "left"
     if arguments.right:

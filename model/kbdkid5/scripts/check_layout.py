@@ -181,9 +181,9 @@ DESIGN_STANDOFF_FLAT_BOTTOM_Z_MM = 6.48
 # The right half's sockets (DESIGN.md, "Tray"): the thumb's tab past the
 # thumb's outer edge, notched and pocketed like column 0's on the left
 # (the same pocket figures), the bottom row's reliefs, and no flats.
-DESIGN_RIGHT_TAB_NOTCH_KEYS = {"S163"}
+DESIGN_RIGHT_TAB_NOTCH_KEYS = {"S203"}
 DESIGN_RIGHT_TAB_TIP_PAST_THUMB_EDGE_MM = 0.231
-DESIGN_RIGHT_LEDGE_RELIEF_KEYS = {"S103", "S113", "S123", "S133", "S143", "S153", "S163"}
+DESIGN_RIGHT_LEDGE_RELIEF_KEYS = {"S263", "S253", "S243", "S233", "S223", "S213", "S203"}
 DESIGN_RIGHT_STANDOFF_FLATS = ()
 DESIGN_RIGHT_CLOSEST_SOCKET_TO_STANDOFF_MM = 1.114
 # Along the slant: boss, four slots, boss.
@@ -192,7 +192,7 @@ DESIGN_SLOT_TO_SLOT_GAP_MM = 2.84
 DESIGN_DOWEL_PIN_SPACING_MM = 55.5
 DESIGN_DOWEL_PIN_Z_MM = 4.15
 # Per half, False the left one, True the right one: how close the
-# dowel bosses and their fills come to a socket (S150's on both), and
+# dowel bosses and their fills come to a socket (S150's and S210's), and
 # the least plastic between two of the joint's holes and slots (the
 # lower dowel hole and the parking hole on both).
 DESIGN_BOSSES_FROM_SOCKETS_MM = {False: 3.701, True: 1.144}
@@ -207,7 +207,7 @@ DESIGN_DOWEL_BOSSES_INSIDE_SLANT_ENDS_MM = (0.0, 0.006)
 DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM = 0.832
 # The plate the standoffs' head holes keep from the switch cutouts where
 # they come nearest, in each of the plate's layers: the north-east
-# standoff's, from S131's cutout, on both halves.
+# standoff's, from S131's cutout, and S231's on the right half.
 DESIGN_HEAD_HOLES_FROM_CUTOUTS_MM = {"top": 0.703, "lower": 0.502}
 DESIGN_PARKING_PIN_PROUD_MM = 1.5
 DESIGN_PARKING_BOSS_FROM_SOCKETS_MM = 1.763  # on both halves, the thumb's
@@ -261,7 +261,7 @@ DESIGN_NANO_STRIP_POCKET_Y_MM = (46.1445, 78.4215)
 DESIGN_NANO_STRIPS_CLEAR_PRINTED_MM = 0.25  # of the tray up to the PCB's underside, the board west
 DESIGN_NANO_STRIPS_CLEAR_WORST_SPLIT_MM = 0.19  # the same, the end faces' swelling split worst
 DESIGN_NANO_STRIPS_UNDER_SOCKETS_MM = 2.267
-DESIGN_NANO_STRIP_SOCKET_KEYS = {False: {"S120", "S121", "S130", "S131"}, True: {"S120", "S121"}}
+DESIGN_NANO_STRIP_SOCKET_KEYS = {False: {"S120", "S121", "S130", "S131"}, True: {"S240", "S241"}}
 # The nice!nano's screw clamp (work items 009 and 010), at the default
 # press.
 DESIGN_CLAMP_TAB_X_MM = (44.724, 50.524)
@@ -291,7 +291,7 @@ DESIGN_CLAMP_NOSE_ONTO_BOARD_WORST_SPLIT_MM = 0.05  # the least, the end faces' 
 DESIGN_CLAMP_HEAD_TOP_Z_MM = 8.0
 DESIGN_CLAMP_UNDER_PCB_MM = 1.5  # the head
 DESIGN_CLAMP_MINIMUM_UNDER_PCB_MM = 0.5
-DESIGN_CLAMP_HEAD_FROM_SOCKETS_MM = 1.587  # S121's, on both halves
+DESIGN_CLAMP_HEAD_FROM_SOCKETS_MM = 1.587  # S121's, and S241's on the right half
 DESIGN_CLAMP_TAB_UNDER_SOCKET_MM = 1.38  # the plate as printed, lifted by the press
 DESIGN_CLAMP_SOCKET_KEYS = {"S121"}  # over the tab
 DESIGN_KNOB_IN_SLOT_PRINTED_MM = 0.25  # per side
@@ -302,12 +302,12 @@ DESIGN_KNOB_IN_SLOT_PRINTED_MM = 0.25  # per side
 # in plan on both halves, and its opening from the leads, beside them
 # and over them.
 DESIGN_RETAINER_UNDER_POSTS_MM = 0.9
-DESIGN_RETAINER_UNDER_WALLS_KEYS = {"S100"}
+DESIGN_RETAINER_UNDER_WALLS_KEYS = {False: {"S100"}, True: {"S260"}}
 DESIGN_RETAINER_UNDER_WALLS_MM = 0.5
 DESIGN_RETAINER_WALLS_OVER_IT_MM = 0.313  # in plan, past its south face
 DESIGN_RETAINER_IN_SOCKET_AT_WALLS_MM = 2.5
 DESIGN_RETAINER_IN_SOCKET_AT_PCB_MM = 0.7
-DESIGN_RETAINER_FROM_SOCKETS_MM = 0.609  # S100's
+DESIGN_RETAINER_FROM_SOCKETS_MM = 0.609  # S100's, and S260's on the right half
 DESIGN_RETAINER_BESIDE_LEADS_PRINTED_MM = 0.25
 DESIGN_RETAINER_OVER_LEADS_MM = 0.5
 # The reliefs under the switches' center posts and side pegs (work item
@@ -320,10 +320,10 @@ DESIGN_POST_RELIEF_UNDER_ENDS_MM = 0.5
 DESIGN_POST_RELIEF_DIAMETERS_MM = {3.4: 4.8, 1.9: 3.3}
 DESIGN_POST_RELIEF_BOTTOM_Z_MM = 7.4
 DESIGN_POST_RELIEF_CENTERS_MM = {
-    "dowel boss at 59.0 along the slant": ((109.799, 68.739),),  # S150's peg
-    "parking boss": ((123.349, 9.207), (117.849, 9.207), (128.849, 9.207)),  # S163's
-    "east wall's raised piece 2": ((60.699, 54.451),),  # S131's peg
-    "east wall's raised piece 3": ((60.699, 73.501),),  # S130's peg
+    "dowel boss at 59.0 along the slant": ((109.799, 68.739),),  # S150's and S210's peg
+    "parking boss": ((123.349, 9.207), (117.849, 9.207), (128.849, 9.207)),  # S163's and S203's
+    "east wall's raised piece 2": ((60.699, 54.451),),  # S131's and S231's peg
+    "east wall's raised piece 3": ((60.699, 73.501),),  # S130's and S230's peg
 }
 DESIGN_POST_RELIEF_FROM_JOINT_VOIDS_MM = {False: 1.05, True: 1.0}  # the upper dowel hole
 DESIGN_NANO_BAR_DEPTH_MM = 0.62
@@ -395,8 +395,8 @@ DESIGN_FRAME_BOSS_NC_PAD_HOLE_DIAMETER_MM = 1.6
 DESIGN_FRAME_WALL_REACH_MM = 0.925
 DESIGN_FRAME_WALLS_Z_MM = (7.7, 9.5)
 DESIGN_FRAME_WALL_POCKET_DEPTH_MM = 0.04
-DESIGN_FRAME_WALL_FLATS = {False: (), True: (("S122", (56.091, 23.460), 3.149, 1.049),)}
-DESIGN_FRAME_WALL_BOSS_NOTCHES = {False: (), True: (("S150", 59.0, 0.177, 1.335),)}
+DESIGN_FRAME_WALL_FLATS = {False: (), True: (("S242", (56.091, 23.460), 3.149, 1.049),)}
+DESIGN_FRAME_WALL_BOSS_NOTCHES = {False: (), True: (("S210", 59.0, 0.177, 1.335),)}
 DESIGN_FRAME_WALL_NOTCH_FROM_JOINT_VOIDS_MM = 1.073
 # The frame's tubes (work item 034): their heights in the tray, the
 # merged standoff's tube's cut from its axis, 0.5 short of the joint
@@ -410,11 +410,11 @@ DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM = 2.432
 DESIGN_FRAME_TUBES_FROM_TRAY_MM = 0.5
 DESIGN_FRAME_TUBES_FROM_FRAME_MM = {
     False: {"pockets": 0.880, "tab slots": 0.219},  # S140's, from the standoff at (75.724, 62.785)
-    True: {"pockets": 1.300, "tab slots": 1.335},  # S122's, and S100's, S102's and S150's
+    True: {"pockets": 1.300, "tab slots": 1.335},  # S242's, and S260's, S262's and S210's
 }
 DESIGN_FRAME_TUBES_INTO_TAB_WIRE_ROOMS_MM = {
     False: {("S122", (56.091, 23.460)): 0.142, ("S140", (75.724, 62.785)): 0.050},
-    True: {("S140", (75.724, 62.785)): 0.179},
+    True: {("S220", (75.724, 62.785)): 0.179},
 }
 # The shelves under the backing's edges (work items 020 and 022): their
 # face from the outer edge's shelf's start at the ledge's face to the
@@ -794,11 +794,11 @@ def half_label(right):
 
 
 def socket_footprints(right=False):
-    """(key name, convex polygon) for every socket polygon on the given
-    half, in the left half's frame."""
+    """(key name on the half, convex polygon) for every socket polygon on
+    the given half, in the left half's frame."""
     return [
         (name, polygon)
-        for name in layout.KEY_CENTERS_MM
+        for name in layout.key_centers_on_half(right)
         for polygon in layout.socket_polygons_on_half(name, right)
     ]
 
@@ -964,11 +964,12 @@ def centered_square(center, size):
                               layout.centered_range(center[1], size))
 
 
-def plate_cutout_pieces(key, layer):
+def plate_cutout_pieces(key, layer, right=False):
     """(label, circle_clearance() kind, shape) of the pieces of a key's
-    switch cutout in a layer of the plate: the top layer's square, the
-    lower layer's square and its pin hole's edge."""
-    x, y = layout.KEY_CENTERS_MM[key]
+    switch cutout in a layer of the plate on the given half, in the left
+    half's frame: the top layer's square, the lower layer's square and its
+    pin hole's edge."""
+    x, y = layout.key_centers_on_half(right)[key]
     label = f"{key}'s cutout in the plate's {layer} layer"
     if layer == "top":
         return [(label, "polygon", centered_square((x, y), layout.PLATE_TOP_LAYER_CUTOUT_MM))]
@@ -1261,20 +1262,21 @@ def plate_head_hole_rule_name(layer):
     return f"head hole from the plate's {layer} layer cutouts"
 
 
-def standoff_plate_rules():
+def standoff_plate_rules(right=False):
     """The switch plate's head hole over the standoff
     PLATE_HEAD_HOLE_FROM_CUTOUTS_MM from every switch cutout in each of
-    the plate's layers (check_plate_head_holes()). The right half's plate
-    is the left half's mirrored (export_plate.py's right), so in the left
-    half's frame its rules are these."""
+    the plate's layers on the given half (check_plate_head_holes()). The
+    right half's plate is the left half's mirrored (export_plate.py's
+    right), so in the left half's frame its rules are these, its cutouts
+    named for its own keys."""
     return [PlacementRule(name=plate_head_hole_rule_name(layer), feature="head hole",
                           radius=layout.PLATE_HEAD_HOLE_DIAMETER_MM / 2.0,
                           feature_z_range=(layout.PCB_TOP_Z_MM, layout.PLATE_TOP_Z_MM),
                           obstacle=label, kind=kind, shape=shape, obstacle_z_range=z_range,
                           minimum=PLATE_HEAD_HOLE_FROM_CUTOUTS_MM)
             for layer, z_range in layout.plate_layers()
-            for key in layout.KEY_CENTERS_MM
-            for label, kind, shape in plate_cutout_pieces(key, layer)]
+            for key in layout.key_centers_on_half(right)
+            for label, kind, shape in plate_cutout_pieces(key, layer, right)]
 
 
 def standoff_merges(right=False, fits=layout.DEFAULT_MOUNT_FITS):
@@ -1310,7 +1312,7 @@ def standoff_rules(right=False, fits=layout.DEFAULT_MOUNT_FITS):
             + standoff_joint_rules(right) + standoff_bore_rules(right)
             + standoff_parking_hole_rules() + standoff_mount_rules(fits)
             + standoff_wire_room_rules(layout.wire_rooms(fits, right))
-            + standoff_nano_strip_rules(strip_places) + standoff_plate_rules())
+            + standoff_nano_strip_rules(strip_places) + standoff_plate_rules(right))
 
 
 # The checks, in order.
@@ -2034,7 +2036,7 @@ def relief_figures(right=False):
     above_face = []
     for key in bottom_row:
         center = layout.KEY_CENTERS_MM[key]
-        polygons = layout.socket_polygons_on_half(key, right)
+        polygons = layout.socket_polygons_on_half(layout.key_name_on_half(key, right), right)
         lowest = min(y for polygon in polygons for _, y in polygon)
         above_face.append(lowest - south_ledge_face_y(center[0]))
     return [
@@ -3315,14 +3317,14 @@ def shell_with_end_swelling_on_foot(fits=layout.DEFAULT_MOUNT_FITS):
     return past, reach
 
 
-def retainer_under_posts(envelope):
-    """(least height under them, keys) of the switches' center posts
-    and side pegs, at their holes' size, that come within
+def retainer_under_posts(envelope, right=False):
+    """(least height under them, keys on the given half) of the switches'
+    center posts and side pegs, at their holes' size, that come within
     DESIGN_MOUNT_FROM_OTHER_PARTS_MM of the retainer in plan."""
     polygon = box_polygon(envelope)
     bottom = layout.PCB_UNDERSIDE_Z_MM - layout.SWITCH_POSTS_BELOW_PCB_MM
     keys = sorted({
-        name for name, center in layout.KEY_CENTERS_MM.items()
+        name for name, center in layout.key_centers_on_half(right).items()
         for hole_center, diameter in layout.footprint_holes(center)[:3]
         if circle_separation(hole_center, diameter / 2.0, polygon)
         < DESIGN_MOUNT_FROM_OTHER_PARTS_MM
@@ -3343,7 +3345,7 @@ def retainer_under_walls(envelope, right):
     at the most) of the frame's pocket walls that stand over it."""
     polygon = box_polygon(envelope)
     reach = {key: -outline_clearance(layout.frame_wall_outer_polygon(key, right), polygon)
-             for key in layout.KEY_CENTERS_MM}
+             for key in layout.key_centers_on_half(right)}
     over = {key: depth for key, depth in reach.items() if depth > TOLERANCE_MM}
     return set(over), max(over.values(), default=0.0)
 
@@ -3354,7 +3356,7 @@ def check_power_switch_retainer(right=False):
     and by the PCB, clear of the sockets in plan, its opening clear of
     the leads as printed and the leads' shortest cut behind it."""
     envelope = layout.power_switch_retainer_envelope()
-    under, keys = retainer_under_posts(envelope)
+    under, keys = retainer_under_posts(envelope, right)
     wall_keys, walls_over = retainer_under_walls(envelope, right)
     under_walls = frame_walls_z_range()[0] - envelope.z_range[1]
     in_socket_at_walls = layout.POWER_SWITCH_CRADLE_TOP_Z_MM - under_walls
@@ -3385,9 +3387,9 @@ def check_power_switch_retainer(right=False):
                        1),
     ]
     problems = failed(figures)
-    if wall_keys != DESIGN_RETAINER_UNDER_WALLS_KEYS:
+    if wall_keys != DESIGN_RETAINER_UNDER_WALLS_KEYS[right]:
         problems.append(f"the pocket walls over the retainer are {sorted(wall_keys)}, DESIGN.md's "
-                        f"{sorted(DESIGN_RETAINER_UNDER_WALLS_KEYS)}")
+                        f"{sorted(DESIGN_RETAINER_UNDER_WALLS_KEYS[right])}")
     if sockets.value < DESIGN_MOUNT_FROM_OTHER_PARTS_MM - TOLERANCE_MM:
         problems.append(f"the retainer comes {sockets.value:.3f} from {sockets.where}")
     if past < TOLERANCE_MM:
@@ -3457,7 +3459,7 @@ def post_relief_problems(right):
     bodies = tray_bodies(right)
     problems, relieved = [], []
     beside, under = Tightest(), Tightest()
-    for key in layout.KEY_CENTERS_MM:
+    for key in layout.key_centers_on_half(right):
         for center, diameter in layout.switch_posts_and_pegs_on_half(key, right):
             hole = f"{key}'s {diameter} hole at ({center[0]:.3f}, {center[1]:.3f})"
             for label, kind, shape, z_range in bodies:
@@ -4261,7 +4263,7 @@ def check_pry_slot(right=False):
 
 
 def frame_key_center(key, right):
-    center = layout.KEY_CENTERS_MM[key]
+    center = layout.key_centers_on_half(right)[key]
     return layout.mirror_for_right_half(center) if right else center
 
 
@@ -4330,7 +4332,7 @@ def frame_own_obstacles(right):
     wire rooms and the footprint holes as the frame has them, with the
     NC pad's place (frame_boss_footprint_holes())."""
     obstacles = []
-    for key in layout.KEY_CENTERS_MM:
+    for key in layout.key_centers_on_half(right):
         obstacles.append((f"{key}'s walls", "outline", layout.frame_wall_outer_polygon(key, right),
                           layout.FRAME_BOSS_FROM_FRAME_MM))
         slots, rooms = frame_tab_pieces(key, right)
@@ -4708,7 +4710,7 @@ def frame_wall_clearances(right=False):
     bands = frame_wall_standoff_bands(right)
     cut_back_pairs = set(layout.frame_walls_cut_back(right))
     problems, tightest, cut_back = [], Tightest(), []
-    for key in layout.KEY_CENTERS_MM:
+    for key in layout.key_centers_on_half(right):
         wall = layout.frame_wall_outer_polygon(key, right)
         measured = [(label, describe_piece(label, z_range), outline_clearance(wall, polygon))
                     for label, polygon, z_range in pieces
@@ -4891,7 +4893,7 @@ def frame_tube_neighbours(tube, right):
     (layout.frame_pocket_polygon(), not convex), the tab slots and the
     footprint holes, and apart (key, room) the tab wires' rooms."""
     near, rooms = [], []
-    for key in layout.KEY_CENTERS_MM:
+    for key in layout.key_centers_on_half(right):
         pocket = layout.frame_pocket_polygon(key, right)
         if bounding_gap(tube, pocket) < TUBE_NEAR_MM:
             near.append(("pockets", f"{key}'s pocket", "outline", pocket))

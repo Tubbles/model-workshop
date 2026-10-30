@@ -150,7 +150,8 @@ class StandoffRunsTest(unittest.TestCase):
             merged = {row.obstacle: row.value for row in report.rows
                       if row.status == "merged" and row.context == context}
             self.assertEqual(round(-merged["joint block"], 3), 0.468)
-            self.assertEqual(round(place.socket_values(report, context)["S150"], 3),
+            key = "S210" if right else "S150"
+            self.assertEqual(round(place.socket_values(report, context)[key], 3),
                              1.391 if right else 3.404)
         drill = rows_named(report, "drill inside the outline", "left")[0]
         self.assertEqual(round(drill.value, 3), 4.032)
@@ -183,7 +184,7 @@ class StandoffRunsTest(unittest.TestCase):
             self.assertIn(figure, flat.note)
         self.assertEqual(round(place.socket_values(report, "left")[key], 3), clearance)
         right = place.socket_values(report, "right")
-        self.assertEqual((round(right["S130"], 3), round(right["S140"], 3)), (2.408, 2.976))
+        self.assertEqual((round(right["S230"], 3), round(right["S220"], 3)), (2.408, 2.976))
 
 
 class HeadOverStripTest(unittest.TestCase):

@@ -147,21 +147,23 @@ DESIGN_PARKING_BOSS_ACROSS_MM = 7.0
 DESIGN_PARKING_BOSS_BEHIND_HOLE_MM = 1.5
 # The reliefs under the switches' center posts and side pegs (work item
 # 023), at the same places on both halves in the left half's frame:
-# (what, the post's or peg's center, its footprint hole across, the way
-# into the body the relief is cut into, the relief across). "slant" is
-# the slant's direction north, ("corner", point) the way toward that
-# corner of the body: the raised east wall's pieces give way to the
-# frame's pocket walls of S131 and S130 (work item 026), so their pegs'
+# (the left half's key, its post or peg and the body, the post's or
+# peg's center, its footprint hole across, the way into the body the
+# relief is cut into, the relief across), the right half's named for
+# the key's right twin. "slant" is the slant's direction north,
+# ("corner", point) the way toward that corner of the body: the raised
+# east wall's pieces give way to the frame's pocket walls of S131 and
+# S130 (S231 and S230 on the right half, work item 026), so their pegs'
 # reliefs cross the pieces' south east corners. The posts and pegs end
 # at z 8.1.
 DESIGN_POST_RELIEFS = (
-    ("S163's post in the parking boss", (123.349, 9.207), 3.4, (0.0, 1.0), 4.8),
-    ("S163's peg in the parking boss", (117.849, 9.207), 1.9, (0.0, 1.0), 3.3),
-    ("S163's peg in the parking boss", (128.849, 9.207), 1.9, (0.0, 1.0), 3.3),
-    ("S150's peg in the upper dowel boss", (109.799, 68.739), 1.9, "slant", 3.3),
-    ("S131's peg in the nice!nano's raised east wall", (60.699, 54.451), 1.9,
+    ("S163", "post in the parking boss", (123.349, 9.207), 3.4, (0.0, 1.0), 4.8),
+    ("S163", "peg in the parking boss", (117.849, 9.207), 1.9, (0.0, 1.0), 3.3),
+    ("S163", "peg in the parking boss", (128.849, 9.207), 1.9, (0.0, 1.0), 3.3),
+    ("S150", "peg in the upper dowel boss", (109.799, 68.739), 1.9, "slant", 3.3),
+    ("S131", "peg in the nice!nano's raised east wall", (60.699, 54.451), 1.9,
      ("corner", (59.124, 54.503)), 3.3),
-    ("S130's peg in the nice!nano's raised east wall", (60.699, 73.501), 1.9,
+    ("S130", "peg in the nice!nano's raised east wall", (60.699, 73.501), 1.9,
      ("corner", (59.124, 73.553)), 3.3),
 )
 DESIGN_POST_RELIEF_BOTTOM_Z_MM = 7.4
@@ -1186,7 +1188,8 @@ def measure_post_relief(tray, right, relief, figures):
     it cuts, between the body's face 0.25 under the bottom and that wall;
     and open over the post's or peg's place, its hole's edge farthest into
     the body, from no higher than the bottom up past the rim."""
-    what, center, hole, into, diameter = relief
+    key, post_or_peg, center, hole, into, diameter = relief
+    what = f"{layout.key_name_on_half(key, right)}'s {post_or_peg}"
     way = vector(relief_way_in(right, center, into))
     plan = half_point(center, right)
     end = DESIGN_POST_ENDS_Z_MM
@@ -1230,10 +1233,10 @@ def measure_joint_face_chamfer(tray, right, figures):
 
 
 def half_sockets(right):
-    """(key, polygon) of every socket polygon of the given half in its
-    own frame: on the right half the left footprint at the mirrored key
-    center (layout.py's module docstring)."""
-    for name, center in layout.KEY_CENTERS_MM.items():
+    """(key name on the half, polygon) of every socket polygon of the
+    given half in its own frame: on the right half the left footprint at
+    the mirrored key center (layout.py's module docstring)."""
+    for name, center in layout.key_centers_on_half(right).items():
         placed = layout.mirror_for_right_half(center) if right else center
         for polygon in layout.socket_polygons(placed):
             yield name, polygon
@@ -1302,7 +1305,7 @@ def measure_frame_wall_clearance(tray, right, figures):
     way to them."""
     closest = (math.inf, "nothing")
     cut_back = {key for key, _body in layout.frame_walls_cut_back(right)}
-    for name, center in layout.KEY_CENTERS_MM.items():
+    for name, center in layout.key_centers_on_half(right).items():
         if name in cut_back:
             continue
         placed = layout.mirror_for_right_half(center) if right else center

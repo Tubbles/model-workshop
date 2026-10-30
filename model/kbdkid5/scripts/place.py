@@ -129,11 +129,11 @@ TAKEN_OUT_BOSS_SEEDS = {
         ("S143's east corner", "S153's west corner"),  # L24 (94.774, 17.070)
     ),
     True: (
-        ("S103's east corner", "S113's west corner"),  # R4 (18.574, 12.307)
-        ("S113's east corner", "S123's west corner"),  # R10 (37.624, 12.307)
-        ("S123's east corner", "S133's west corner"),  # R15 (56.416, 17.115)
-        ("S133's east corner", "S143's west corner"),  # R20 (75.724, 19.451)
-        ("S143's east corner", "S153's west corner"),  # R25 (94.774, 17.070)
+        ("S263's east corner", "S253's west corner"),  # R4 (18.574, 12.307)
+        ("S253's east corner", "S243's west corner"),  # R10 (37.624, 12.307)
+        ("S243's east corner", "S233's west corner"),  # R15 (56.416, 17.115)
+        ("S233's east corner", "S223's west corner"),  # R20 (75.724, 19.451)
+        ("S223's east corner", "S213's west corner"),  # R25 (94.774, 17.070)
     ),
 }
 
@@ -310,8 +310,9 @@ def pair_rules():
                  for record in check_layout.frame_boss_pair_rules())
 
 
-def bottom_row():
-    return {layout.column_key_name(column, 3) for column in range(6)} | {layout.THUMB_KEY_NAME}
+def bottom_row(right):
+    keys = {layout.column_key_name(column, 3) for column in range(6)} | {layout.THUMB_KEY_NAME}
+    return {layout.key_name_on_half(key, right) for key in keys}
 
 
 def boss_seeds(right):
@@ -322,13 +323,13 @@ def boss_seeds(right):
     sign = -1.0 if right else 1.0
     taken_out = {label for labels in TAKEN_OUT_BOSS_SEEDS[right] for label in labels}
     seeds = []
-    for key, (x, y) in layout.KEY_CENTERS_MM.items():
+    for key, (x, y) in layout.key_centers_on_half(right).items():
         north = (x + sign * BOSS_NORTH_OFFSET[0], y + BOSS_NORTH_OFFSET[1])
         corners = [(side, (x + offset_x, y + offset_y))
                    for side, (offset_x, offset_y) in BOSS_CORNER_OFFSETS]
         seeds += [(f"{key} north", north, (f"{key}'s {side} corner, its fallback", corner))
                   for side, corner in corners]
-        if key in bottom_row():
+        if key in bottom_row(right):
             seeds += [(f"{key}'s {side} corner", corner, None) for side, corner in corners]
     return [seed for seed in seeds if seed[0] not in taken_out]
 
