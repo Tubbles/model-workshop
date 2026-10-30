@@ -47,6 +47,9 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 - `check_layout.py`'s walls check prints the number of wall pockets (7 per half) but holds it to no DESIGN figure, so a pocket dropped or added would pass (026's review).
 - `place.py`'s boss seed labels (`boss_seeds()`) give a right half key's corners in the left half's frame, so "S263's east corner" is its west corner on the printed right half. The labels are matched by `TAKEN_OUT_BOSS_SEEDS`, so flipping east and west on the right half means renaming those too (037's review).
 - `export_plate.py`'s `cover:` line on the right half names S243 with the point (47.149, 13.970) of the left half's build, which the plate is mirrored from afterwards (037's review).
+- `export_switch_pusher.py`'s raise tops are flat with sharp edges, and after 1.35 of push they must meet the frame's post and peg holes within 0.05 per side as printed. If the user reports them catching at the ceiling, a chamfer on the tops' edges is the lead-in (039's review).
+- `export_switch_pusher.py`'s off-axis figures measure the raises against the centers they were built at, so that check cannot fail. The raises sit right because the frame and the pusher share `frame_shape.key_holes()` (039's review).
+- The pusher's 0.5 under the bosses' ends counts on the post and pegs reaching `SWITCH_POSTS_BELOW_PCB_MM` 1.4 past the frame's body, a model figure, not calipered. It holds for posts reaching down to about 0.9 (039's review).
 
 ## kbdkid4
 
