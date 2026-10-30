@@ -168,6 +168,23 @@ Its tests hold the solver's margins to `check_layout.py`'s and the runs to DESIG
 
     podman run --rm -v "$PWD":/work -w /work placement python3 model/kbdkid5/scripts/test_place.py
 
+## Routing the matrix
+
+`scripts/route_matrix.py` routes the hand-wired frame's matrix (DESIGN.md, Hand-wired frame, Matrix wiring) over the frame, the tray and the backing of a `kbdkid5-<short commit hash>` artifact, in the placement image (the root [README.md](../../README.md), The placement solver). It takes the bosses and the backing's opening from `layout.py`, so the artifact must be the checked out commit's, and it stops if the frame's bosses are not `layout.py`'s. Download the artifact into a folder of its own under `tmp/` (the run's page, or `gh run download`), then run the script from the repository root, for both halves or for the one named:
+
+    gh run download <run id> --name kbdkid5-<short commit hash> --dir tmp/route/kbdkid5-<short commit hash>
+    podman run --rm -v "$PWD":/work -w /work placement \
+        python3 model/kbdkid5/scripts/route_matrix.py tmp/route/kbdkid5-<short commit hash> [left|right]
+
+It takes about three minutes a half. It prints every net's chain and lead length, every diode it could not place by its west tab and every squeeze, a stretch where a wire runs close to plastic, with the gap across it and what lies on either side, at the room's full height and at the level of a wire lying on the backing, with the floor there. To `tmp/route_matrix/` it writes for each half the same as JSON (`left.json`, `right.json`) and two pictures: `<half>-top.png`, the half from the top, and `<half>-underside.png`, the frame as you hold it to wire it, upside down and turned toward you, so west stays on the left and the north edge is at the bottom.
+
+In the pictures:
+
+- Light grey is the frame's body, dark grey what of it stands below its ceiling (the pocket walls, the tubes and the bosses), light blue what of the tray stands into the room, pink the sockets and the switches' center posts and pegs, gold the sockets' tabs.
+- Each net has its colour: a column (C0 to C5, the thumb's C6) or a row (R0 to R3) solid along its chain, dashed along its lead to the backing's opening (the dashed red rectangle), its name at the lead's end.
+- A diode is a pink bar, black at its cathode's band, its own leads in grey: the anode's from its tab, the cathode's on to where the row wire takes it.
+- A red circle marks a squeeze where a wire's center comes within 0.35 of plastic. The printout lists every squeeze, also those the pictures leave out, and DESIGN.md (Matrix wiring) says which sides a wire can slip under.
+
 ## Parts to buy
 
 For both halves:

@@ -15,6 +15,7 @@ Each module's docstring says what it builds or checks and how, and its constants
 - `frame_shape.py`: the hand-wired frame and its backing, from `socket_test_shape.py`'s cells and `pcb_shape.py`'s body. `export_frame.py` exports them. `export_switch_pusher.py` and `export_socket_pusher.py` build and export the switch pusher and the socket pusher from the frame's holes (`frame_shape.key_holes()`).
 - `tray_shape.py`: the tray, the nice!nano clamp's tab and the power switch's retainer. `export_tray.py`, `export_clamp_tab.py` and `export_power_switch_retainer.py` export them, and `export_nano_bay_test.py` cuts the test bay out of the left tray.
 - `place.py` and `test_place.py` (README.md, Placing parts): `place.py` imports `check_layout.py`, never the reverse, so `check_layout.py` stays standard library only, and both run in the placement image only.
+- `route_matrix.py` (README.md, Routing the matrix): the matrix's route over a CI artifact's STLs, in the placement image only. It takes the bosses, the backing's opening and the tubes' outlines from `layout.py` and `check_layout.py`, never from a copy.
 
 ## Conventions
 
