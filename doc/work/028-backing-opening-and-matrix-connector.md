@@ -1,12 +1,12 @@
 # 028 The backing's opening for the matrix's leads, and an inline connector
 
-Status: todo
+Status: in progress (2026-10-30)
 
 The user, 2026-10-24, on the hand-wired frame's leads to the nice!nano: "there needs to be some wire slack that'll get stuffed into the tray when closing it up" and "let's look at where the backing hole could go, it doesn't need to be close to the bay necessarily". On the first pick, S110 north of column 1: "Hmm I am not sure that's the best pick, remember I want a bundled up wire nest so there is slack enough that I can remove the whole matrix assembly to access the tray pocket, so I can work in it, do repairs, rewire, etc.". On the next, S122 south of the bay: "That's still very huddled up close to the nano, and just next to the battery. I think S102 is a better fit". Then: "I'm thinking I might want a cable connector between the nano wire bundle and matrix wire bundle, is there something neat that could fit? Then the wire nest doesn't need to be so big, just big enough to get in with the hands and disconnect the connector to separate the matrix assembly from the tray", and on the kit below: "Yes I'll order this kit and use one 13 cm cable for each side of the connector, and skip the ethernet cabling. That'll be 22 cables per half, or 44 in total, and 2x each of 6p and 5p male and female housings. That'll be 26 cm in total between the matrix and nano, I think that'll be enough".
 
 ## Decided
 
-- The opening goes in the backing under S102 on the left half and S262 on the right. The floor under the backing is one free region over each half (6,687 mm2 on the left half and 6,668 on the right, 6.38 clear, 4.88 under the backing's screw heads), so the leads' slack lies on it between the opening and the bay. The largest rectangle there that keeps the backing's rules (1.0 from the pads, clear of the screw heads, the bosses' ends and the walls' outer faces) over free floor, in the left half's frame: 9.7 x 12.2 at x 8.9 to 18.6, y 25.6 to 37.8 on the left half, 5.6 x 12.2 at x 3.6 to 9.2, y 25.6 to 37.8 on the right (`tmp/slack_hole/probe.py`, untracked, with its output in `left.txt` and `right.txt`).
+- The opening goes in the backing under S102 on the left half and S262 on the right. The floor under the backing is one free region over each half (6,664 mm2 on the left half and 6,646 on the right, 6.38 clear, 4.88 under the backing's screw heads), so the leads' slack lies on it between the opening and the bay. The opening, in the left half's frame: 9.4 x 12.0 at x 9.1 to 18.5, y 25.7 to 37.7 on the left half, 5.4 x 12.0 at x 3.6 to 9.0, y 25.7 to 37.7 on the right (`tmp/backing_opening/probe.py` and `floor.py`, untracked, 2026-10-30; the 2026-10-24 figures were `tmp/slack_hole/probe.py`'s raster edges, not rounded in).
 - The connector: elechawk's PicoBlade compatible 1.25 mm kit (model 125BOXMF, Amazon.se B08RMQP6YP, 209 kr on 2026-10-24), male and female housings of 2 to 6 positions and 180 pre-crimped 13 cm silicone wires, each with a male terminal at one end and a female one at the other (the listing's photos). Per half a 6P and a 5P pair carry the 11 signals, with one 13 cm wire per signal on each side and no Ethernet cores: 44 wires in all and two each of the 6P and 5P male and female housings. The two sizes cannot be swapped, and each housing mates one way. Molex's own PicoBlade housings have a friction lock and are polarized to their mating part (the 51021 and 51047 product sheets, `tmp/connector/picoblade-51021-drawings/`). The kit is a clone, so its lock is unverified, and the listing gives neither the wire's gauge nor the housings' size.
 - The nano side's wires end in clipped 1N4148 leads (0.5 at most) as the pins in the strips, held by hot glue (doc/log/2026-10-24.md).
 - Power, ground and reset stay in the tray and plug into the strips like the matrix: the battery's negative on a GND pin, its positive through the power switch on RAW, the reset button on RST and GND. B+ and B- stay empty. The user: "I mean b- and b+ is not populated by the strip". nicekeyboards: "RAW and GND are the respective equivalents to B+ and B-" (doc/components.md, section 1). None of these wires pass the opening.
@@ -49,13 +49,18 @@ From the probe, in the left half's frame, where the right half's west strip is i
 
 From each column's nearest key center to the opening, in plan (Derived): on the left half C0 0, C1 9, C2 29, C3 48, C4 67, C5 86 and C6 106, on the right C0 0, C1 19, C2 38, C3 57, C4 76, C5 95 and C6 115. The row wires cross the whole half and pass the opening. A 13 cm wire with its far terminal cut off and its end stripped leaves about 12.4, and a lead also comes down from the frame's underside through the backing to the connector on the floor, so C6's lead on both halves and C5's on the right have little or none to spare. Run west under the frame, their enamelled wire would bring them nearer the opening.
 
-## Scope
+## Specification
 
-- The backing gets the opening on both halves, and `check_layout.py` holds it to the backing's rules and to free floor under it.
-- DESIGN.md (Hand-wired frame, Wires to the nice!nano) and kbdkid5's README (putting a half together) follow.
+The user, 2026-10-30: "Do work item 028, no need to caliper". So the kit is taken as fitting the 6.38 under the backing (4.88 under the heads), unmeasured.
+
+- The opening: one rectangular hole through the backing on each half, under S102 on the left half and S262 on the right, its sides along x and y in the left half's frame, the largest that fits within the key's 19.05 cell by the probe's rules: over free floor (nothing of the tray or the parts standing below the backing's underside as printed), 1.0 from every pad (`FRAME_STRIP_CUTOUT_FROM_PADS_MM`), off every screw head on the backing (4.0 across) and every boss's end, and off the pocket walls' outer faces in plan, so the leads come down from the frame's underside straight through it. It is the largest that also keeps these rules with the bosses where `test_place.py`'s check pass puts them (the placement solver's places, 0.119 nearer on column 0), which CI's placement job runs. Recompute it against today's geometry: the tubes and the shorter standoffs (work item 034) and the power switch's move (036) came after the figures under Decided. The probe needs scipy, which is not installed, and nothing gets installed: redo its masks and largest rectangle with numpy and plain Python in `tmp/`.
+- `layout.py` holds each half's rectangle, and the backing's builder cuts it as it cuts the strips' cutouts. `check_layout.py` holds it to the rules above analytically, on both halves, and `export_frame.py` prints its figures.
+- DESIGN.md (Hand-wired frame, Backing and Wires to the nice!nano) and kbdkid5's README (putting a half together: the matrix's leads down through the opening to the connector on the floor, the slack between it and the bay) follow.
+- The frame, the tray and every other STL stay as they are.
+
+Verify: `check_layout.py` passes locally, CI's exports pass and print the opening's figures, and every kbdkid5 STL but the two backings comes out byte for byte as 9849358's.
 
 ## Open
 
-- Calipering the kit when it comes: a 6P pair mated and lying flat, against the 6.38 clear (4.88 under the screw heads), and the wire's outer diameter.
 - C5's and C6's leads on the matrix side (above).
 - Whether the wire rooms over B+ and B- go, now that the pads stay empty.

@@ -3821,6 +3821,31 @@ def frame_strip_cutouts(right=False):
     return cutouts
 
 
+# The backing's opening for the matrix's leads (work item 028): one
+# rectangle per half under FRAME_BACKING_OPENING_KEY (S262 on the right
+# half), (x range, y range) in the left half's frame, through which the
+# leads come down from the frame's underside to the connector on the
+# tray's floor. Each is the largest rectangle with its sides along x and
+# y, on a 0.1 grid, within the key's 19.05 cell over free floor,
+# FRAME_STRIP_CUTOUT_FROM_PADS_MM from every pad and clear of every
+# screw head, boss's end and pocket wall's outer face in plan, the rules
+# check_layout.py's check_frame_backing_opening() holds it to, that also
+# keeps them with the frame's bosses where test_place.py's check pass
+# puts them (the solver's places, 0.119 nearer on column 0).
+FRAME_BACKING_OPENING_KEY = "S102"
+FRAME_BACKING_OPENINGS_MM = {
+    False: ((9.1, 18.5), (25.7, 37.7)),
+    True: ((3.6, 9.0), (25.7, 37.7)),
+}
+
+
+def frame_backing_opening(right=False):
+    """(key on the half, x range, y range) of the half's opening for the
+    matrix's leads."""
+    x_range, y_range = FRAME_BACKING_OPENINGS_MM[right]
+    return key_name_on_half(FRAME_BACKING_OPENING_KEY, right), x_range, y_range
+
+
 def frame_backing_outline():
     """The backing's outline: the ledge's inner face (the joint block's
     along the slant) moved in by FRAME_TRAY_CLEARANCE_MM,
@@ -3862,11 +3887,14 @@ def frame_backing_tray_bodies(right=False):
 
 def frame_backing_polygon_cutouts(right=False):
     """(label, counter-clockwise polygon) of the backing's other cutouts:
-    the tray bodies grown by FRAME_TRAY_CLEARANCE_MM, and the strips'."""
+    the tray bodies grown by FRAME_TRAY_CLEARANCE_MM, the strips' and
+    the opening for the matrix's leads."""
     cutouts = [(f"around the {label}", offset_polygon(polygon, FRAME_TRAY_CLEARANCE_MM))
                for label, polygon in frame_backing_tray_bodies(right)]
     cutouts.extend((label, box_corners(x_range, y_range))
                    for label, x_range, y_range in frame_strip_cutouts(right))
+    key, x_range, y_range = frame_backing_opening(right)
+    cutouts.append((f"under {key} for the matrix's leads", box_corners(x_range, y_range)))
     return cutouts
 
 

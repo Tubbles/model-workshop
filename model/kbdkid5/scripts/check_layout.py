@@ -4591,6 +4591,82 @@ def check_frame_backing(right=False):
             f"{tray_room}, {strips} cutouts over the nice!nano's strips")
 
 
+# The backing's opening for the matrix's leads (work item 028,
+# layout.frame_backing_opening()), held in plan to the rules it was
+# found by: inside its key's 19.05 cell and the backing's outline, over
+# free floor (clear of whatever of the tray stands below the backing's
+# underside as printed), layout.FRAME_STRIP_CUTOUT_FROM_PADS_MM from
+# every pad, and clear of every screw head, every boss's end and every
+# pocket wall's outer face.
+
+FRAME_OPENING_RULES = ("cell", "outline", "floor", "pads", "heads", "ends", "walls")
+
+
+def key_cell_polygon(key, right):
+    """A key's 19.05 cell on the given half, in the left half's frame."""
+    center_x, center_y = layout.key_centers_on_half(right)[key]
+    half = layout.KEY_PITCH_MM / 2.0
+    return layout.box_corners((center_x - half, center_x + half), (center_y - half, center_y + half))
+
+
+def frame_opening_floor_clearances(opening, right):
+    """(clearance, where) of the opening from every tray piece standing
+    below the backing's underside as printed."""
+    below = (0.0, layout.backing_underside_z_as_printed())
+    clearances = []
+    for label, kind, shape, z_range in frame_tray_obstacles(layout.MOUNTING_DRILL_CENTERS_MM, right):
+        if ranges_overlap(z_range, below):
+            clearance = (circle_separation(shape[0], shape[1], opening) if kind == "circle"
+                         else convex_separation(opening, shape))
+            clearances.append((clearance, f"the {describe_piece(label, z_range)}"))
+    return clearances
+
+
+def frame_opening_margins(right):
+    """{rule: Tightest} of the half's opening, each beyond the rule's
+    minimum."""
+    key, x_range, y_range = layout.frame_backing_opening(right)
+    opening = layout.box_corners(x_range, y_range)
+    tightest = {name: Tightest() for name in FRAME_OPENING_RULES}
+    tightest["cell"].update(containment_margin(opening, key_cell_polygon(key, right)),
+                            f"{key}'s cell")
+    tightest["outline"].update(containment_margin(opening, layout.frame_backing_outline()),
+                               "the backing's outline")
+    for clearance, where in frame_opening_floor_clearances(opening, right):
+        tightest["floor"].update(clearance, where)
+    for pad_key, pad_x, pad_y in layout.frame_pad_boxes(right):
+        pad = layout.box_corners(pad_x, pad_y)
+        tightest["pads"].update(convex_separation(opening, pad)
+                                - layout.FRAME_STRIP_CUTOUT_FROM_PADS_MM, f"{pad_key}'s pad")
+    head_radius = layout.FRAME_BACKING_SCREW_HEAD_DIAMETER_MM / 2.0
+    for center in layout.frame_boss_centers(right):
+        tightest["heads"].update(circle_separation(center, head_radius, opening),
+                                 f"the head at {center}")
+        tightest["ends"].update(circle_separation(center, layout.STANDOFF_DIAMETER_MM / 2.0,
+                                                  opening), f"the boss's end at {center}")
+    for wall_key in layout.key_centers_on_half(right):
+        tightest["walls"].update(
+            outline_clearance(layout.frame_wall_outer_polygon(wall_key, right), opening),
+            f"{wall_key}'s walls")
+    return tightest
+
+
+def check_frame_backing_opening(right=False):
+    """The backing's opening for the matrix's leads by its rules
+    (frame_opening_margins())."""
+    key, x_range, y_range = layout.frame_backing_opening(right)
+    tightest = frame_opening_margins(right)
+    problems = [f"{name}: {margin}" for name, margin in tightest.items()
+                if margin.value < -TOLERANCE_MM]
+    fail_on(problems, f"{half_label(right)}the backing's opening for the matrix's leads")
+    return (f"opening:   {half_label(right)}under {key}, x {x_range[0]} to {x_range[1]}, "
+            f"y {y_range[0]} to {y_range[1]}, {x_range[1] - x_range[0]:.1f} x "
+            f"{y_range[1] - y_range[0]:.1f}, beyond its rules by {tightest['cell']} inside the "
+            f"cell, {tightest['outline']} inside the outline, {tightest['floor']} from the tray, "
+            f"{tightest['pads']} from the pads, {tightest['heads']} from the heads, "
+            f"{tightest['ends']} from the bosses' ends, {tightest['walls']} from the walls")
+
+
 # The frame's pocket walls, whole on every pocket of both halves (work
 # item 026): whatever of the tray, or of the parts in it, stands within
 # the walls' heights, or within layout.FRAME_TRAY_CLEARANCE_MM above or
@@ -5218,6 +5294,8 @@ CHECKS = (
     on_right_half(check_frame_bosses),
     check_frame_backing,
     on_right_half(check_frame_backing),
+    check_frame_backing_opening,
+    on_right_half(check_frame_backing_opening),
     check_backing_shelves,
     on_right_half(check_backing_shelves),
     check_frame_walls,

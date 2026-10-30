@@ -35,7 +35,8 @@ comes nearer.
 The backing: layout.frame_backing_outline(), 0.8 thick, with the
 strips' 2.8 clearance hole for an M2 screw under each boss, the
 cutouts layout.py gives (around the standoffs and the tray's bodies
-that stand into its heights, and over the nice!nano's socket strips),
+that stand into its heights, over the nice!nano's socket strips, and
+the opening for the matrix's leads, layout.frame_backing_opening()),
 and under every socket the pads of the third backing strip's cell 1,
 their tops 0.1 under the socket's bottom.
 

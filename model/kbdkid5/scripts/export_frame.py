@@ -8,8 +8,9 @@ grooves. frame_shape.py builds them and its docstring has the design.
            for M2 heat-set inserts, the mounting drills with a tube
            under each that stands on the tray's standoff
   backing  the backing that screws up under the sockets, bottom down,
-           with a pad under each socket lobe and its cutouts around the
-           tray; checked stacked under the frame, which it builds too
+           with a pad under each socket lobe, its cutouts around the
+           tray and the opening for the matrix's leads; checked stacked
+           under the frame, which it builds too
 
 Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
@@ -176,6 +177,10 @@ def main():
         print(f"backing:    {half} half, {len(shape.backing_pads(right))} pads, "
               f"{len(shape.boss_centers(right))} screw holes, volume {backing.Volume:.3f} mm3 "
               f"(plan {expected:.3f} mm3)")
+        key, x_range, y_range = layout.frame_backing_opening(right)
+        print(f"opening:    under {key} for the matrix's leads, x {x_range[0]} to {x_range[1]}, "
+              f"y {y_range[0]} to {y_range[1]} in the left half's frame, "
+              f"{x_range[1] - x_range[0]:.1f} x {y_range[1] - y_range[0]:.1f} mm")
         print(f"stack:      touching the bosses' ends over {contact:.3f} mm2 alone, the pads' "
               f"tops at {top:.3f} under the ceiling, the sockets' bottoms at "
               f"{-cells.socket_height():.3f}")
