@@ -1,6 +1,6 @@
 # 037 Right half key names in the scripts
 
-Status: implemented (2026-10-30)
+Status: implemented (2026-10-30, 206dde1 and 0d834e9)
 
 The docs call the right half's keys by their own names, S2xx, since 6154fa4 (doc/log/2026-10-30.md). Asked whether the code should follow, the user, 2026-10-30: "Yes switch code too".
 

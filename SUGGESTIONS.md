@@ -45,6 +45,8 @@ Ideas noticed during work, not yet asked for. Strike or promote as you see fit.
 - `export_tray.py`'s tube clearance line calls every tube "the standoffs' 5.8 circles", but the one on the standoff merged with the joint block is cut 0.5 short of the block (034 to 036's review).
 - The heat-set insert in the standoff merged with the joint block now sits at z 7.70 beside the block, which stands 1.8 higher with its face 2.432 from the bore's axis (about 2.232 as printed), so the iron's tip must fit about 4.4 across 1.8 down to seat it flush. The user's tip is not recorded (034 to 036's review).
 - `check_layout.py`'s walls check prints the number of wall pockets (7 per half) but holds it to no DESIGN figure, so a pocket dropped or added would pass (026's review).
+- `place.py`'s boss seed labels (`boss_seeds()`) give a right half key's corners in the left half's frame, so "S263's east corner" is its west corner on the printed right half. The labels are matched by `TAKEN_OUT_BOSS_SEEDS`, so flipping east and west on the right half means renaming those too (037's review).
+- `export_plate.py`'s `cover:` line on the right half names S243 with the point (47.149, 13.970) of the left half's build, which the plate is mirrored from afterwards (037's review).
 
 ## kbdkid4
 
