@@ -90,7 +90,7 @@ What to check and report:
 
 CI exports it as `kbdkid5-switch-pusher.stl`, in `kbdkid5-<short commit hash>`.
 
-Print it as written, base down with the raises up. It needs no supports.
+Print it as written, base down with the raises up. It needs no supports. To get it off the bed, slide a small tool into the slot in the middle of one base edge and pry it up.
 
 To take a switch out, take the frame out of the tray and unscrew the backing, leaving the sockets in their pockets and the plate on. Hold the pusher under the key, the raise with the dimple under the switch's center post and the other two under its side pegs, which stick out under the frame's holes, and press it straight up until the switch's clips clear the plate. Then lift the switch out by hand.
 
@@ -98,18 +98,18 @@ Report whether the raises find the post and pegs and go up into the frame's hole
 
 ## 3D printed socket pusher
 
-`model/kbdkid5/scripts/export_socket_pusher.py` exports a tool for taking a hotswap socket out of the hand-wired frame: a key-sized square with two pins that reach down through the plate and the frame's two pin holes onto the socket's contact bosses and push the socket down out of its pocket. One serves both halves. DESIGN.md (Socket pusher) has the design.
+`model/kbdkid5/scripts/export_socket_pusher.py` exports a tool for taking a hotswap socket out of the hand-wired frame: a key-sized square with two short pins that reach down through the frame's two pin holes onto the socket's contact bosses and nudge the socket out of its pocket, and a longer pilot pin that finds the switch's post hole first. One serves both halves. DESIGN.md (Socket pusher) has the design.
 
     docker run --rm -v "$PWD":/work -w /work freecad-headless \
         freecadcmd model/kbdkid5/scripts/export_socket_pusher.py --pass pusher.stl
 
 CI exports it as `kbdkid5-socket-pusher.stl`, in `kbdkid5-<short commit hash>`.
 
-Print it as written, base down with the pins up. It needs no supports.
+Print it as written, base down with the pins up. It needs no supports. To get it off the bed, slide a small tool into the slot in the middle of one base edge and pry it up.
 
-To take a socket out, take the frame out of the tray, unscrew the backing, leave the plate on and take the key's switch out with the switch pusher. Hold the frame with room under the key for the socket to drop into. Turn the pusher over, pins down, and lower them into the key's plate cutout: the flattened pin goes into the frame's pin hole by the middle of the cutout's edge, its flat toward that edge, the other into the pin hole beside it. Press straight down until the base sits on the plate. The socket comes out of its pocket and hangs on its wires.
+To take a socket out, take the frame out of the tray, unscrew the backing and take the plate and the switches off, so nothing is on the frame's top side. Hold the frame with room under the key for the socket to drop into. Turn the pusher over, pins down, and set the pilot, the long pin with the chamfered tip, into the post hole in the middle of the key first. Turn the pusher about it until the two short pins drop into the key's two pin holes, then press straight down until the base sits on the frame's top face. The socket comes out of its pocket, its top level with the pocket walls' ends, and hangs on its wires.
 
-Report whether the pins go through the plate and into the frame's pin holes without catching, whether the socket comes all the way out of its pocket at the full push (if not, how far it still sits in), and whether the flattened pin holds.
+Report whether the pilot finds the post hole and leads the short pins into the pin holes without catching, whether the socket comes free of its pocket at the full push (if not, how far it still sits in), and whether the slot lets you pry the pusher off the bed.
 
 ## 3D printed tray
 

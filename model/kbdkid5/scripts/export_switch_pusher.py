@@ -17,17 +17,19 @@ so the post and pegs end level, and at the full push the base stays
 that far under the bosses' ends. For the last part of the push the
 raises go up into the frame's post and peg holes, so each passes its
 hole at the slip fit, both as printed (raise_diameter()). The post's
-raise has a cone dimple centered in its top, the pegs' are flat. A
-switch's footprint is the same on both halves (DESIGN.md, Frame and
-units), so one pusher serves both.
+raise has a cone dimple centered in its top, the pegs' are flat. A pry
+slot in the base's underside, the face on the bed, at the middle of its
+north edge takes a tool to pry the pusher off the bed. A switch's
+footprint is the same on both halves (DESIGN.md, Frame and units), so
+one pusher serves both.
 
 This script builds the pusher, measures it against DESIGN.md's figures,
 which it transcribes itself (the DESIGN_* constants below), prints its
 figures, and fails where a raise as printed does not pass its hole as
-printed at the slip fit or where the base at the full push comes within
-BASE_UNDER_BOSSES_MM of the bosses' ends. It writes the pusher as one
-closed mesh as it prints, base down on z = 0, the raises up, nothing to
-support.
+printed at the slip fit, where the base at the full push comes within
+BASE_UNDER_BOSSES_MM of the bosses' ends or where the slot does not
+open on the bed. It writes the pusher as one closed mesh as it prints,
+base down on z = 0, the raises up, nothing to support.
 
 Runs headless under FreeCAD's console interpreter (see
 freecad_common.py for the freecadcmd quirks that shape the
@@ -68,6 +70,14 @@ BASE_UNDER_BOSSES_MM = 0.5
 # leaving a rim of about a nozzle's width, and six 0.2 layers deep.
 DIMPLE_DIAMETER_MM = 1.8
 DIMPLE_DEPTH_MM = 1.2
+# The pry slot in the base's underside, the face on the bed, at the
+# middle of its north edge, away from the pin holes, which lie south: a
+# tool slid into it pries the pusher off the bed. Its roof prints as a
+# SLOT_WIDTH_MM bridge. The user, 2026-10-30: "say 6 mm wide and 4 mm
+# deep, and 1.5 mm high (half the base side height)" (work item 042).
+SLOT_WIDTH_MM = 6.0  # along the edge
+SLOT_DEPTH_MM = 4.0  # into the base
+SLOT_HEIGHT_MM = 1.5
 # The raises, under the first cells.SWITCH_PROTRUDING_HOLE_COUNT of
 # layout.CHOC_FOOTPRINT_HOLES_MM, in its order, the footprint turned 90
 # degrees.
@@ -82,6 +92,7 @@ DESIGN_RAISE_HEIGHT_MM = 3.667
 DESIGN_RAISE_DIAMETERS_MM = (2.62, 1.10, 1.10)  # as modelled, in RAISE_NAMES' order
 DESIGN_DIMPLE_MM = (1.8, 1.2)  # across, deep
 DESIGN_PIN_HOLE_DIAMETER_MM = 3.2
+DESIGN_SLOT_MM = (6.0, 4.0, 1.5)  # across, deep, high, as modelled
 
 # How far a measuring line reaches either side of its point, and how
 # much a measured figure may miss a bound the export holds it to.
@@ -178,11 +189,12 @@ def pin_holes():
 
 def analytic_volume():
     base = layout.KEY_PITCH_MM**2 * BASE_THICKNESS_MM
+    slot = SLOT_WIDTH_MM * SLOT_DEPTH_MM * SLOT_HEIGHT_MM
     pins = sum(math.pi * (diameter / 2.0) ** 2 for _, diameter in pin_holes()) * BASE_THICKNESS_MM
     raises = sum(math.pi * (raise_diameter(diameter) / 2.0) ** 2
                  for _, diameter in raise_holes()) * raise_height()
     dimple = math.pi * (DIMPLE_DIAMETER_MM / 2.0) ** 2 * DIMPLE_DEPTH_MM / 3.0
-    return base - pins + raises - dimple
+    return base - slot - pins + raises - dimple
 
 
 def dimple_cutter(center, top):
@@ -193,6 +205,16 @@ def dimple_cutter(center, top):
     height = DIMPLE_DEPTH_MM + CUT_EXTRA_MM
     return Part.makeCone(0.0, widening * height, height,
                          App.Vector(center[0], center[1], top - DIMPLE_DEPTH_MM), UP)
+
+
+def slot_cutter():
+    """The pry slot, SLOT_WIDTH_MM along the base's north edge and
+    centered on it, SLOT_DEPTH_MM into the base and SLOT_HEIGHT_MM up
+    from its underside, running on CUT_EXTRA_MM past the edge and the
+    underside for a clean cut."""
+    return Part.makeBox(SLOT_WIDTH_MM, SLOT_DEPTH_MM + CUT_EXTRA_MM, SLOT_HEIGHT_MM + CUT_EXTRA_MM,
+                        App.Vector(KEY_CENTER_MM[0] - SLOT_WIDTH_MM / 2.0,
+                                   layout.KEY_PITCH_MM - SLOT_DEPTH_MM, -CUT_EXTRA_MM))
 
 
 def build_pusher():
@@ -208,6 +230,7 @@ def build_pusher():
                for center, diameter in pin_holes()]
     post_center, _ = raise_holes()[0]
     cutters.append(dimple_cutter(post_center, top))
+    cutters.append(slot_cutter())
     pusher = base.fuse(raises).cut(Part.makeCompound(cutters)).removeSplitter()
     require_one_valid_solid(pusher, "building the switch pusher")
     expected = analytic_volume()
@@ -218,6 +241,16 @@ def build_pusher():
 
 
 # Measuring.
+
+
+@dataclass
+class MeasuredBase:
+    """The base as measured on the pusher, as modelled, near its north
+    east corner."""
+
+    along_x: tuple  # its west and east edges
+    along_y: tuple  # its south and north edges
+    along_z: tuple  # its underside and top
 
 
 @dataclass
@@ -286,20 +319,24 @@ def across(shape, point, material=True):
     return min(length(along_x), length(along_y)), off_center
 
 
+def above_slot():
+    """A height in the base over the slot's roof, where measuring lines
+    run through plastic only."""
+    return (SLOT_HEIGHT_MM + BASE_THICKNESS_MM) / 2.0
+
+
 def measure_base(pusher, problems):
-    """(base's top z, text): the base measured near its north east
-    corner, clear of the raises and the pin holes."""
-    in_base = App.Vector(layout.KEY_PITCH_MM - 1.0, layout.KEY_PITCH_MM - 1.0,
-                         BASE_THICKNESS_MM / 2.0)
-    thick = run_through(pusher, in_base, "z")
+    """(MeasuredBase, text): the base measured near its north east
+    corner over the slot's roof, clear of the raises and the pin
+    holes."""
+    in_base = App.Vector(layout.KEY_PITCH_MM - 1.0, layout.KEY_PITCH_MM - 1.0, above_slot())
+    base = MeasuredBase(*(run_through(pusher, in_base, axis) for axis in ("x", "y", "z")))
     texts = [
-        check(problems, "along x", length(run_through(pusher, in_base, "x")),
-              DESIGN_BASE_SIDE_MM, 2),
-        check(problems, "along y", length(run_through(pusher, in_base, "y")),
-              DESIGN_BASE_SIDE_MM, 2),
-        check(problems, "thick", length(thick), DESIGN_BASE_THICKNESS_MM, 1),
+        check(problems, "along x", length(base.along_x), DESIGN_BASE_SIDE_MM, 2),
+        check(problems, "along y", length(base.along_y), DESIGN_BASE_SIDE_MM, 2),
+        check(problems, "thick", length(base.along_z), DESIGN_BASE_THICKNESS_MM, 1),
     ]
-    return thick[1], ", ".join(texts)
+    return base, ", ".join(texts)
 
 
 def measure_raises(pusher, base_top, problems):
@@ -347,12 +384,37 @@ def measure_pin_holes(pusher, problems):
     texts = []
     for center, _ in pin_holes():
         diameter, off_center = across(
-            pusher, App.Vector(center[0], center[1], BASE_THICKNESS_MM / 2.0), material=False)
+            pusher, App.Vector(center[0], center[1], above_slot()), material=False)
         texts.append(", ".join([
             check(problems, "across", diameter, DESIGN_PIN_HOLE_DIAMETER_MM, 1),
             check(problems, "off the blade hole's axis", off_center, 0.0, 3),
         ]))
     return "; ".join(texts)
+
+
+def measure_slot(pusher, base, problems):
+    """The pry slot's text, measured through its middle: across along x,
+    its middle off the base's north edge's, deep along y from that edge
+    to its back wall, high along z up from the base's underside, and the
+    base left over it, failing where it does not open down to the
+    underside, the face on the bed."""
+    in_slot = App.Vector(middle(base.along_x), base.along_y[1] - SLOT_DEPTH_MM / 2.0,
+                         base.along_z[0] + SLOT_HEIGHT_MM / 2.0)
+    across = run_through(pusher, in_slot, "x", material=False)
+    back_wall = run_through(pusher, in_slot, "y", material=False)[0]
+    floor, roof = run_through(pusher, in_slot, "z", material=False)
+    texts = [
+        check(problems, "across", length(across), DESIGN_SLOT_MM[0], 1),
+        check(problems, "off the north edge's middle", middle(across) - middle(base.along_x),
+              0.0, 3),
+        check(problems, "deep", base.along_y[1] - back_wall, DESIGN_SLOT_MM[1], 1),
+        check(problems, "high", roof - base.along_z[0], DESIGN_SLOT_MM[2], 1),
+        f"the base {base.along_z[1] - roof:.3f} over it",
+    ]
+    text = "in the base's underside at the middle of its north edge, " + ", ".join(texts)
+    if floor >= base.along_z[0]:
+        problems.append(f"the slot {text}, not open to the bed")
+    return text
 
 
 # The checks the pusher is built for.
@@ -398,13 +460,15 @@ def main():
     pusher = build_pusher()
     print(f"pusher:     one valid solid, volume {pusher.Volume:.3f} mm3")
     problems = []
-    base_top, base_text = measure_base(pusher, problems)
+    base, base_text = measure_base(pusher, problems)
     print(f"base:       {base_text}")
+    base_top = base.along_z[1]
     raises, raise_text = measure_raises(pusher, base_top, problems)
     print(f"raises:     {raise_text}, as modelled")
     rim_top = base_top + raises[0].height
     print(f"dimple:     {measure_dimple(pusher, rim_top, problems)}")
     print(f"pin holes:  {measure_pin_holes(pusher, problems)}")
+    print(f"slot:       {measure_slot(pusher, base, problems)}")
     push_text = check(problems, "the switch up by", push(), DESIGN_PUSH_MM, 2)
     print(f"push:       {push_text}, the plate's {layout.PLATE_THICKNESS_MM} as printed; under "
           f"the frame's top face as printed the post's and pegs' ends stand "
