@@ -53,7 +53,7 @@ import socket_test_shape as cells
 from freecad_common import check_closed_mesh, export_stl, run_and_exit, script_arguments
 from tray_shape import CUT_EXTRA_MM, UP, require_one_valid_solid
 
-# The base, as thick as the user asked, built with its south west
+# The base, built with its south west
 # corner on the origin and its bottom on z = 0, the key's center over
 # its middle.
 BASE_THICKNESS_MM = 3.0
@@ -63,9 +63,11 @@ KEY_CENTER_MM = (layout.KEY_PITCH_MM / 2.0, layout.KEY_PITCH_MM / 2.0)
 BASE_UNDER_BOSSES_MM = 0.5
 # The cone dimple centered in the post's raise's top, for alignment.
 # The pegs' raises are flat, the user: "I think the pegs are too small
-# for a dimple to print correctly".
-DIMPLE_DIAMETER_MM = 1.5
-DIMPLE_DEPTH_MM = 0.4
+# for a dimple to print correctly". The first, 1.5 across and 0.4 deep,
+# printed flat (work item 040), so it is as wide as the raise allows,
+# leaving a rim of about a nozzle's width, and six 0.2 layers deep.
+DIMPLE_DIAMETER_MM = 1.8
+DIMPLE_DEPTH_MM = 1.2
 # The raises, under the first cells.SWITCH_PROTRUDING_HOLE_COUNT of
 # layout.CHOC_FOOTPRINT_HOLES_MM, in its order, the footprint turned 90
 # degrees.
@@ -78,7 +80,7 @@ DESIGN_BASE_THICKNESS_MM = 3.0
 DESIGN_PUSH_MM = 2.25
 DESIGN_RAISE_HEIGHT_MM = 3.667
 DESIGN_RAISE_DIAMETERS_MM = (2.62, 1.10, 1.10)  # as modelled, in RAISE_NAMES' order
-DESIGN_DIMPLE_MM = (1.5, 0.4)  # across, deep
+DESIGN_DIMPLE_MM = (1.8, 1.2)  # across, deep
 DESIGN_PIN_HOLE_DIAMETER_MM = 3.2
 
 # How far a measuring line reaches either side of its point, and how
