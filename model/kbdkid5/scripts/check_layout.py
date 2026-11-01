@@ -66,8 +66,7 @@ Distances are in plan. Two bodies are checked against each other only
 where their z ranges overlap, since one can pass over the other. The
 tray is modelled as layout.py's sharp-cornered polygons: the wall
 between the cavity and the outer face (whole but for the sockets' tab
-pockets, since its windows and the magnet slots' cut-backs only take
-more away), the ledge (cut away where DESIGN.md says and where the
+pockets, since its windows only take more away), the ledge (cut away where DESIGN.md says and where the
 sockets get notches and reliefs, the joint block in its place along
 the slant), the shelves on the ledge's face under the hand-wired
 frame's backing (work item 020, notched for its screw heads, checked
@@ -116,10 +115,9 @@ INSIDE_OUTLINE_MINIMUM_MARGIN_MM = 0.5
 # example, lies at 75.485625, 0.396375 inside the cells' 75.882.
 OUTLINE_ON_CELLS_TOLERANCE_MM = 0.0015
 
-# This check's own threshold: a magnet drops into its slot from above,
-# through what the wall leaves open there, with at least the least
-# clearance DESIGN.md gives a slot as printed (3.1 across for the 3.0
-# magnet).
+# This check's own threshold: a magnet goes into its slot from the
+# cavity with at least the least clearance DESIGN.md gives a slot as
+# printed (3.1 across for the 3.0 magnet).
 MAGNET_DROP_IN_CLEARANCE_MM = 0.1
 
 # This check's own threshold (work item 016, the user having no
@@ -2330,14 +2328,12 @@ def printed(modelled):
     return modelled - 2.0 * layout.PRINT_SWELLING_PER_SIDE_MM
 
 
-def magnet_slot_opening_problems(opening_across, wall_left):
-    """Where a magnet would not drop into its slot as printed: the slot
-    or the opening above it too tight for it with
-    MAGNET_DROP_IN_CLEARANCE_MM, the slot not open toward the cavity,
-    or the cut-back through the wall. The sixth standoff walls off the
-    south 2.165 of the slot at 48.26 along the slant, flush with the
-    block's inner face, so the slot still prints 3.1 across there and the
-    magnet still drops in from the top."""
+def magnet_slot_opening_problems():
+    """Where a magnet would not go into its slot as printed: the slot
+    too tight for it with MAGNET_DROP_IN_CLEARANCE_MM, or not open
+    toward the cavity. The sixth standoff walls off the south 2.165 of
+    the slot at 48.26 along the slant, flush with the block's inner
+    face, so the slot still prints 3.1 across there."""
     clearance = MAGNET_DROP_IN_CLEARANCE_MM
     thickness = layout.MAGNET_THICKNESS_MM
     diameter = layout.MAGNET_DIAMETER_MM
@@ -2355,11 +2351,6 @@ def magnet_slot_opening_problems(opening_across, wall_left):
             f"the slot prints {along:.3f} along the slant, the {diameter} magnet needs "
             f"{needed_along:.3f}"
         )
-    if printed(opening_across) < needed_across - TOLERANCE_MM:
-        problems.append(
-            f"the opening above each slot prints {printed(opening_across):.3f} across, the "
-            f"{thickness} magnet needs {needed_across:.3f}"
-        )
     inner_side = layout.magnet_slot_outward_range()[0]
     block_inner_face = layout.JOINT_FACE_OUTWARD_MM - layout.JOINT_BLOCK_THICKNESS_MM
     if inner_side > block_inner_face + TOLERANCE_MM:
@@ -2367,32 +2358,25 @@ def magnet_slot_opening_problems(opening_across, wall_left):
             f"the slot's inner side lies {inner_side - block_inner_face:.3f} out of the block's "
             "inner face, which leaves a wall there"
         )
-    if wall_left <= TOLERANCE_MM:
-        problems.append(f"the cut-back leaves {wall_left:.3f} of wall at the face")
     return problems
 
 
 def check_magnet_slot_opening():
-    """Each slot runs through the block to its inner face, and above the
-    block the wall would overhang its outer side, so the wall's inner
-    face is cut back to the slot: as printed, the slot and the opening
-    above it must take the magnet with MAGNET_DROP_IN_CLEARANCE_MM."""
-    cutback = layout.magnet_wall_cutback_outward()
-    low, high = layout.magnet_slot_opening_outward_range(cutback)
-    low_uncut, high_uncut = layout.magnet_slot_opening_outward_range(layout.TRAY_GAP_MM)
-    wall_left = layout.JOINT_FACE_OUTWARD_MM - cutback
-    fail_on(
-        magnet_slot_opening_problems(high - low, wall_left),
-        "the magnets cannot drop into their slots",
-    )
+    """Each slot runs through the block to its inner face, so a magnet
+    goes in from the cavity: as printed, the slot must take it with
+    MAGNET_DROP_IN_CLEARANCE_MM. Above the block the wall stands whole
+    and overhangs the slot's face side (work item 045)."""
+    fail_on(magnet_slot_opening_problems(), "the magnets cannot go into their slots")
+    inner_side, face_side = layout.magnet_slot_outward_range()
+    past_standoff = layout.TRAY_GAP_MM - inner_side
     return (
         f"slots:     {layout.MAGNET_SLOT_ACROSS_MM:.1f} x {layout.MAGNET_SLOT_ALONG_MM:.1f} "
         f"modelled, {printed(layout.MAGNET_SLOT_ACROSS_MM):.1f} x "
         f"{printed(layout.MAGNET_SLOT_ALONG_MM):.1f} printed, for the "
         f"{layout.MAGNET_THICKNESS_MM} x {layout.MAGNET_DIAMETER_MM} magnet, open toward the "
-        f"cavity and above the block {high - low:.3f} across ({high_uncut - low_uncut:.3f} "
-        f"without the cut-back), the cut-back leaving {wall_left:.3f} of wall from z "
-        f"{layout.JOINT_BLOCK_TOP_Z_MM} to {layout.MAGNET_WALL_CUTBACK_TOP_Z_MM}"
+        f"cavity, the wall whole above the block, overhanging the slot by "
+        f"{face_side - layout.TRAY_GAP_MM:.3f}; between the wall and the sixth standoff's flat "
+        f"{past_standoff:.3f}, {printed(past_standoff):.3f} printed"
     )
 
 

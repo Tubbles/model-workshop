@@ -1613,13 +1613,15 @@ PRINT_RISE_OF_TOP_FACES_MM = 0.05
 
 # Magnets: four supermagnete S-08-03-N (8 x 3) standing on edge, each
 # glued against a 0.5 skin at the face, which takes its pull. Its slot
-# is a notch through the rest of the block, open at the top and toward
-# the cavity: the skin and a 3.0 magnet's printed fit across fill the
-# block's 4.0, which leaves no room for a wall on the slot's inner side.
-# The sixth standoff (MOUNTING_DRILL_CENTERS_MM), merged with the block,
-# walls off the south 2.165 of the slot at 48.26, flush with the
-# block's inner face, so the slot still prints 3.1 across there and the
-# magnet still drops in from the top.
+# is a notch through the rest of the block, open toward the cavity, so
+# the magnet is pushed in from the cavity side: the skin and a 3.0
+# magnet's printed fit across fill the block's 4.0, which leaves no
+# room for a wall on the slot's inner side. The sixth standoff
+# (MOUNTING_DRILL_CENTERS_MM), merged with the block, walls off the
+# south 2.165 of the slot at 48.26 up to its top, flush with the
+# block's inner face, so the slot still prints 3.1 across there, but
+# its magnet has to come in above the standoff and down past the wall
+# (below).
 # The slots run from z -0.7 up (0.5 above the bed), between the pins at
 # the given centers along the slant: spread evenly between the bosses
 # when the slots were 8.2 long (3.14 from each boss and from each
@@ -1632,12 +1634,13 @@ MAGNET_SLOT_BOTTOM_Z_MM = -0.7
 MAGNET_SKIN_MM = 0.5
 MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 48.26)
 
-# Above the block the wall's inner face is cut back to each slot, from
-# the block's top to the rim, over the slot's width along the slant: the
-# full wall, its inner face TRAY_GAP_MM out, would overhang the slot by
-# 0.3, so a magnet could not go straight down into its place against
-# the skin.
-MAGNET_WALL_CUTBACK_TOP_Z_MM = TRAY_RIM_Z_MM
+# Above the block the wall stands whole over the slots, its inner face
+# TRAY_GAP_MM out, so it overhangs each slot's face side by 0.3 (work
+# item 045, the user: "Make it so the wall is full, right now it looks
+# really bad with four visible cuts in the wall when the whole thing is
+# assembled"). The magnet at 48.26 passes between the wall and the
+# sixth standoff's flat, 3.2 apart, 2.8 as printed, for its 3.0: the
+# user chose to force it in.
 
 # Dowel pins: two hardened ISO 8734 4 x 16, normal to the face,
 # midway between the bed and the PCB's underside, at the given centers
@@ -1712,20 +1715,6 @@ def magnet_slot_polygon(along):
 
 def magnet_slot_z_range():
     return (MAGNET_SLOT_BOTTOM_Z_MM, JOINT_BLOCK_TOP_Z_MM)
-
-
-def magnet_wall_cutback_outward():
-    """The wall's inner face over each slot, cut back to the slot's face
-    side, so the wall keeps the slot's 0.5 skin there."""
-    return magnet_slot_outward_range()[1]
-
-
-def magnet_slot_opening_outward_range(wall_inner_face_outward):
-    """Across the slant, what is open above a slot from the block's top
-    to the rim, as far as the slot reaches inward: from the slot's inner
-    side to the wall's inner face."""
-    inner_side, face_side = magnet_slot_outward_range()
-    return (inner_side, min(face_side, wall_inner_face_outward))
 
 
 def dowel_boss_polygon(along, right=False):

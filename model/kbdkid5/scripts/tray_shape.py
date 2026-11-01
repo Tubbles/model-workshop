@@ -52,7 +52,7 @@ the dowel bosses take for the frame's pocket walls, after the reliefs,
 which may have opened part of one already. Then
 the magnet slots, open toward the cavity (but the south 2.165 of the
 one at 48.26 along the slant, which the sixth standoff walls off), with
-the wall cut back over them, the flat-topped teardrop pin holes (the
+the wall whole over them, the flat-topped teardrop pin holes (the
 half's fit and depth, the right half's with a lead-in at the mouth),
 the flat-topped teardrop parking hole and the chamfer along the joint
 face's bottom edge. Each
@@ -771,37 +771,39 @@ def slant_probe(along, outward, z):
 
 
 def cut_magnet_slot(tray, along):
-    """Cut a magnet slot from its bottom up through the block's top and
-    on to the rim, which also cuts the wall back to the slot's face side
-    above the block. All of it lies in plastic: the slot in the block
-    and the floor, the cut-back in the wall. The slot's inner side lies
-    on the block's inner face, so it opens toward the cavity, but where
-    a standoff merges with the block: the sixth standoff walls off the
-    south 2.165 of the slot at 48.26 along the slant, flush with that
-    face, so the slot still prints 3.1 across there and the magnet still
-    drops in from the top."""
+    """Cut a magnet slot from its bottom up to the block's top, the
+    cutter running on through the top where nothing stands over it, so
+    the wall above the block stays whole and overhangs the slot's face
+    side (work item 045). All of the slot lies in plastic, in the block
+    and the floor. The slot's inner side lies on the block's inner face,
+    so it opens toward the cavity, but where a standoff merges with the
+    block: the sixth standoff walls off the south 2.165 of the slot at
+    48.26 along the slant, flush with that face, so the slot still
+    prints 3.1 across there."""
     bottom = layout.MAGNET_SLOT_BOTTOM_Z_MM
-    cutter = plan_prism(layout.magnet_slot_polygon(along), bottom, RIM_Z_MM + CUT_EXTRA_MM)
+    top = layout.JOINT_BLOCK_TOP_Z_MM
+    inner_side, face_side = layout.magnet_slot_outward_range()
+    open_above = layout.slant_rectangle(
+        along, layout.MAGNET_SLOT_ALONG_MM, (inner_side, layout.TRAY_GAP_MM)
+    )
+    cutter = plan_prism(layout.magnet_slot_polygon(along), bottom, top).fuse(
+        plan_prism(open_above, top, top + CUT_EXTRA_MM)
+    )
     result = tray.cut(cutter)
     label = f"the magnet slot at {along} along the slant"
     require_one_valid_solid(result, label)
-    cutback = layout.magnet_wall_cutback_outward()
-    expected = layout.MAGNET_SLOT_ALONG_MM * (
-        layout.MAGNET_SLOT_ACROSS_MM * (layout.JOINT_BLOCK_TOP_Z_MM - bottom)
-        + (cutback - layout.TRAY_GAP_MM) * (RIM_Z_MM - layout.JOINT_BLOCK_TOP_Z_MM)
-    )
+    expected = layout.MAGNET_SLOT_ALONG_MM * layout.MAGNET_SLOT_ACROSS_MM * (top - bottom)
     require_volume(label, tray.Volume - result.Volume, expected, 1e-6)
-    inner_side, face_side = layout.magnet_slot_outward_range()
     face = layout.JOINT_FACE_OUTWARD_MM
-    middle_z = (bottom + layout.JOINT_BLOCK_TOP_Z_MM) / 2.0
-    wall_z = (layout.JOINT_BLOCK_TOP_Z_MM + RIM_Z_MM) / 2.0
+    middle_z = (bottom + top) / 2.0
+    wall_z = (top + RIM_Z_MM) / 2.0
     for outward, z, want_solid, what in (
         ((inner_side + face_side) / 2.0, middle_z, False, "open"),
         (inner_side - PROBE_OFFSET_MM, middle_z, False, "open toward the cavity"),
         ((face_side + face) / 2.0, middle_z, True, "behind its skin"),
         ((inner_side + face_side) / 2.0, bottom - 0.25, True, "above its floor"),
-        ((layout.TRAY_GAP_MM + cutback) / 2.0, wall_z, False, "open through the cut-back"),
-        ((cutback + face) / 2.0, wall_z, True, "behind the cut-back's wall"),
+        ((layout.TRAY_GAP_MM + face_side) / 2.0, top - 0.25, False, "open under the wall"),
+        ((layout.TRAY_GAP_MM + face_side) / 2.0, wall_z, True, "under the whole wall"),
     ):
         if is_solid_at(result, slant_probe(along, outward, z)) != want_solid:
             raise SystemExit(f"error: {label} is not {what}")

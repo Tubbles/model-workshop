@@ -1101,8 +1101,8 @@ def measure_magnet_slots(tray, right, figures):
         recess = slant_place(right, stated, slot_middle, in_floor_z)
         across_low, across_high = run_through(tray, recess, vector(normal), False)
         bottom, _top = run_through(tray, point, UP, False)
-        cutback = slant_place(right, stated, face - 0.05, WALL_PROBE_Z_MM)
-        wall_low, wall_high = run_through(tray, cutback, vector(normal), True)
+        over_slot = slant_place(right, stated, face - 0.05, WALL_PROBE_Z_MM)
+        wall_low, wall_high = run_through(tray, over_slot, vector(normal), True)
         texts = [
             figures.check("at", stated + (along_low + along_high) / 2.0, stated, 2),
             figures.check("long", along_high - along_low, DESIGN_MAGNET_SLOT_MM[0], 1),
@@ -1112,9 +1112,7 @@ def measure_magnet_slots(tray, right, figures):
             figures.check("skin", face - (slot_middle + face_high), DESIGN_MAGNET_SKIN_MM, 1),
             figures.check("bottom z", point.z + bottom, DESIGN_MAGNET_SLOT_BOTTOM_Z_MM, 1),
             "open toward the cavity from the block's inner face",
-            figures.check(
-                "wall left above the block", wall_high - wall_low, DESIGN_MAGNET_SKIN_MM, 1
-            ),
+            figures.check("wall over it above the block", wall_high - wall_low, DESIGN_WALL_MM, 1),
         ]
         lines.append(f"magnet:     {', '.join(texts)}")
     return lines
