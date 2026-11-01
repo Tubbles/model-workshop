@@ -1,6 +1,6 @@
 # 045 The tray's wall whole over the magnet slots
 
-Status: implemented (2026-11-01)
+Status: implemented (2026-11-01, 4bac045)
 
 Above the joint block the slanted wall was cut back over each magnet slot, up to the rim, so a magnet could drop straight down into its slot. The user, 2026-11-01: "Make it so the wall is full, right now it looks really bad with four visible cuts in the wall when the whole thing is assembled", "I'll push it in from the inside", and "Just don't touch anything except the topmost wall".
 
