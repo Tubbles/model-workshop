@@ -1,6 +1,6 @@
 # 046 The magnet slots' skin as thick as the wall
 
-Status: implemented (2026-11-02)
+Status: implemented (2026-11-02, 02e5348)
 
 The 0.5 skin between the magnet slots and the joint face showed the slots through the face as printed. The user, 2026-11-02: "There is still significant patterning on the outside of the joint slant wall from the magnet pockets. Move the magnets back so that the wall thickness is respected, so the patterning disappears."
 
