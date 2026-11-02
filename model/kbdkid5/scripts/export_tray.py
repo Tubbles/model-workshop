@@ -102,14 +102,14 @@ DESIGN_MOUNTING_DRILLS_MM = (
     (113.824, 59.214),
 )
 # The sixth standoff merges with the joint block, the magnet slot at
-# 48.26 along the slant cut through it, and its bore keeps this much
-# plastic toward the slot. Over its top the block's inner face stands
-# this far from its axis, beside an insert pressed in from above. The
-# axis lies across the slot, which opens toward the cavity over the
-# standoff's top, so the face is probed this far south of the slot.
-DESIGN_MERGED_STANDOFF_BORE_WALL_MM = 0.83
+# 49.46 along the slant cut into it, and its bore keeps this much
+# plastic toward the slot's south inner corner, the slot's nearest
+# point, probed this far north of the corner so the probe meets the
+# slot's inner face. Over its top the block's inner face stands this
+# far from its axis, beside an insert pressed in from above.
+DESIGN_MERGED_STANDOFF_BORE_WALL_MM = 0.62
 DESIGN_MERGED_STANDOFF_AXIS_FROM_BLOCK_MM = 2.432
-MERGED_AXIS_PROBE_PAST_SLOT_MM = 0.5
+MERGED_BORE_PROBE_PAST_CORNER_MM = 0.01
 DESIGN_MIRROR_LINE_X_MM = 66.199
 DESIGN_SLANT_ENDS_MM = ((132.398, 18.335), (113.348, 77.867))  # south, north
 DESIGN_SLANT_ANGLE_FROM_NORTH_DEGREES = 17.74
@@ -131,11 +131,11 @@ DESIGN_PLASTIC_OVER_DOWEL_HOLES_MM = {False: 3.15, True: 3.1}
 DESIGN_DOWEL_BOSS_ACROSS_MM = 7.0
 DESIGN_DOWEL_PIN_LENGTH_MM = 16.0
 DESIGN_PIN_CHANNEL_MARGIN_MM = 1.0  # the joined channel's length past the pin's, as modelled
-DESIGN_MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 48.26)
+DESIGN_MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 49.46)
 DESIGN_MAGNET_SLOT_MM = (8.5, 3.5)  # along the slant, across it
 DESIGN_MAGNET_SLOT_BOTTOM_Z_MM = -0.7
-DESIGN_MAGNET_SKIN_MM = 0.5
-DESIGN_MAGNETS_APART_JOINED_MM = 1.0
+DESIGN_MAGNET_SKIN_MM = 0.8
+DESIGN_MAGNETS_APART_JOINED_MM = 1.6
 DESIGN_THUMB_EAST_EDGE_X_MM = 132.398
 DESIGN_PARKING_HOLE_DIAMETER_MM = 4.5
 DESIGN_PARKING_HOLE_FLAT_MM = 1.86
@@ -818,18 +818,30 @@ def design_slant_coordinates(point):
 
 def merged_bore_walls(tray, right):
     """The plastic between each bore of a standoff that reaches the joint
-    block and the slot cut through it, along the slant's normal from the
-    bore's face."""
+    block and the slot cut into it, from the bore's face toward the
+    south inner corner of the slot whose south end lies nearest, the
+    slot lying north of the bore."""
     block_inner_face = DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_JOINT_BLOCK_THICKNESS_MM
-    _south, _direction, normal = design_slant_frame(right)
+    slot_inner_side = (DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_MAGNET_SKIN_MM
+                       - DESIGN_MAGNET_SLOT_MM[1])
+    _south, direction, normal = design_slant_frame(right)
     walls = []
     for drill in DESIGN_MOUNTING_DRILLS_MM:
         along, outward = design_slant_coordinates(drill)
         if outward + DESIGN_STANDOFF_DIAMETER_MM / 2.0 <= block_inner_face:
             continue
-        point = slant_place(right, along, outward + DESIGN_STANDOFF_BORE_MM / 2.0 + 0.05,
-                            LEDGE_PROBE_Z_MM)
-        low, high = run_through(tray, point, vector(normal), True)
+        slot_south = min((slot_along - DESIGN_MAGNET_SLOT_MM[0] / 2.0
+                          for slot_along in DESIGN_MAGNET_ALONGS_MM),
+                         key=lambda south_end: abs(south_end - along))
+        toward_along = slot_south + MERGED_BORE_PROBE_PAST_CORNER_MM - along
+        toward_outward = slot_inner_side - outward
+        length = math.hypot(toward_along, toward_outward)
+        toward_along, toward_outward = toward_along / length, toward_outward / length
+        start = DESIGN_STANDOFF_BORE_MM / 2.0 + 0.05
+        point = slant_place(right, along + toward_along * start,
+                            outward + toward_outward * start, LEDGE_PROBE_Z_MM)
+        toward = vector(direction) * toward_along + vector(normal) * toward_outward
+        low, high = run_through(tray, point, toward, True)
         walls.append(high - low)
     return walls
 
@@ -838,9 +850,7 @@ def merged_axes_from_block(tray, right):
     """How far the joint block's inner face stands from the axis of each
     standoff that reaches the block, over the standoff's top, along the
     slant's normal: open there, the standoff ending at the frame's tubes'
-    mouth and the block standing whole to its top. The face is planar,
-    so it is probed just south of a magnet slot the axis lies across,
-    which opens toward the cavity over the standoff's top."""
+    mouth and the block standing whole to its top."""
     block_inner_face = DESIGN_JOINT_FACE_OUT_OF_SLANT_MM - DESIGN_JOINT_BLOCK_THICKNESS_MM
     _south, _direction, normal = design_slant_frame(right)
     over_top = (DESIGN_STANDOFF_TOP_Z_MM + DESIGN_LEDGE_TOP_Z_MM) / 2.0
@@ -849,12 +859,7 @@ def merged_axes_from_block(tray, right):
         along, outward = design_slant_coordinates(drill)
         if outward + DESIGN_STANDOFF_DIAMETER_MM / 2.0 <= block_inner_face:
             continue
-        probe_along = along
-        for slot_along in DESIGN_MAGNET_ALONGS_MM:
-            slot_south = slot_along - DESIGN_MAGNET_SLOT_MM[0] / 2.0
-            if slot_south <= along <= slot_along + DESIGN_MAGNET_SLOT_MM[0] / 2.0:
-                probe_along = slot_south - MERGED_AXIS_PROBE_PAST_SLOT_MM
-        _low, high = run_through(tray, slant_place(right, probe_along, outward, over_top),
+        _low, high = run_through(tray, slant_place(right, along, outward, over_top),
                                  vector(normal), False)
         distances.append(high)
     return distances

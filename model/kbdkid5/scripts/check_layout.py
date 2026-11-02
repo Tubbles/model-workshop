@@ -184,9 +184,10 @@ DESIGN_RIGHT_TAB_TIP_PAST_THUMB_EDGE_MM = 0.231
 DESIGN_RIGHT_LEDGE_RELIEF_KEYS = {"S263", "S253", "S243", "S233", "S223", "S213", "S203"}
 DESIGN_RIGHT_STANDOFF_FLATS = ()
 DESIGN_RIGHT_CLOSEST_SOCKET_TO_STANDOFF_MM = 1.114
-# Along the slant: boss, four slots, boss.
-DESIGN_BOSS_TO_SLOT_GAP_MM = 2.99
-DESIGN_SLOT_TO_SLOT_GAP_MM = 2.84
+# Along the slant: boss, four slots, boss, the gaps in order from the
+# south end.
+DESIGN_BOSS_TO_SLOT_GAPS_MM = (2.99, 1.79)
+DESIGN_SLOT_TO_SLOT_GAPS_MM = (2.84, 2.84, 4.04)
 DESIGN_DOWEL_PIN_SPACING_MM = 55.5
 DESIGN_DOWEL_PIN_Z_MM = 4.15
 # Per half, False the left one, True the right one: how close the
@@ -201,8 +202,8 @@ DESIGN_DOWEL_PIN_SLANT_Y_MM = (21.7, 74.5)
 DESIGN_DOWEL_BOSSES_INSIDE_SLANT_ENDS_MM = (0.0, 0.006)
 # The plastic around the standoffs' bores where the joint's slots and
 # holes come nearest: the sixth standoff's, merged with the joint block,
-# beside the magnet slot at 48.26 along the slant, on both halves.
-DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM = 0.832
+# beside the magnet slot at 49.46 along the slant, on both halves.
+DESIGN_STANDOFF_BORE_FROM_JOINT_VOIDS_MM = 0.619
 # The plate the standoffs' head holes keep from the switch cutouts where
 # they come nearest, in each of the plate's layers: the north-east
 # standoff's, from S131's cutout, and S231's on the right half.
@@ -2298,13 +2299,19 @@ def joint_gaps():
     return to_bosses, between_slots
 
 
+def gap_figures(label, gaps, stated_gaps):
+    """require_figure on each gap along the slant against DESIGN.md's,
+    in order from the south end."""
+    if len(gaps) != len(stated_gaps):
+        return [(False, f"{label}: {len(gaps)} gaps, DESIGN.md has {len(stated_gaps)}")]
+    return [require_figure(label, gap, stated, 2) for gap, stated in zip(gaps, stated_gaps)]
+
+
 def magnet_figures():
     to_bosses, between_slots = joint_gaps()
-    return [
-        require_figure_for_all(
-            "slots from the bosses along the slant", to_bosses, DESIGN_BOSS_TO_SLOT_GAP_MM, 2
-        ),
-        require_figure_for_all("slots apart", between_slots, DESIGN_SLOT_TO_SLOT_GAP_MM, 2),
+    return gap_figures(
+        "slot from a boss along the slant", to_bosses, DESIGN_BOSS_TO_SLOT_GAPS_MM
+    ) + gap_figures("slots apart", between_slots, DESIGN_SLOT_TO_SLOT_GAPS_MM) + [
         require_figure(
             "magnet slot bottom above the bed",
             layout.MAGNET_SLOT_BOTTOM_Z_MM - layout.FLOOR_UNDERSIDE_Z_MM,
@@ -2331,9 +2338,10 @@ def printed(modelled):
 def magnet_slot_opening_problems():
     """Where a magnet would not go into its slot as printed: the slot
     too tight for it with MAGNET_DROP_IN_CLEARANCE_MM, or not open
-    toward the cavity. The sixth standoff walls off the south 2.165 of
-    the slot at 48.26 along the slant, flush with the block's inner
-    face, so the slot still prints 3.1 across there."""
+    toward the cavity. The sixth standoff walls off the south 1.351 of
+    the slot at 49.46 along the slant, and the slot cuts into it as far
+    as past the block's inner face, so the slot prints 3.1 across there
+    too."""
     clearance = MAGNET_DROP_IN_CLEARANCE_MM
     thickness = layout.MAGNET_THICKNESS_MM
     diameter = layout.MAGNET_DIAMETER_MM
@@ -2362,21 +2370,26 @@ def magnet_slot_opening_problems():
 
 
 def check_magnet_slot_opening():
-    """Each slot runs through the block to its inner face, so a magnet
+    """Each slot runs through the block past its inner face, so a magnet
     goes in from the cavity: as printed, the slot must take it with
-    MAGNET_DROP_IN_CLEARANCE_MM. Above the block the wall stands whole
-    and overhangs the slot's face side (work item 045)."""
+    MAGNET_DROP_IN_CLEARANCE_MM. Its skin is no thinner than the wall,
+    so the slots do not show through the joint face (work item 046),
+    and above the block the wall stands whole (work item 045)."""
     fail_on(magnet_slot_opening_problems(), "the magnets cannot go into their slots")
     inner_side, face_side = layout.magnet_slot_outward_range()
+    skin = layout.JOINT_FACE_OUTWARD_MM - face_side
+    if skin < layout.TRAY_WALL_MM - TOLERANCE_MM:
+        raise CheckFailure(
+            f"the slots' skin is {skin:.3f}, thinner than the {layout.TRAY_WALL_MM} wall"
+        )
     past_standoff = layout.TRAY_GAP_MM - inner_side
     return (
         f"slots:     {layout.MAGNET_SLOT_ACROSS_MM:.1f} x {layout.MAGNET_SLOT_ALONG_MM:.1f} "
         f"modelled, {printed(layout.MAGNET_SLOT_ACROSS_MM):.1f} x "
         f"{printed(layout.MAGNET_SLOT_ALONG_MM):.1f} printed, for the "
         f"{layout.MAGNET_THICKNESS_MM} x {layout.MAGNET_DIAMETER_MM} magnet, open toward the "
-        f"cavity, the wall whole above the block, overhanging the slot by "
-        f"{face_side - layout.TRAY_GAP_MM:.3f}; between the wall and the sixth standoff's flat "
-        f"{past_standoff:.3f}, {printed(past_standoff):.3f} printed"
+        f"cavity, behind a {skin:.3f} skin, the wall whole above the block; between the wall "
+        f"and the sixth standoff as cut {past_standoff:.3f}, {printed(past_standoff):.3f} printed"
     )
 
 

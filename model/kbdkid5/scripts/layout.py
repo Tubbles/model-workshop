@@ -541,7 +541,7 @@ def mirror_for_right_half(point):
 # north-east standoff one key to the left? And then adding a new
 # standoff south east of the north easternmost key?"). The sixth runs
 # into the joint block, which it merges with, and the magnet slot at
-# 48.26 along the slant is cut through it: only its bore needs the
+# 49.46 along the slant is cut into it: only its bore needs the
 # plastic around it (the user: "the standoff doesn't have to be 100 %
 # clear of everything, the inner bore is more important").
 MOUNTING_DRILL_DIAMETER_MM = 2.4
@@ -1612,35 +1612,36 @@ PRINT_RISE_OF_TOP_FACES_MM = 0.05
 
 
 # Magnets: four supermagnete S-08-03-N (8 x 3) standing on edge, each
-# glued against a 0.5 skin at the face, which takes its pull. Its slot
-# is a notch through the rest of the block, open toward the cavity, so
-# the magnet is pushed in from the cavity side: the skin and a 3.0
-# magnet's printed fit across fill the block's 4.0, which leaves no
-# room for a wall on the slot's inner side. The sixth standoff
+# glued against a skin at the face as thick as the wall, which takes
+# its pull: the 0.5 skin before showed the slots through the joint face
+# as printed (work item 046, the user: "There is still significant
+# patterning on the outside of the joint slant wall from the magnet
+# pockets. Move the magnets back so that the wall thickness is
+# respected"). So the slot's face side lies on the wall's inner face,
+# and the wall above the block stands whole over it (work item 045).
+# The slot is a notch through the rest of the block, open toward the
+# cavity, so the magnet is pushed in from the cavity side. The skin and
+# a 3.0 magnet's printed fit across take 4.3 of the block's 4.0, so the
+# slot runs 0.3 past the block's inner face, into the floor there, and
+# as printed the magnet's back lies on that face. The sixth standoff
 # (MOUNTING_DRILL_CENTERS_MM), merged with the block, walls off the
-# south 2.165 of the slot at 48.26 up to its top, flush with the
-# block's inner face, so the slot still prints 3.1 across there, but
-# its magnet has to come in above the standoff and down past the wall
-# (below).
+# south 1.351 of the slot at 49.46 up to its top, and the slot cuts the
+# 0.3 into it, so the slot prints 3.1 across there too, and its magnet
+# comes in above the standoff and down behind it.
 # The slots run from z -0.7 up (0.5 above the bed), between the pins at
 # the given centers along the slant: spread evenly between the bosses
 # when the slots were 8.2 long (3.14 from each boss and from each
-# other), now 2.99 from the bosses and 2.84 apart.
+# other), then 2.99 from the bosses and 2.84 apart. The north one moved
+# 1.2 north from 48.26 when the slots went 0.3 deeper, so the sixth
+# standoff's bore keeps STANDOFF_RELIEF_MINIMUM_WALL_MM from it (0.6185):
+# it lies 4.04 from its neighbour and 1.79 from the upper boss.
 MAGNET_DIAMETER_MM = 8.0
 MAGNET_THICKNESS_MM = 3.0
 MAGNET_SLOT_ALONG_MM = printed_fit(MAGNET_DIAMETER_MM, SLIP_FIT_MM)
 MAGNET_SLOT_ACROSS_MM = printed_fit(MAGNET_THICKNESS_MM, SLIP_FIT_MM)
 MAGNET_SLOT_BOTTOM_Z_MM = -0.7
-MAGNET_SKIN_MM = 0.5
-MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 48.26)
-
-# Above the block the wall stands whole over the slots, its inner face
-# TRAY_GAP_MM out, so it overhangs each slot's face side by 0.3 (work
-# item 045, the user: "Make it so the wall is full, right now it looks
-# really bad with four visible cuts in the wall when the whole thing is
-# assembled"). The magnet at 48.26 passes between the wall and the
-# sixth standoff's flat, 3.2 apart, 2.8 as printed, for its 3.0: the
-# user chose to force it in.
+MAGNET_SKIN_MM = TRAY_WALL_MM
+MAGNET_ALONGS_MM = (14.24, 25.58, 36.92, 49.46)
 
 # Dowel pins: two hardened ISO 8734 4 x 16, normal to the face,
 # midway between the bed and the PCB's underside, at the given centers
